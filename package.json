@@ -1,0 +1,25 @@
+{
+  "name": "nyaitter.js",
+  "version": "0.1.0",
+  "description": "NyaitterAPI を JavaScript から簡単に使えるクライアントライブラリ",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src"
+  ],
+  "keywords": [
+    "nyaitter",
+    "api",
+    "client",
+    "sns",
+    "scratch"
+  ],
+  "author": "nyantorusabu <nyantorusabu@outlook.jp>",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  }
+}
