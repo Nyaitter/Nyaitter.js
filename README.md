@@ -8,7 +8,7 @@ import { NyaitterClient } from 'nyaitter.js';
 
 const client = new NyaitterClient({
   baseUrl: 'https://nyaitter.example.com',
-  token: 'nyauth_...', // NyaitterAuth で取得したトークン
+  token: 'bot_...', // Bot トークン または NyaitterAuth トークン
 });
 
 await client.posts.create({ content: 'はじめての投稿！' });
@@ -20,7 +20,7 @@ await client.posts.create({ content: 'はじめての投稿！' });
 
 - **Node.js 18 以上**（または `fetch` が使えるブラウザ・環境）
 - **Nyaitter サーバーの URL**（接続先のサーバー URL）
-- **アクセストークン**（後述の NyaitterAuth で取得します）
+- **トークン**（下記の「トークンの取得」を参照）
 
 ---
 
@@ -32,20 +32,45 @@ npm install nyaitter.js
 
 ---
 
-## アクセストークンの取得（NyaitterAuth）
+## トークンの取得
 
-API を使うには、**NyaitterAuth** でユーザーにアプリの利用を許可してもらい、アクセストークンを取得する必要があります。
+Nyaitter.js を使うには、用途に合ったトークンを取得してください。
 
-### 連携の流れ
+### Bot トークン（`bot_...`）― 自分のアカウントで動く Bot・スクリプト向け
+
+自分のアカウントとして自由に API を呼び出せるトークンです。  
+Nyaitter の設定画面 → **「API キー」** から発行できます。
+
+```js
+// 発行済みの Bot トークンをそのまま使う
+const client = new NyaitterClient({
+  baseUrl: 'https://nyaitter.example.com',
+  token: 'bot_...',
+});
+```
+
+発行・管理をプログラムから行う場合は `client.botTokens` を使えます（セッションが必要）。
+
+```js
+const { token } = await client.botTokens.create({ name: '自動投稿Bot' });
+// ⚠️ このレスポンスにしかトークンは含まれません。必ず保存してください。
+```
+
+---
+
+### NyaitterAuth トークン（`nyauth_...`）― 他のユーザーの許可を得て動く外部アプリ向け
+
+別のユーザーに「アプリの利用を許可」してもらうことで発行されるトークンです。  
+許可された権限（スコープ）の範囲内でのみ API を呼び出せます。
 
 ```js
 // ステップ 1: 認証ページの URL を生成する
 const { auth_url } = await client.nyaitterAuth.initiate({
   appId: 'my_app',          // Nyaitter サーバーに登録したアプリ ID
   apiToken: 'secret_token', // 同じく登録したシークレット
-  redirectUri: 'https://example.com/callback', // 許可後にリダイレクトされる URL
+  redirectUri: 'https://example.com/callback',
   scopes: ['profile:read', 'posts:write', 'continuous_access'],
-  name: '私のアプリ',        // 認証画面に表示されるアプリ名
+  name: '私のアプリ',
 });
 
 // ステップ 2: ユーザーを auth_url に案内する
@@ -54,28 +79,15 @@ window.location.href = auth_url;
 // ステップ 3: ユーザーが「許可」を押すと redirectUri に ?code=... が届く
 const code = new URLSearchParams(window.location.search).get('code');
 
-// ステップ 4: code をアクセストークンと交換する
-//   ※ トークンは exchangeToken() 後に client へ自動保存されます
+// ステップ 4: code をトークンと交換する（トークンは自動で保存されます）
 const { user } = await client.nyaitterAuth.exchangeToken({
   appId: 'my_app',
   apiToken: 'secret_token',
   code,
 });
-
-// ステップ 5: 以降はそのまま API を呼び出せる
-const { posts } = await client.posts.getTimeline();
 ```
 
-取得したトークン（`nyauth_...`）は次回以降、コンストラクタに渡すだけで使えます。
-
-```js
-const client = new NyaitterClient({
-  baseUrl: 'https://nyaitter.example.com',
-  token: 'nyauth_0123456789abcdef...', // 保存しておいたトークン
-});
-```
-
-### 使えるスコープ（権限）一覧
+**使えるスコープ（権限）一覧：**
 
 | スコープ | 内容 |
 |---|---|

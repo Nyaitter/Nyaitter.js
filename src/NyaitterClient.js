@@ -18,6 +18,7 @@ import { UsersAPI } from './api/UsersAPI.js';
 import { DmAPI } from './api/DmAPI.js';
 import { NotificationsAPI } from './api/NotificationsAPI.js';
 import { NyaitterAuthAPI } from './api/NyaitterAuthAPI.js';
+import { BotTokenAPI } from './api/BotTokenAPI.js';
 
 export class NyaitterClient {
   /**
@@ -37,6 +38,7 @@ export class NyaitterClient {
     this.dm = new DmAPI(this);
     this.notifications = new NotificationsAPI(this);
     this.nyaitterAuth = new NyaitterAuthAPI(this);
+    this.botTokens = new BotTokenAPI(this);
   }
 
   /**
