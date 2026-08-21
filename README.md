@@ -135,7 +135,6 @@ Bot トークンで認証したクライアントから呼び出してくださ�
 // 1. 認証 URL を生成する
 const { auth_url } = await client.nyaitterAuth.initiate({
   appId: 'my_app',
-  apiToken: 'secret_token',
   redirectUri: 'https://example.com/callback',
   scopes: ['profile:read', 'posts:write', 'continuous_access'],
   name: '私のアプリ',
@@ -150,7 +149,6 @@ const code = new URLSearchParams(window.location.search).get('code');
 // 4. code をアクセストークンと交換する
 const { user, access_token } = await client.nyaitterAuth.exchangeToken({
   appId: 'my_app',
-  apiToken: 'secret_token',
   code,
 });
 

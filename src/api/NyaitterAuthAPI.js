@@ -22,7 +22,6 @@ export class NyaitterAuthAPI {
    *
    * @param {object} params
    * @param {string} params.appId - アプリ ID
-   * @param {string} params.apiToken - アプリのシークレット
    * @param {string} params.redirectUri - 許可後にリダイレクトされる URL
    * @param {string[]} params.scopes - 要求する権限のリスト
    * @param {string} [params.name] - 認証画面に表示されるアプリ名
@@ -33,17 +32,16 @@ export class NyaitterAuthAPI {
    * @example
    * const { auth_url } = await client.nyaitterAuth.initiate({
    *   appId: 'my_app',
-   *   apiToken: 'secret_token',
    *   redirectUri: 'https://example.com/callback',
    *   scopes: ['profile:read', 'posts:write', 'continuous_access'],
    *   name: '私のアプリ',
    * });
    * // ユーザーを auth_url へ案内する
    */
-  initiate({ appId, apiToken, redirectUri, scopes, name, iconUrl, state } = {}) {
+  initiate({ appId, redirectUri, scopes, name, iconUrl, state } = {}) {
     return this._client._post('/server/api/nyaitter-auth/initiate', {
       app_id: appId,
-      api_token: apiToken,
+      api_token: this._client.getToken(),
       redirect_uri: redirectUri,
       scopes,
       name,
@@ -58,7 +56,6 @@ export class NyaitterAuthAPI {
    *
    * @param {object} params
    * @param {string} params.appId - アプリ ID
-   * @param {string} params.apiToken - アプリのシークレット
    * @param {string} params.code - コールバック URL の `?code=` の値
    * @returns {Promise<{ user: object, granted_scopes: string[], access_token?: string }>}
    *
@@ -67,7 +64,6 @@ export class NyaitterAuthAPI {
    *
    * const { user, access_token } = await client.nyaitterAuth.exchangeToken({
    *   appId: 'my_app',
-   *   apiToken: 'secret_token',
    *   code,
    * });
    *
@@ -78,10 +74,10 @@ export class NyaitterAuthAPI {
    * });
    * await userClient.posts.create({ content: 'ユーザーとして投稿！' });
    */
-  exchangeToken({ appId, apiToken, code } = {}) {
+  exchangeToken({ appId, code } = {}) {
     return this._client._post('/server/api/nyaitter-auth/token', {
       app_id: appId,
-      api_token: apiToken,
+      api_token: this._client.getToken(),
       code,
     });
   }
