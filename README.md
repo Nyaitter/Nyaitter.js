@@ -4,8 +4,13 @@
 投稿の取得・作成・いいね、ユーザーのフォロー、DM の送受信、通知の管理など、Nyaitter のさまざまな機能をシンプルなコードで呼び出せます。
 
 ```js
-const client = new NyaitterClient({ baseUrl: 'https://nyaitter.example.com' });
-await client.auth.login({ username: 'nyanko', password: 'password' });
+import { NyaitterClient } from 'nyaitter.js';
+
+const client = new NyaitterClient({
+  baseUrl: 'https://nyaitter.example.com',
+  token: 'nyauth_...', // NyaitterAuth で取得したトークン
+});
+
 await client.posts.create({ content: 'はじめての投稿！' });
 ```
 
@@ -14,7 +19,8 @@ await client.posts.create({ content: 'はじめての投稿！' });
 ## 必要なもの
 
 - **Node.js 18 以上**（または `fetch` が使えるブラウザ・環境）
-- **Nyaitter サーバーの URL**（自分でホストするか、接続先のサーバー URL）
+- **Nyaitter サーバーの URL**（接続先のサーバー URL）
+- **アクセストークン**（後述の NyaitterAuth で取得します）
 
 ---
 
@@ -26,63 +32,48 @@ npm install nyaitter.js
 
 ---
 
-## 使い方
+## アクセストークンの取得（NyaitterAuth）
 
-### 1. クライアントを作る
-
-```js
-import { NyaitterClient } from 'nyaitter.js';
-
-const client = new NyaitterClient({
-  baseUrl: 'https://nyaitter.example.com', // 接続先の Nyaitter サーバー URL
-});
-```
-
-### 2. ログインする
-
-```js
-await client.auth.login({ username: 'nyanko', password: 'password' });
-// ログイン後は自動でトークンが保存され、以降のリクエストに使われます
-```
-
-### 3. 使いたい機能を呼び出す
-
-ログイン後は `client.posts`、`client.users`、`client.dm`、`client.notifications` からそれぞれの機能を使えます。
-
----
-
-## 外部アプリとの連携（NyaitterAuth）
-
-Nyaitter には、外部のアプリやサービスが Nyaitter アカウントと連携できる仕組み（**NyaitterAuth**）があります。  
-ユーザーにパスワードを教えてもらう必要がなく、どの権限を許可するかをユーザー自身が確認・管理できます。
+Nyaitter のログインは Web ブラウザ上で行われるため、ユーザー名とパスワードを直接 API に送る方法はありません。  
+代わりに **NyaitterAuth** という仕組みを使って、ユーザーに許可してもらいながら安全にトークンを取得します。
 
 ### 連携の流れ
 
 ```js
-// ステップ1: 認証ページの URL を生成する
+// ステップ 1: 認証ページの URL を生成する
 const { auth_url } = await client.nyaitterAuth.initiate({
-  appId: 'my_app',
-  apiToken: 'secret_token',
-  redirectUri: 'https://example.com/callback',
+  appId: 'my_app',          // Nyaitter サーバーに登録したアプリ ID
+  apiToken: 'secret_token', // 同じく登録したシークレット
+  redirectUri: 'https://example.com/callback', // 許可後にリダイレクトされる URL
   scopes: ['profile:read', 'posts:write', 'continuous_access'],
-  name: '私のアプリ',
+  name: '私のアプリ',        // 認証画面に表示されるアプリ名
 });
 
-// ステップ2: ユーザーを auth_url に案内する（ブラウザでリダイレクトなど）
+// ステップ 2: ユーザーを auth_url に案内する
 window.location.href = auth_url;
 
-// ステップ3: ユーザーが許可すると redirectUri に ?code=... が届く
+// ステップ 3: ユーザーが「許可」を押すと redirectUri に ?code=... が届く
 const code = new URLSearchParams(window.location.search).get('code');
 
-// ステップ4: code をアクセストークンと交換する
-const { user, access_token } = await client.nyaitterAuth.exchangeToken({
+// ステップ 4: code をアクセストークンと交換する
+//   ※ トークンは exchangeToken() 後に client へ自動保存されます
+const { user } = await client.nyaitterAuth.exchangeToken({
   appId: 'my_app',
   apiToken: 'secret_token',
   code,
 });
 
-// ステップ5: 以降はそのままユーザーとして API を呼び出せる
+// ステップ 5: 以降はそのまま API を呼び出せる
 const { posts } = await client.posts.getTimeline();
+```
+
+取得したトークン（`nyauth_...`）は次回以降、コンストラクタに渡すだけで使えます。
+
+```js
+const client = new NyaitterClient({
+  baseUrl: 'https://nyaitter.example.com',
+  token: 'nyauth_0123456789abcdef...', // 保存しておいたトークン
+});
 ```
 
 ### 使えるスコープ（権限）一覧
@@ -137,7 +128,7 @@ await client.posts.delete(123);
 // プロフィールを取得
 const { user } = await client.users.get(12);
 
-// ハンドル（ユーザー名）で検索
+// ハンドル（ユーザー名）で取得
 const { user } = await client.users.getByHandle('nyanko');
 
 // フォロー / 解除

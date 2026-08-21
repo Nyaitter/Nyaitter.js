@@ -1,9 +1,15 @@
 /**
  * NyaitterClient - NyaitterAPI を JavaScript から簡単に使うためのクライアント
  *
+ * アクセストークンは NyaitterAuth の連携フローで取得してください。
+ * 取得済みのトークンがある場合はコンストラクタの `token` に直接渡せます。
+ *
  * @example
- * const client = new NyaitterClient({ baseUrl: 'https://nyaitter.example.com' });
- * await client.auth.login({ username: 'nyanko', password: '...' });
+ * // 取得済みトークンをそのまま使う
+ * const client = new NyaitterClient({
+ *   baseUrl: 'https://nyaitter.example.com',
+ *   token: 'nyauth_...',
+ * });
  * await client.posts.create({ content: 'はじめての投稿！' });
  */
 
@@ -12,13 +18,12 @@ import { UsersAPI } from './api/UsersAPI.js';
 import { DmAPI } from './api/DmAPI.js';
 import { NotificationsAPI } from './api/NotificationsAPI.js';
 import { NyaitterAuthAPI } from './api/NyaitterAuthAPI.js';
-import { AuthAPI } from './api/AuthAPI.js';
 
 export class NyaitterClient {
   /**
    * @param {object} options
    * @param {string} options.baseUrl - Nyaitter サーバーの URL（例: 'https://nyaitter.example.com'）
-   * @param {string} [options.token] - アクセストークン（取得済みの場合に指定）
+   * @param {string} [options.token] - アクセストークン（`nyauth_...` 形式）
    */
   constructor({ baseUrl, token = null } = {}) {
     if (!baseUrl) throw new Error('baseUrl は必須です');
@@ -27,7 +32,6 @@ export class NyaitterClient {
     this._token = token;
 
     // 各 API カテゴリ
-    this.auth = new AuthAPI(this);
     this.posts = new PostsAPI(this);
     this.users = new UsersAPI(this);
     this.dm = new DmAPI(this);
