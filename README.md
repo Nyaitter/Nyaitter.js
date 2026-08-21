@@ -8,7 +8,7 @@ import { NyaitterClient } from 'nyaitter.js';
 
 const client = new NyaitterClient({
   baseUrl: 'https://nyaitter.example.com',
-  token: 'bot_...', // Bot トークン または NyaitterAuth トークン
+  token: 'bot_...', // 設定画面で発行した Bot トークン
 });
 
 await client.posts.create({ content: 'はじめての投稿！' });
@@ -20,7 +20,7 @@ await client.posts.create({ content: 'はじめての投稿！' });
 
 - **Node.js 18 以上**（または `fetch` が使えるブラウザ・環境）
 - **Nyaitter サーバーの URL**（接続先のサーバー URL）
-- **トークン**（下記の「トークンの取得」を参照）
+- **Bot トークン**（Nyaitter の設定画面 → 「API キー」から発行）
 
 ---
 
@@ -32,65 +32,18 @@ npm install nyaitter.js
 
 ---
 
-## トークンの取得
+## セットアップ
 
-Nyaitter.js を使うには、用途に合ったトークンを取得してください。
-
-### Bot トークン（`bot_...`）― 自分のアカウントで動く Bot・スクリプト向け
-
-自分のアカウントとして自由に API を呼び出せるトークンです。  
-Nyaitter の設定画面 → **「API キー」** から発行してください。
+Nyaitter の設定画面 → **「API キー」** から Bot トークンを発行し、コンストラクタに渡すだけで使えます。
 
 ```js
-// 発行済みの Bot トークンをそのまま使う
+import { NyaitterClient } from 'nyaitter.js';
+
 const client = new NyaitterClient({
   baseUrl: 'https://nyaitter.example.com',
-  token: 'bot_...',
+  token: 'bot_...', // 発行した Bot トークン
 });
 ```
-
----
-
-### NyaitterAuth トークン（`nyauth_...`）― 他のユーザーの許可を得て動く外部アプリ向け
-
-別のユーザーに「アプリの利用を許可」してもらうことで発行されるトークンです。  
-許可された権限（スコープ）の範囲内でのみ API を呼び出せます。
-
-```js
-// ステップ 1: 認証ページの URL を生成する
-const { auth_url } = await client.nyaitterAuth.initiate({
-  appId: 'my_app',          // Nyaitter サーバーに登録したアプリ ID
-  apiToken: 'secret_token', // 同じく登録したシークレット
-  redirectUri: 'https://example.com/callback',
-  scopes: ['profile:read', 'posts:write', 'continuous_access'],
-  name: '私のアプリ',
-});
-
-// ステップ 2: ユーザーを auth_url に案内する
-window.location.href = auth_url;
-
-// ステップ 3: ユーザーが「許可」を押すと redirectUri に ?code=... が届く
-const code = new URLSearchParams(window.location.search).get('code');
-
-// ステップ 4: code をトークンと交換する（トークンは自動で保存されます）
-const { user } = await client.nyaitterAuth.exchangeToken({
-  appId: 'my_app',
-  apiToken: 'secret_token',
-  code,
-});
-```
-
-**使えるスコープ（権限）一覧：**
-
-| スコープ | 内容 |
-|---|---|
-| `profile:read` | ユーザー名・アイコンなどの基本情報を見る（必須） |
-| `posts:read` | タイムラインや投稿を見る |
-| `posts:write` | 投稿・いいね・リポストを行う |
-| `dm:read` | DM を読む |
-| `dm:write` | DM を送る |
-| `notifications:read` | 通知を確認する |
-| `continuous_access` | バックグラウンドでも続けて API を使えるトークンを発行する |
 
 ---
 
@@ -168,6 +121,58 @@ const { unread_count } = await client.notifications.getUnreadCount();
 // すべて既読にする
 await client.notifications.markAllAsRead();
 ```
+
+---
+
+## 他のユーザーと連携する（NyaitterAuth）
+
+自分のアプリに**別のユーザーを連携**させたい場合は `client.nyaitterAuth` を使います。  
+Bot トークンで認証したクライアントから呼び出してください。
+
+### 使い方の流れ
+
+```js
+// 1. 認証 URL を生成する
+const { auth_url } = await client.nyaitterAuth.initiate({
+  appId: 'my_app',
+  apiToken: 'secret_token',
+  redirectUri: 'https://example.com/callback',
+  scopes: ['profile:read', 'posts:write', 'continuous_access'],
+  name: '私のアプリ',
+});
+
+// 2. ユーザーを auth_url へ案内する
+window.location.href = auth_url;
+
+// 3. ユーザーが許可すると redirectUri に ?code=... が届く
+const code = new URLSearchParams(window.location.search).get('code');
+
+// 4. code をアクセストークンと交換する
+const { user, access_token } = await client.nyaitterAuth.exchangeToken({
+  appId: 'my_app',
+  apiToken: 'secret_token',
+  code,
+});
+
+// 5. 取得したトークンで、そのユーザーとして API を呼び出せる
+const userClient = new NyaitterClient({
+  baseUrl: 'https://nyaitter.example.com',
+  token: access_token,
+});
+await userClient.posts.create({ content: 'そのユーザーとして投稿！' });
+```
+
+### スコープ（権限）一覧
+
+| スコープ | 内容 |
+|---|---|
+| `profile:read` | ユーザー名・アイコンなどの基本情報を見る（必須） |
+| `posts:read` | タイムラインや投稿を見る |
+| `posts:write` | 投稿・いいね・リポストを行う |
+| `dm:read` | DM を読む |
+| `dm:write` | DM を送る |
+| `notifications:read` | 通知を確認する |
+| `continuous_access` | バックグラウンドでも続けて API を使えるトークンを発行する |
 
 ---
 
