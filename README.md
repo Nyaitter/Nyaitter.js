@@ -39,7 +39,7 @@ Nyaitter.js を使うには、用途に合ったトークンを取得してく�
 ### Bot トークン（`bot_...`）― 自分のアカウントで動く Bot・スクリプト向け
 
 自分のアカウントとして自由に API を呼び出せるトークンです。  
-Nyaitter の設定画面 → **「API キー」** から発行できます。
+Nyaitter の設定画面 → **「API キー」** から発行してください。
 
 ```js
 // 発行済みの Bot トークンをそのまま使う
@@ -47,13 +47,6 @@ const client = new NyaitterClient({
   baseUrl: 'https://nyaitter.example.com',
   token: 'bot_...',
 });
-```
-
-発行・管理をプログラムから行う場合は `client.botTokens` を使えます（セッションが必要）。
-
-```js
-const { token } = await client.botTokens.create({ name: '自動投稿Bot' });
-// ⚠️ このレスポンスにしかトークンは含まれません。必ず保存してください。
 ```
 
 ---
