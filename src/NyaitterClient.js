@@ -18,6 +18,7 @@ import { UsersAPI } from './api/UsersAPI.js';
 import { DmAPI } from './api/DmAPI.js';
 import { NotificationsAPI } from './api/NotificationsAPI.js';
 import { NyaitterAuthAPI } from './api/NyaitterAuthAPI.js';
+import { RealtimeClient } from './RealtimeClient.js';
 
 export class NyaitterClient {
   /**
@@ -54,6 +55,25 @@ export class NyaitterClient {
    */
   getToken() {
     return this._token;
+  }
+
+  /**
+   * リアルタイムイベントを受け取るクライアントを作成します。
+   * 返ってきたオブジェクトで `.on()` でイベントを登録してから `.connect()` を呼んでください。
+   *
+   * @returns {RealtimeClient}
+   *
+   * @example
+   * const realtime = client.realtime();
+   *
+   * realtime.on('notification', (n) => console.log('通知:', n));
+   * realtime.on('dm', ({ dmId, message }) => console.log('DM:', message.content));
+   * realtime.on('timelinePost', ({ postId }) => console.log('新着投稿:', postId));
+   *
+   * await realtime.connect();
+   */
+  realtime() {
+    return new RealtimeClient(this);
   }
 
   /**

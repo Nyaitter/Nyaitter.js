@@ -122,6 +122,40 @@ const { unread_count } = await client.notifications.getUnreadCount();
 await client.notifications.markAllAsRead();
 ```
 
+### リアルタイム受信 (`client.realtime()`)
+
+通知やメッセージ、タイムラインの更新などをリアルタイムに受け取れます。
+
+```js
+const realtime = client.realtime();
+
+// 新着通知
+realtime.on('notification', (notification) => {
+  console.log('新着通知:', notification);
+});
+
+// 通知未読数の変化
+realtime.on('notificationUnreadCount', (count) => {
+  console.log(`未読通知: ${count} 件`);
+});
+
+// DM メッセージの受信
+realtime.on('dm', ({ dmId, message }) => {
+  console.log(`DM受信 (${dmId}):`, message.content);
+});
+
+// フォロー中タイムラインの新規投稿
+realtime.on('timelinePost', ({ postId, authorId }) => {
+  console.log(`ユーザー ${authorId} が投稿しました (ID: ${postId})`);
+});
+
+// 接続開始
+await realtime.connect();
+
+// 切断する場合
+// realtime.disconnect();
+```
+
 ---
 
 ## 他のユーザーと連携する（NyaitterAuth）
