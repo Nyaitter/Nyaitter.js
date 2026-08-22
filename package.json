@@ -18,7 +18,9 @@
     "scratch"
   ],
   "author": "nyantorusabu <nyantorusabu@outlook.jp>",
-  "license": "MIT",
+  "scripts": {
+    "test": "node --test"
+  },
   "engines": {
     "node": ">=18"
   }

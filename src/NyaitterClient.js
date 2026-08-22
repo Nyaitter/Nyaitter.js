@@ -1,22 +1,28 @@
 /**
- * NyaitterClient - NyaitterAPI を JavaScript から簡単に使うためのクライアント
+ * NyaitterClient - Nyaitter API を JavaScript から簡単に使うための統合クライアント
  *
- * アクセストークンは NyaitterAuth の連携フローで取得してください。
- * 取得済みのトークンがある場合はコンストラクタの `token` に直接渡せます。
+ * Bot トークン (`bot_...`) または NyaitterAuth アクセストークン (`nyauth_...`) を指定して初期化します。
  *
  * @example
- * // 取得済みトークンをそのまま使う
  * const client = new NyaitterClient({
  *   baseUrl: 'https://nyaitter.example.com',
- *   token: 'nyauth_...',
+ *   token: 'bot_xxxxxxxxxxxxxxxx',
  * });
- * await client.posts.create({ content: 'はじめての投稿！' });
+ *
+ * // 投稿する
+ * await client.posts.create({ content: 'こんにちは！' });
  */
 
 import { PostsAPI } from './api/PostsAPI.js';
 import { UsersAPI } from './api/UsersAPI.js';
 import { DmAPI } from './api/DmAPI.js';
 import { NotificationsAPI } from './api/NotificationsAPI.js';
+import { GroupsAPI } from './api/GroupsAPI.js';
+import { UploadsAPI } from './api/UploadsAPI.js';
+import { RankingAPI } from './api/RankingAPI.js';
+import { ReportsAPI } from './api/ReportsAPI.js';
+import { VerificationAPI } from './api/VerificationAPI.js';
+import { SystemAPI } from './api/SystemAPI.js';
 import { NyaitterAuthAPI } from './api/NyaitterAuthAPI.js';
 import { RealtimeClient } from './RealtimeClient.js';
 
@@ -24,25 +30,38 @@ export class NyaitterClient {
   /**
    * @param {object} options
    * @param {string} options.baseUrl - Nyaitter サーバーの URL（例: 'https://nyaitter.example.com'）
-   * @param {string} [options.token] - アクセストークン（`nyauth_...` 形式）
+   * @param {string} [options.token] - Bot トークンまたはアクセストークン（`bot_...`, `nyauth_...`）
+   * @param {typeof fetch} [options.fetch] - カスタム fetch 関数（省略時はグローバル fetch）
+   * @param {any} [options.WebSocket] - カスタム WebSocket クラス（Node.js 環境用）
    */
-  constructor({ baseUrl, token = null } = {}) {
+  constructor({ baseUrl, token = null, fetch: customFetch = null, WebSocket: customWebSocket = null } = {}) {
     if (!baseUrl) throw new Error('baseUrl は必須です');
 
-    this._baseUrl = baseUrl.replace(/\/$/, '');
+    this._baseUrl = baseUrl.replace(/\/+$/, '');
     this._token = token;
+    this._fetch = customFetch || globalThis.fetch;
+    this._WebSocket = customWebSocket || globalThis.WebSocket;
+
+    if (typeof this._fetch !== 'function') {
+      throw new Error('fetch 関数が見つかりません。Node.js 18+ または fetch ポリフィルが必要です。');
+    }
 
     // 各 API カテゴリ
     this.posts = new PostsAPI(this);
     this.users = new UsersAPI(this);
     this.dm = new DmAPI(this);
     this.notifications = new NotificationsAPI(this);
+    this.groups = new GroupsAPI(this);
+    this.uploads = new UploadsAPI(this);
+    this.ranking = new RankingAPI(this);
+    this.reports = new ReportsAPI(this);
+    this.verification = new VerificationAPI(this);
+    this.system = new SystemAPI(this);
     this.nyaitterAuth = new NyaitterAuthAPI(this);
   }
 
   /**
-   * アクセストークンを設定します。
-   * ログイン後に自動で呼ばれるため、通常は直接呼ぶ必要はありません。
+   * アクセストークン（Bot トークン）を設定します。
    * @param {string|null} token
    */
   setToken(token) {
@@ -50,7 +69,7 @@ export class NyaitterClient {
   }
 
   /**
-   * 現在のアクセストークンを返します。
+   * 現在のアクセストークン（Bot トークン）を取得します。
    * @returns {string|null}
    */
   getToken() {
@@ -58,67 +77,101 @@ export class NyaitterClient {
   }
 
   /**
-   * リアルタイムイベントを受け取るクライアントを作成します。
-   * 返ってきたオブジェクトで `.on()` でイベントを登録してから `.connect()` を呼んでください。
+   * 認証中のユーザー（Bot の所有者アカウント）の情報を取得します。
+   * `client.users.getMe()` のエイリアスです。
    *
+   * @returns {Promise<{ user: object, isBot: boolean, tokenType: string }>}
+   *
+   * @example
+   * const me = await client.getMe();
+   * console.log(`ログイン中: ${me.user.name} (@${me.user.nyaitter_id || me.user.id})`);
+   */
+  getMe() {
+    return this.users.getMe();
+  }
+
+  /**
+   * リアルタイムイベントを受信するためのクライアントを作成します。
+   *
+   * @param {object} [options]
+   * @param {boolean} [options.autoReconnect=true] - 切断時の自動再接続
+   * @param {number} [options.reconnectDelayMs=3000] - 再接続待機時間（ミリ秒）
    * @returns {RealtimeClient}
    *
    * @example
    * const realtime = client.realtime();
-   *
    * realtime.on('notification', (n) => console.log('通知:', n));
    * realtime.on('dm', ({ dmId, message }) => console.log('DM:', message.content));
-   * realtime.on('timelinePost', ({ postId }) => console.log('新着投稿:', postId));
-   *
    * await realtime.connect();
    */
-  realtime() {
-    return new RealtimeClient(this);
+  realtime(options = {}) {
+    return new RealtimeClient(this, options);
   }
 
   /**
    * API リクエストを送信する内部メソッド。
+   *
    * @param {string} method - HTTP メソッド（'GET', 'POST', 'PUT', 'PATCH', 'DELETE'）
    * @param {string} path - エンドポイントのパス（例: '/server/api/posts'）
-   * @param {object} [body] - 送信するデータ（POST/PUT/PATCH 時）
-   * @param {object} [query] - URL クエリパラメータ
+   * @param {object} [options]
+   * @param {any} [options.body] - 送信する JSON ボディ
+   * @param {object} [options.query] - URL クエリパラメータ
+   * @param {Record<string, string>} [options.headers] - 追加ヘッダー
    * @returns {Promise<any>}
    */
-  async request(method, path, { body, query } = {}) {
-    const url = new URL(`${this._baseUrl}${path}`);
+  async request(method, path, { body, query, headers = {} } = {}) {
+    const rawPath = path.startsWith('/') ? path : `/${path}`;
+    const url = new URL(`${this._baseUrl}${rawPath}`);
 
-    if (query) {
+    if (query && typeof query === 'object') {
       for (const [key, value] of Object.entries(query)) {
         if (value !== undefined && value !== null) {
-          url.searchParams.set(key, String(value));
+          if (Array.isArray(value)) {
+            url.searchParams.set(key, value.join(','));
+          } else {
+            url.searchParams.set(key, String(value));
+          }
         }
       }
     }
 
-    const headers = {
+    const reqHeaders = {
       'Content-Type': 'application/json',
+      ...headers,
     };
 
     if (this._token) {
-      headers['Authorization'] = `Bearer ${this._token}`;
+      reqHeaders['Authorization'] = `Bearer ${this._token}`;
     }
 
-    const response = await fetch(url.toString(), {
+    const fetchOptions = {
       method,
-      headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
+      headers: reqHeaders,
+    };
+
+    if (body !== undefined) {
+      fetchOptions.body = JSON.stringify(body);
+    }
+
+    const response = await this._fetch(url.toString(), fetchOptions);
 
     let data;
-    const contentType = response.headers.get('content-type') || '';
+    const contentType = response.headers?.get?.('content-type') || '';
     if (contentType.includes('application/json')) {
       data = await response.json();
     } else {
-      data = await response.text();
+      const text = await response.text();
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = text;
+      }
     }
 
     if (!response.ok) {
-      const message = (typeof data === 'object' && data?.error) || `HTTP ${response.status}`;
+      const message =
+        (typeof data === 'object' && (data?.error || data?.message)) ||
+        `HTTP ${response.status} ${response.statusText || ''}`.trim();
       throw new NyaitterError(message, response.status, data);
     }
 
@@ -131,28 +184,28 @@ export class NyaitterClient {
   }
 
   /** @internal */
-  _post(path, body) {
-    return this.request('POST', path, { body });
+  _post(path, body, query) {
+    return this.request('POST', path, { body, query });
   }
 
   /** @internal */
-  _put(path, body) {
-    return this.request('PUT', path, { body });
+  _put(path, body, query) {
+    return this.request('PUT', path, { body, query });
   }
 
   /** @internal */
-  _patch(path, body) {
-    return this.request('PATCH', path, { body });
+  _patch(path, body, query) {
+    return this.request('PATCH', path, { body, query });
   }
 
   /** @internal */
-  _delete(path) {
-    return this.request('DELETE', path);
+  _delete(path, body, query) {
+    return this.request('DELETE', path, { body, query });
   }
 }
 
 /**
- * NyaitterAPI のエラーを表します。
+ * Nyaitter API のエラーを表す例外クラスです。
  */
 export class NyaitterError extends Error {
   /**

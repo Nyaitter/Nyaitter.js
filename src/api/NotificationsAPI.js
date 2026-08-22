@@ -1,6 +1,6 @@
 /**
  * 通知 API
- * 通知の取得・既読処理などを行います。
+ * 通知の取得・作成・既読・クリック状態管理・削除などを行います。
  */
 export class NotificationsAPI {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
@@ -42,6 +42,30 @@ export class NotificationsAPI {
   }
 
   /**
+   * 新しい通知を送信します。
+   *
+   * @param {object} params
+   * @param {number} params.recipientId - 送信先ユーザー ID
+   * @param {'mention'|'repost'|'dm_invite'|'dm_removed'|'dm_host_transfer'|'admin_notice'} params.type - 通知タイプ
+   * @param {object} [params.target] - 通知対象（例: `{ kind: 'post', id: 123 }` または `{ kind: 'dm', id: 'group-id' }`）
+   * @returns {Promise<{ success: boolean, notification: object|null }>}
+   *
+   * @example
+   * await client.notifications.create({
+   *   recipientId: 12,
+   *   type: 'mention',
+   *   target: { kind: 'post', id: 123 },
+   * });
+   */
+  create({ recipientId, type, target } = {}) {
+    return this._client._post('/server/api/notifications', {
+      recipient_id: recipientId,
+      type,
+      target,
+    });
+  }
+
+  /**
    * 通知を既読にします。
    *
    * @param {number} notificationId - 通知 ID
@@ -49,6 +73,16 @@ export class NotificationsAPI {
    */
   markAsRead(notificationId) {
     return this._client._put(`/server/api/notifications/${notificationId}/read`, {});
+  }
+
+  /**
+   * 通知をクリック済みにマークします。
+   *
+   * @param {number} notificationId - 通知 ID
+   * @returns {Promise<{ success: boolean, read: boolean, clicked: boolean }>}
+   */
+  markAsClicked(notificationId) {
+    return this._client._put(`/server/api/notifications/${notificationId}/clicked`, {});
   }
 
   /**
@@ -64,6 +98,15 @@ export class NotificationsAPI {
   }
 
   /**
+   * すべての通知をクリック済みにします。
+   *
+   * @returns {Promise<{ success: boolean, notification_unread_count: number }>}
+   */
+  markAllAsClicked() {
+    return this._client._put('/server/api/notifications/click-all', {});
+  }
+
+  /**
    * 通知を削除します。
    *
    * @param {number} notificationId - 削除する通知 ID
@@ -73,3 +116,4 @@ export class NotificationsAPI {
     return this._client._delete(`/server/api/notifications/${notificationId}`);
   }
 }
+

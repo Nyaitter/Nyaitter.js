@@ -92,6 +92,19 @@ export class NyaitterAuthAPI {
   }
 
   /**
+   * 現在のアクセストークンで認可されたユーザー情報とスコープを取得します。
+   *
+   * @returns {Promise<{ success: boolean, user: object, scopes: string[], app_id: string|null }>}
+   *
+   * @example
+   * const info = await userClient.nyaitterAuth.getUserInfo();
+   * console.log(`連携ユーザー: ${info.user.name}, スコープ:`, info.scopes);
+   */
+  getUserInfo() {
+    return this._client._get('/server/api/nyaitter-auth/userinfo');
+  }
+
+  /**
    * 連携済みアプリのスコープを更新します。
    *
    * @param {string} appAuthId - 連携 ID
@@ -112,3 +125,4 @@ export class NyaitterAuthAPI {
     return this._client._delete(`/server/api/nyaitter-auth/authorized-apps/${appAuthId}`);
   }
 }
+

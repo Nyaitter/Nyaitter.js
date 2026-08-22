@@ -105,33 +105,50 @@ export class RealtimeClient {
       const token = this._client.getToken();
       const url = `${base}/server/api/realtime`;
 
-      const ws = new WebSocket(url, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
+      const WSClass = this._client._WebSocket || globalThis.WebSocket;
+      if (!WSClass) {
+        throw new Error('WebSocket 実装が見つかりません。globalThis.WebSocket または client オプションに WebSocket を渡してください。');
+      }
+
+      const wsOptions = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
+      const ws = wsOptions ? new WSClass(url, wsOptions) : new WSClass(url);
       this._ws = ws;
 
-      ws.addEventListener('open', () => {
+      const onOpen = () => {
         this._startPing();
         this._emit('open');
         resolve();
-      });
+      };
 
-      ws.addEventListener('message', (event) => {
-        this._handleMessage(event.data);
-      });
+      const onMessage = (event) => {
+        const raw = typeof event === 'string' ? event : (event?.data ?? event);
+        this._handleMessage(raw);
+      };
 
-      ws.addEventListener('close', () => {
+      const onClose = () => {
         this._stopPing();
         this._emit('close');
         if (this._shouldReconnect) {
           this._reconnectTimer = setTimeout(() => this._connect(), this._reconnectDelayMs);
         }
-      });
+      };
 
-      ws.addEventListener('error', (err) => {
+      const onError = (err) => {
         this._emit('error', err);
         reject(err);
-      });
+      };
+
+      if (typeof ws.addEventListener === 'function') {
+        ws.addEventListener('open', onOpen);
+        ws.addEventListener('message', onMessage);
+        ws.addEventListener('close', onClose);
+        ws.addEventListener('error', onError);
+      } else if (typeof ws.on === 'function') {
+        ws.on('open', onOpen);
+        ws.on('message', (data) => onMessage({ data: data.toString() }));
+        ws.on('close', onClose);
+        ws.on('error', onError);
+      }
     });
   }
 
@@ -139,10 +156,12 @@ export class RealtimeClient {
   _handleMessage(raw) {
     let data;
     try {
-      data = JSON.parse(raw);
+      data = typeof raw === 'string' ? JSON.parse(raw) : JSON.parse(raw.toString());
     } catch {
       return;
     }
+
+    this._emit('raw', data);
 
     switch (data.type) {
       case 'notification_new':
