@@ -277,6 +277,9 @@ const { group } = await client.groups.create({
 const { group: detail } = await client.groups.get('group-id');
 await client.groups.update('group-id', { description: '更新された説明文' });
 
+// グループアイコン画像 URL の取得
+const groupIconUrl = client.groups.getIconUrl(detail);
+
 // グループに参加 / 退出
 await client.groups.join('group-id');
 await client.groups.leave('group-id');

@@ -1,11 +1,53 @@
 /**
- * グループ API
- * グループの作成・取得・設定更新・メンバー管理・ロール管理・招待・参加リクエスト・グループ内投稿取得などを行います。
+ * グループオブジェクトまたはアイコンデータから、適切なグループアイコン URL を生成して返します。
+ *
+ * @param {object|string} group - グループオブジェクト（{ id, icon_data, iconData }）またはアイコン文字列
+ * @param {object} [options]
+ * @param {string} [options.baseUrl] - サーバーのベース URL（省略時は空文字列）
+ * @returns {string} グループアイコンの URL（設定されていない場合は空文字列）
+ *
+ * @example
+ * const url = getGroupIconUrl(group, { baseUrl: 'https://nyaitter.example.com' });
  */
+export function getGroupIconUrl(group, { baseUrl = '' } = {}) {
+  const base = baseUrl ? String(baseUrl).replace(/\/+$/, '') : '';
+
+  if (!group) return '';
+
+  const rawIcon =
+    typeof group === 'object' && group !== null
+      ? (group.icon_data ?? group.iconData ?? '')
+      : group;
+
+  const image = typeof rawIcon === 'string' ? rawIcon.trim() : '';
+  if (!image) return '';
+
+  if (/^data:image\//i.test(image) || /^https?:\/\//i.test(image)) {
+    return image;
+  }
+  if (image.startsWith('/')) {
+    return `${base}${image}`;
+  }
+  return base ? `${base}/${image}` : image;
+}
+
 export class GroupsAPI {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
     this._client = client;
+  }
+
+  /**
+   * グループオブジェクトまたはアイコン文字列から、適切なグループアイコン URL を返します。
+   *
+   * @param {object|string} group - グループオブジェクト（{ id, icon_data, iconData }）またはアイコン文字列
+   * @returns {string} グループアイコンの URL
+   *
+   * @example
+   * const iconUrl = client.groups.getIconUrl(group);
+   */
+  getIconUrl(group) {
+    return getGroupIconUrl(group, { baseUrl: this._client._baseUrl });
   }
 
   /**

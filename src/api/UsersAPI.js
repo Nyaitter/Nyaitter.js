@@ -1,11 +1,78 @@
 /**
- * ユーザー API
- * プロフィール取得・更新・フォロー・フォロワー一覧・いいね一覧・メディア一覧・検索などを行います。
+ * ユーザーオブジェクトまたはユーザー ID から、適切なアカウントアイコン URL を生成して返します。
+ *
+ * @param {object|number|string} user - ユーザーオブジェクト（{ id, icon_data, icon_available }）またはユーザー ID
+ * @param {object} [options]
+ * @param {string} [options.baseUrl] - サーバーのベース URL（省略時は空文字列）
+ * @returns {string} アイコンの URL
+ *
+ * @example
+ * const url = getUserIconUrl(user, { baseUrl: 'https://nyaitter.example.com' });
  */
+export function getUserIconUrl(user, { baseUrl = '' } = {}) {
+  const base = baseUrl ? String(baseUrl).replace(/\/+$/, '') : '';
+
+  if (!user && user !== 0) {
+    return base ? `${base}/emoji/neko.svg` : '/emoji/neko.svg';
+  }
+
+  // 数値または数値文字列（ID 直接指定）の場合
+  if (typeof user === 'number' || (typeof user === 'string' && /^\d+$/.test(user.trim()))) {
+    const id = typeof user === 'number' ? user : parseInt(user.trim(), 10);
+    if (Number.isSafeInteger(id) && id > 0) {
+      return `${base}/server/api/users/${encodeURIComponent(String(id))}/icon`;
+    }
+  }
+
+  if (typeof user === 'object' && user !== null) {
+    if (user.icon_available === false) {
+      return base ? `${base}/emoji/neko.svg` : '/emoji/neko.svg';
+    }
+
+    const iconData =
+      typeof user.icon_data === 'string'
+        ? user.icon_data.trim()
+        : typeof user.iconData === 'string'
+          ? user.iconData.trim()
+          : '';
+
+    if (iconData) {
+      if (/^data:image\//i.test(iconData) || /^https?:\/\//i.test(iconData)) {
+        return iconData;
+      }
+      if (iconData.startsWith('/')) {
+        return `${base}${iconData}`;
+      }
+      return `${base}/${iconData}`;
+    }
+
+    const userId = Number(user.id);
+    if (Number.isSafeInteger(userId) && userId > 0) {
+      return `${base}/server/api/users/${encodeURIComponent(String(userId))}/icon`;
+    }
+  }
+
+  return base ? `${base}/emoji/neko.svg` : '/emoji/neko.svg';
+}
+
 export class UsersAPI {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
     this._client = client;
+  }
+
+  /**
+   * ユーザーオブジェクトまたはユーザー ID から、適切なアカウントアイコン URL を返します。
+   *
+   * @param {object|number|string} user - ユーザーオブジェクト（{ id, icon_data, icon_available }）またはユーザー ID
+   * @returns {string} アイコンの URL
+   *
+   * @example
+   * const iconUrl = client.users.getIconUrl(user);
+   * const myIconUrl = client.users.getIconUrl(12);
+   */
+  getIconUrl(user) {
+    return getUserIconUrl(user, { baseUrl: this._client._baseUrl });
   }
 
   /**

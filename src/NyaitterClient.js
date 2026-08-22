@@ -91,6 +91,32 @@ export class NyaitterClient {
   }
 
   /**
+   * ユーザーオブジェクトまたはユーザー ID から、適切なアカウントアイコン URL を返します。
+   *
+   * @param {object|number|string} user - ユーザーオブジェクト（{ id, icon_data, icon_available }）またはユーザー ID
+   * @returns {string} アイコンの URL
+   *
+   * @example
+   * const iconUrl = client.getUserIconUrl(user);
+   */
+  getUserIconUrl(user) {
+    return this.users.getIconUrl(user);
+  }
+
+  /**
+   * グループオブジェクトまたはアイコン文字列から、適切なグループアイコン URL を返します。
+   *
+   * @param {object|string} group - グループオブジェクト（{ id, icon_data, iconData }）またはアイコン文字列
+   * @returns {string} グループアイコンの URL
+   *
+   * @example
+   * const iconUrl = client.getGroupIconUrl(group);
+   */
+  getGroupIconUrl(group) {
+    return this.groups.getIconUrl(group);
+  }
+
+  /**
    * リアルタイムイベントを受信するためのクライアントを作成します。
    *
    * @param {object} [options]
