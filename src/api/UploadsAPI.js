@@ -74,7 +74,7 @@ export class UploadsAPI {
       throw new Error('サポートされていないファイル形式です。Base64 文字列、Buffer、Uint8Array、または Blob を指定してください。');
     }
 
-    return this._client._post('/server/api/uploads', {
+    return this._client._post('/uploads', {
       file: base64String,
       fileName,
       contentType,
@@ -92,7 +92,7 @@ export class UploadsAPI {
    * console.log(`ストレージ使用量: ${storage.used_percent.toFixed(1)}% (${storage.used_bytes} / ${storage.limit_bytes} bytes)`);
    */
   getStorage() {
-    return this._client._get('/server/api/uploads/storage');
+    return this._client._get('/uploads/storage');
   }
 
   /**
@@ -106,7 +106,7 @@ export class UploadsAPI {
   delete(params) {
     const fileIds = Array.isArray(params) ? params : params?.fileIds;
     const asUserId = Array.isArray(params) ? undefined : params?.asUserId;
-    return this._client._delete('/server/api/uploads', {
+    return this._client._delete('/uploads', {
       fileIds,
       as_user_id: asUserId,
     });
@@ -120,6 +120,6 @@ export class UploadsAPI {
    */
   getPreviewUrl(fileId) {
     const cleanId = String(fileId || '').trim();
-    return `${this._client._baseUrl}/server/api/uploads/preview?file_id=${encodeURIComponent(cleanId)}`;
+    return `${this._client._baseUrl}/uploads/preview?file_id=${encodeURIComponent(cleanId)}`;
   }
 }

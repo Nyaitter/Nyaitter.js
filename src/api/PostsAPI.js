@@ -22,7 +22,7 @@ export class PostsAPI {
    * const { posts } = await client.posts.getTimeline({ tab: 'following' });
    */
   getTimeline({ tab = 'foryou', limit = 20, offset = 0, beforeId } = {}) {
-    return this._client._get('/server/api/posts/page', {
+    return this._client._get('/posts/page', {
       mode: 'timeline',
       tab,
       limit,
@@ -41,7 +41,7 @@ export class PostsAPI {
    * @returns {Promise<{ posts: object[], has_next?: boolean, next_cursor?: any }>}
    */
   getRecommended({ limit = 20, offset = 0, beforeId } = {}) {
-    return this._client._get('/server/api/posts/recommended', {
+    return this._client._get('/posts/recommended', {
       limit,
       offset,
       before_id: beforeId,
@@ -56,7 +56,7 @@ export class PostsAPI {
    * @returns {Promise<{ posts: object[] }>}
    */
   getTrending({ limit = 20 } = {}) {
-    return this._client._get('/server/api/posts/trending', { limit });
+    return this._client._get('/posts/trending', { limit });
   }
 
   /**
@@ -67,7 +67,7 @@ export class PostsAPI {
    * @returns {Promise<{ trends: Array<{ tag: string, count: number }> }>}
    */
   getTrendingHashtags({ limit = 10 } = {}) {
-    return this._client._get('/server/api/posts/trending-hashtags', { limit });
+    return this._client._get('/posts/trending-hashtags', { limit });
   }
 
   /**
@@ -84,7 +84,7 @@ export class PostsAPI {
    * const { posts } = await client.posts.search({ query: 'ねこ' });
    */
   search({ query, limit = 20, offset = 0, beforeId } = {}) {
-    return this._client._get('/server/api/posts/search', {
+    return this._client._get('/posts/search', {
       q: query,
       limit,
       offset,
@@ -120,7 +120,7 @@ export class PostsAPI {
     offset = 0,
     beforeId,
   } = {}) {
-    return this._client._get('/server/api/posts/page', {
+    return this._client._get('/posts/page', {
       mode,
       tab,
       q: query,
@@ -144,7 +144,7 @@ export class PostsAPI {
    * @returns {Promise<{ ids: number[], has_more: boolean }>}
    */
   getIds({ tab = 'foryou', limit = 30, offset = 0 } = {}) {
-    return this._client._get('/server/api/posts/ids', { tab, limit, offset });
+    return this._client._get('/posts/ids', { tab, limit, offset });
   }
 
   /**
@@ -157,7 +157,7 @@ export class PostsAPI {
    * const { post } = await client.posts.get(123);
    */
   get(postId) {
-    return this._client._get(`/server/api/posts/${postId}`);
+    return this._client._get(`/posts/${postId}`);
   }
 
   /**
@@ -170,7 +170,7 @@ export class PostsAPI {
    * @returns {Promise<{ replies: object[], has_more: boolean, offset: number, limit: number }>}
    */
   getReplies(postId, { limit = 20, offset = 0 } = {}) {
-    return this._client._get(`/server/api/posts/${postId}/replies`, { limit, offset });
+    return this._client._get(`/posts/${postId}/replies`, { limit, offset });
   }
 
   /**
@@ -183,7 +183,7 @@ export class PostsAPI {
    * @returns {Promise<{ post: object, replies: object[], has_more: boolean, offset: number, limit: number }>}
    */
   getThread(postId, { limit = 50, offset = 0 } = {}) {
-    return this._client._get(`/server/api/posts/${postId}/thread`, { limit, offset });
+    return this._client._get(`/posts/${postId}/thread`, { limit, offset });
   }
 
   /**
@@ -227,7 +227,7 @@ export class PostsAPI {
     groupAnnouncement = false,
     postAsUserId,
   } = {}) {
-    return this._client._post('/server/api/posts', {
+    return this._client._post('/posts', {
       content,
       reply_to: replyToId,
       repost_to: quoteId,
@@ -253,7 +253,7 @@ export class PostsAPI {
    * @returns {Promise<{ success: boolean, post: object }>}
    */
   update(postId, { content, attachments, mask, lock } = {}) {
-    return this._client._put(`/server/api/posts/${postId}`, {
+    return this._client._put(`/posts/${postId}`, {
       content,
       attachments,
       mask,
@@ -275,7 +275,7 @@ export class PostsAPI {
    * @returns {Promise<{ success: boolean, queued: boolean, action_id?: string }>}
    */
   delete(postId) {
-    return this._client._delete(`/server/api/posts/${postId}`);
+    return this._client._delete(`/posts/${postId}`);
   }
 
   /**
@@ -289,7 +289,7 @@ export class PostsAPI {
    * console.log('いいね状態:', res.liked);
    */
   like(postId) {
-    return this._client._post(`/server/api/posts/${postId}/like`, {});
+    return this._client._post(`/posts/${postId}/like`, {});
   }
 
   /**
@@ -310,7 +310,7 @@ export class PostsAPI {
    * @returns {Promise<{ success: boolean, starred: boolean, count: number, updated_stars: number[] }>}
    */
   star(postId) {
-    return this._client._post(`/server/api/posts/${postId}/star`, {});
+    return this._client._post(`/posts/${postId}/star`, {});
   }
 
   /**
@@ -333,7 +333,7 @@ export class PostsAPI {
    * await client.posts.repost(123);
    */
   repost(postId) {
-    return this._client._post(`/server/api/posts/${postId}/repost`, {});
+    return this._client._post(`/posts/${postId}/repost`, {});
   }
 
   /**
@@ -355,7 +355,7 @@ export class PostsAPI {
    * @returns {Promise<{ reposts: object[] }>}
    */
   getReposts(postId, { limit = 50 } = {}) {
-    return this._client._get(`/server/api/posts/${postId}/reposts`, { limit });
+    return this._client._get(`/posts/${postId}/reposts`, { limit });
   }
 
   /**
@@ -365,7 +365,7 @@ export class PostsAPI {
    * @returns {Promise<{ success: boolean, pinned: boolean, pin_id: number|null }>}
    */
   pin(postId) {
-    return this._client._post(`/server/api/posts/${postId}/pin`, {});
+    return this._client._post(`/posts/${postId}/pin`, {});
   }
 
   /**
@@ -375,7 +375,7 @@ export class PostsAPI {
    * @returns {Promise<{ posts: object[] }>}
    */
   hydrate(postIds) {
-    return this._client._post('/server/api/posts/hydrate', { post_ids: postIds });
+    return this._client._post('/posts/hydrate', { post_ids: postIds });
   }
 
   /**
@@ -385,7 +385,7 @@ export class PostsAPI {
    * @returns {Promise<{ metrics: Array<{ post_id: number, like_count: number, star_count: number, reply_count: number, repost_count: number }> }>}
    */
   getMetrics(postIds) {
-    return this._client._post('/server/api/posts/metrics', { post_ids: postIds });
+    return this._client._post('/posts/metrics', { post_ids: postIds });
   }
 }
 

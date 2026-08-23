@@ -138,7 +138,7 @@ export class NyaitterClient {
    * API リクエストを送信する内部メソッド。
    *
    * @param {string} method - HTTP メソッド（'GET', 'POST', 'PUT', 'PATCH', 'DELETE'）
-   * @param {string} path - エンドポイントのパス（例: '/server/api/posts'）
+   * @param {string} path - エンドポイントのパス（例: '/posts'）
    * @param {object} [options]
    * @param {any} [options.body] - 送信する JSON ボディ
    * @param {object} [options.query] - URL クエリパラメータ

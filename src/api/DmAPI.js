@@ -21,7 +21,7 @@ export class DmAPI {
    * console.log(`未読 DM: ${unread_total} 件`);
    */
   list({ limit = 20, offset = 0 } = {}) {
-    return this._client._get('/server/api/dm', { limit, offset });
+    return this._client._get('/dm', { limit, offset });
   }
 
   /**
@@ -30,7 +30,7 @@ export class DmAPI {
    * @returns {Promise<{ unread_count: number }>}
    */
   getUnreadCount() {
-    return this._client._get('/server/api/dm/unread');
+    return this._client._get('/dm/unread');
   }
 
   /**
@@ -39,7 +39,7 @@ export class DmAPI {
    * @returns {Promise<{ unread_total: number, unread_by_dm: Record<string, number> }>}
    */
   getUnreadCounts() {
-    return this._client._get('/server/api/dm/unread-counts');
+    return this._client._get('/dm/unread-counts');
   }
 
   /**
@@ -50,7 +50,7 @@ export class DmAPI {
    */
   find(params) {
     const userId = typeof params === 'object' && params !== null ? params.userId : params;
-    return this._client._get('/server/api/dm/find', { user_id: userId });
+    return this._client._get('/dm/find', { user_id: userId });
   }
 
   /**
@@ -66,7 +66,7 @@ export class DmAPI {
    * const dm = await client.dm.get('dm-group-id');
    */
   get(dmId, { limit = 50, offset = 0 } = {}) {
-    return this._client._get(`/server/api/dm/${dmId}`, { limit, offset });
+    return this._client._get(`/dm/${dmId}`, { limit, offset });
   }
 
   /**
@@ -82,7 +82,7 @@ export class DmAPI {
    * const { dm } = await client.dm.create({ members: [12, 34], title: '企画グループ' });
    */
   create({ members, title, name } = {}) {
-    return this._client._post('/server/api/dm', {
+    return this._client._post('/dm', {
       member: members,
       title: title !== undefined ? title : name,
     });
@@ -102,7 +102,7 @@ export class DmAPI {
    * await client.dm.send('dm-group-id', { content: 'こんにちは！' });
    */
   send(dmId, { content = '', attachments, e2e } = {}) {
-    return this._client._post(`/server/api/dm/${dmId}/messages`, {
+    return this._client._post(`/dm/${dmId}/messages`, {
       message: {
         content,
         attachments,
@@ -123,7 +123,7 @@ export class DmAPI {
    * @returns {Promise<{ dm: object }>}
    */
   update(dmId, { title, members, hostId, post } = {}) {
-    return this._client._put(`/server/api/dm/${dmId}`, {
+    return this._client._put(`/dm/${dmId}`, {
       title,
       member: members,
       host_id: hostId,
@@ -171,7 +171,7 @@ export class DmAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   delete(dmId) {
-    return this._client._delete(`/server/api/dm/${dmId}`);
+    return this._client._delete(`/dm/${dmId}`);
   }
 
   /**
@@ -181,7 +181,7 @@ export class DmAPI {
    * @returns {Promise<{ success: boolean, dm: object }>}
    */
   accept(dmId) {
-    return this._client._post(`/server/api/dm/${dmId}/accept`, {});
+    return this._client._post(`/dm/${dmId}/accept`, {});
   }
 
   /**
@@ -191,7 +191,7 @@ export class DmAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   decline(dmId) {
-    return this._client._post(`/server/api/dm/${dmId}/decline`, {});
+    return this._client._post(`/dm/${dmId}/decline`, {});
   }
 
   /**
@@ -201,7 +201,7 @@ export class DmAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   leave(dmId) {
-    return this._client._post(`/server/api/dm/${dmId}/leave`, {});
+    return this._client._post(`/dm/${dmId}/leave`, {});
   }
 
   /**
@@ -211,7 +211,7 @@ export class DmAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   markAsRead(dmId) {
-    return this._client._post(`/server/api/dm/${dmId}/read`, {});
+    return this._client._post(`/dm/${dmId}/read`, {});
   }
 
   /**
@@ -222,7 +222,7 @@ export class DmAPI {
    */
   getKeys(userIds) {
     const ids = Array.isArray(userIds) ? userIds.join(',') : userIds;
-    return this._client._get('/server/api/dm/keys', { user_ids: ids });
+    return this._client._get('/dm/keys', { user_ids: ids });
   }
 
   /**
@@ -232,7 +232,7 @@ export class DmAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   setKeys(publicKey) {
-    return this._client._post('/server/api/dm/keys', { public_key: publicKey });
+    return this._client._post('/dm/keys', { public_key: publicKey });
   }
 }
 

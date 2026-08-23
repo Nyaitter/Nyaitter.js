@@ -25,7 +25,7 @@ export class ReportsAPI {
    * });
    */
   create({ targetKind, targetId, description } = {}) {
-    return this._client._post('/server/api/reports', {
+    return this._client._post('/reports', {
       target_kind: targetKind,
       target_id: targetId,
       description,

@@ -103,7 +103,7 @@ export class RealtimeClient {
     return new Promise((resolve, reject) => {
       const base = this._client._baseUrl.replace(/^http/, 'ws');
       const token = this._client.getToken();
-      const url = `${base}/server/api/realtime`;
+      const url = `${base}/realtime`;
 
       const WSClass = this._client._WebSocket || globalThis.WebSocket;
       if (!WSClass) {
@@ -201,7 +201,7 @@ export class RealtimeClient {
   /** @internal */
   _startPing() {
     this._pingInterval = setInterval(() => {
-      if (this._ws?.readyState === WebSocket.OPEN) {
+      if (this._ws?.readyState === 1) {
         this._ws.send(JSON.stringify({ type: 'ping' }));
       }
     }, 25000);
@@ -230,6 +230,6 @@ export class RealtimeClient {
    * @returns {boolean}
    */
   get connected() {
-    return this._ws?.readyState === WebSocket.OPEN;
+    return this._ws?.readyState === 1;
   }
 }

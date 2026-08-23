@@ -18,7 +18,7 @@ export class RankingAPI {
    * console.log('フォロワー順位:', myRanks.followers.rank);
    */
   getMe() {
-    return this._client._get('/server/api/ranking/me');
+    return this._client._get('/ranking/me');
   }
 
   /**
@@ -34,7 +34,7 @@ export class RankingAPI {
    * data.forEach((entry) => console.log(`${entry.rank}位: ${entry.name}`));
    */
   get(type, { limit = 50 } = {}) {
-    return this._client._get(`/server/api/ranking/${type}`, { limit });
+    return this._client._get(`/ranking/${type}`, { limit });
   }
 
   /**

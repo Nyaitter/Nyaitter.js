@@ -20,7 +20,7 @@ export function getUserIconUrl(user, { baseUrl = '' } = {}) {
   if (typeof user === 'number' || (typeof user === 'string' && /^\d+$/.test(user.trim()))) {
     const id = typeof user === 'number' ? user : parseInt(user.trim(), 10);
     if (Number.isSafeInteger(id) && id > 0) {
-      return `${base}/server/api/users/${encodeURIComponent(String(id))}/icon`;
+      return `${base}/users/${encodeURIComponent(String(id))}/icon`;
     }
   }
 
@@ -48,7 +48,7 @@ export function getUserIconUrl(user, { baseUrl = '' } = {}) {
 
     const userId = Number(user.id);
     if (Number.isSafeInteger(userId) && userId > 0) {
-      return `${base}/server/api/users/${encodeURIComponent(String(userId))}/icon`;
+      return `${base}/users/${encodeURIComponent(String(userId))}/icon`;
     }
   }
 
@@ -86,7 +86,7 @@ export class UsersAPI {
    * console.log(user.name);
    */
   get(userId) {
-    return this._client._get(`/server/api/users/${userId}`);
+    return this._client._get(`/users/${userId}`);
   }
 
   /**
@@ -99,7 +99,7 @@ export class UsersAPI {
    * console.log(`ログイン中: ${user.name}`);
    */
   getMe() {
-    return this._client._get('/server/api/auth/me');
+    return this._client._get('/auth/me');
   }
 
   /**
@@ -153,7 +153,7 @@ export class UsersAPI {
    * const { users } = await client.users.search({ query: 'nyanko' });
    */
   search({ query, limit = 20, offset = 0 } = {}) {
-    return this._client._get('/server/api/users/search', { q: query, limit, offset });
+    return this._client._get('/users/search', { q: query, limit, offset });
   }
 
   /**
@@ -165,7 +165,7 @@ export class UsersAPI {
    * @returns {Promise<{ users: object[] }>}
    */
   getRecommended({ limit = 20, offset = 0 } = {}) {
-    return this._client._get('/server/api/users/recommended', { limit, offset });
+    return this._client._get('/users/recommended', { limit, offset });
   }
 
   /**
@@ -176,7 +176,7 @@ export class UsersAPI {
    */
   getBatch(userIds) {
     const ids = Array.isArray(userIds) ? userIds.join(',') : userIds;
-    return this._client._get('/server/api/users', { ids });
+    return this._client._get('/users', { ids });
   }
 
   /**
@@ -193,7 +193,7 @@ export class UsersAPI {
    * @returns {Promise<{ post_count: number, media_count: number, follower_count: number, following_count: number }>}
    */
   getCounts(userId) {
-    return this._client._get(`/server/api/users/${userId}/counts`);
+    return this._client._get(`/users/${userId}/counts`);
   }
 
   /**
@@ -206,7 +206,7 @@ export class UsersAPI {
    * @returns {Promise<{ media_items: object[] }>}
    */
   getMedia(userId, { limit = 15, offset = 0 } = {}) {
-    return this._client._get(`/server/api/users/${userId}/media`, { limit, offset });
+    return this._client._get(`/users/${userId}/media`, { limit, offset });
   }
 
   /**
@@ -216,7 +216,7 @@ export class UsersAPI {
    * @returns {Promise<{ lock: boolean }>}
    */
   isLocked(userId) {
-    return this._client._get(`/server/api/users/${userId}/is-lock`);
+    return this._client._get(`/users/${userId}/is-lock`);
   }
 
   /**
@@ -233,7 +233,7 @@ export class UsersAPI {
    * const { posts } = await client.users.getPosts(12, { mode: 'posts' });
    */
   getPosts(userId, { limit = 20, offset = 0, mode = 'all' } = {}) {
-    return this._client._get(`/server/api/users/${userId}/posts`, { limit, offset, mode });
+    return this._client._get(`/users/${userId}/posts`, { limit, offset, mode });
   }
 
   /**
@@ -246,7 +246,7 @@ export class UsersAPI {
    * @returns {Promise<{ posts: object[], has_more: boolean }>}
    */
   getLikes(userId, { limit = 30, offset = 0 } = {}) {
-    return this._client._get(`/server/api/users/${userId}/likes`, { limit, offset });
+    return this._client._get(`/users/${userId}/likes`, { limit, offset });
   }
 
   /**
@@ -259,7 +259,7 @@ export class UsersAPI {
    * @returns {Promise<{ posts: object[], has_more: boolean }>}
    */
   getStars(userId, { limit = 30, offset = 0 } = {}) {
-    return this._client._get(`/server/api/users/${userId}/stars`, { limit, offset });
+    return this._client._get(`/users/${userId}/stars`, { limit, offset });
   }
 
   /**
@@ -272,7 +272,7 @@ export class UsersAPI {
    * @returns {Promise<{ followers: object[], has_more: boolean }>}
    */
   getFollowers(userId, { limit = 20, offset = 0 } = {}) {
-    return this._client._get(`/server/api/users/${userId}/followers`, { limit, offset });
+    return this._client._get(`/users/${userId}/followers`, { limit, offset });
   }
 
   /**
@@ -285,7 +285,7 @@ export class UsersAPI {
    * @returns {Promise<{ following: object[], has_more: boolean }>}
    */
   getFollowing(userId, { limit = 20, offset = 0 } = {}) {
-    return this._client._get(`/server/api/users/${userId}/following`, { limit, offset });
+    return this._client._get(`/users/${userId}/following`, { limit, offset });
   }
 
   /**
@@ -295,7 +295,7 @@ export class UsersAPI {
    * @returns {Promise<{ pin_id: number|null }>}
    */
   getPinnedPost(userId) {
-    return this._client._get(`/server/api/users/${userId}/pin`);
+    return this._client._get(`/users/${userId}/pin`);
   }
 
   /**
@@ -305,7 +305,7 @@ export class UsersAPI {
    * @returns {string} アイコン画像の URL
    */
   getIconUrl(userId) {
-    return `${this._client._baseUrl}/server/api/users/${userId}/icon`;
+    return `${this._client._baseUrl}/users/${userId}/icon`;
   }
 
   /**
@@ -319,7 +319,7 @@ export class UsersAPI {
    * console.log('フォロー中:', res.following);
    */
   follow(userId) {
-    return this._client._post(`/server/api/users/${userId}/follow`, {});
+    return this._client._post(`/users/${userId}/follow`, {});
   }
 
   /**
@@ -350,7 +350,7 @@ export class UsersAPI {
    * await client.users.updateProfile({ name: '新しい名前', me: '自己紹介です' });
    */
   updateProfile({ name, me, bio, headerImage, iconData, settings, block } = {}) {
-    return this._client._put('/server/api/users/me', {
+    return this._client._put('/users/me', {
       name,
       me: me !== undefined ? me : bio,
       bio: bio !== undefined ? bio : me,
@@ -399,7 +399,7 @@ export class UsersAPI {
    * @returns {Promise<{ logs: object[] }>}
    */
   getLogs({ limit = 50, offset = 0 } = {}) {
-    return this._client._get('/server/api/users/logs', { limit, offset });
+    return this._client._get('/users/logs', { limit, offset });
   }
 }
 

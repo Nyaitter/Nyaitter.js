@@ -18,7 +18,7 @@ export class SystemAPI {
    * console.log('サーバー状態:', status.server, status.database);
    */
   getStatus() {
-    return this._client._get('/server/api/status');
+    return this._client._get('/status');
   }
 
   /**
@@ -31,7 +31,7 @@ export class SystemAPI {
    * console.log(rules);
    */
   getRules() {
-    return this._client._get('/server/api/rules');
+    return this._client._get('/rules');
   }
 
   /**
@@ -45,7 +45,7 @@ export class SystemAPI {
    * console.log('タイトル:', card.title);
    */
   getUrlCard(url) {
-    return this._client._get('/server/api/url-cards', { url });
+    return this._client._get('/url-cards', { url });
   }
 
   /**
@@ -55,7 +55,7 @@ export class SystemAPI {
    * @returns {Promise<object>} oEmbed JSON レスポンス
    */
   getOembed(url) {
-    return this._client._get('/server/api/oembed', { url });
+    return this._client._get('/oembed', { url });
   }
 
   /**
@@ -68,6 +68,6 @@ export class SystemAPI {
    * console.log(`通知未読: ${summary.notification_unread_count}, DM未読: ${summary.dm_unread_count}`);
    */
   getUiSummary() {
-    return this._client._get('/server/api/ui/summary');
+    return this._client._get('/ui/summary');
   }
 }

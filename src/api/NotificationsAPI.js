@@ -22,7 +22,7 @@ export class NotificationsAPI {
    * console.log(`未読: ${notification_unread_count} 件`);
    */
   list({ limit = 50, offset = 0, since } = {}) {
-    return this._client._get('/server/api/notifications', {
+    return this._client._get('/notifications', {
       limit,
       offset,
       since: since instanceof Date ? since.toISOString() : since,
@@ -38,7 +38,7 @@ export class NotificationsAPI {
    * const { unread_count } = await client.notifications.getUnreadCount();
    */
   getUnreadCount() {
-    return this._client._get('/server/api/notifications/unread');
+    return this._client._get('/notifications/unread');
   }
 
   /**
@@ -58,7 +58,7 @@ export class NotificationsAPI {
    * });
    */
   create({ recipientId, type, target } = {}) {
-    return this._client._post('/server/api/notifications', {
+    return this._client._post('/notifications', {
       recipient_id: recipientId,
       type,
       target,
@@ -72,7 +72,7 @@ export class NotificationsAPI {
    * @returns {Promise<{ success: boolean, notification_unread_count: number }>}
    */
   markAsRead(notificationId) {
-    return this._client._put(`/server/api/notifications/${notificationId}/read`, {});
+    return this._client._put(`/notifications/${notificationId}/read`, {});
   }
 
   /**
@@ -82,7 +82,7 @@ export class NotificationsAPI {
    * @returns {Promise<{ success: boolean, read: boolean, clicked: boolean }>}
    */
   markAsClicked(notificationId) {
-    return this._client._put(`/server/api/notifications/${notificationId}/clicked`, {});
+    return this._client._put(`/notifications/${notificationId}/clicked`, {});
   }
 
   /**
@@ -94,7 +94,7 @@ export class NotificationsAPI {
    * await client.notifications.markAllAsRead();
    */
   markAllAsRead() {
-    return this._client._put('/server/api/notifications/read-all', {});
+    return this._client._put('/notifications/read-all', {});
   }
 
   /**
@@ -103,7 +103,7 @@ export class NotificationsAPI {
    * @returns {Promise<{ success: boolean, notification_unread_count: number }>}
    */
   markAllAsClicked() {
-    return this._client._put('/server/api/notifications/click-all', {});
+    return this._client._put('/notifications/click-all', {});
   }
 
   /**
@@ -113,7 +113,7 @@ export class NotificationsAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   delete(notificationId) {
-    return this._client._delete(`/server/api/notifications/${notificationId}`);
+    return this._client._delete(`/notifications/${notificationId}`);
   }
 }
 

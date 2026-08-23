@@ -63,7 +63,7 @@ export class GroupsAPI {
    * const { groups } = await client.groups.list({ query: 'プログラミング' });
    */
   list({ query, limit = 20, offset = 0 } = {}) {
-    return this._client._get('/server/api/groups', { q: query, limit, offset });
+    return this._client._get('/groups', { q: query, limit, offset });
   }
 
   /**
@@ -76,7 +76,7 @@ export class GroupsAPI {
    * @returns {Promise<{ groups: object[], home_tab_limit: number }>}
    */
   listMine({ postAsUserId, limit = 100, offset = 0 } = {}) {
-    return this._client._get('/server/api/groups/mine', {
+    return this._client._get('/groups/mine', {
       post_as_user_id: postAsUserId,
       limit,
       offset,
@@ -89,7 +89,7 @@ export class GroupsAPI {
    * @returns {Promise<{ invites: Array<{ id: string, group_id: string, inviter_id: number, invitee_id: number, status: string, group: object|null }> }>}
    */
   getInvitesMine() {
-    return this._client._get('/server/api/groups/invites/mine');
+    return this._client._get('/groups/invites/mine');
   }
 
   /**
@@ -100,7 +100,7 @@ export class GroupsAPI {
    * @returns {Promise<{ success: boolean, group?: object }>}
    */
   respondInvite(inviteId, decision) {
-    return this._client._post(`/server/api/groups/invites/${inviteId}/respond`, { decision });
+    return this._client._post(`/groups/invites/${inviteId}/respond`, { decision });
   }
 
   /**
@@ -113,7 +113,7 @@ export class GroupsAPI {
    * const { group } = await client.groups.get('group-uuid');
    */
   get(groupId) {
-    return this._client._get(`/server/api/groups/${groupId}`);
+    return this._client._get(`/groups/${groupId}`);
   }
 
   /**
@@ -135,7 +135,7 @@ export class GroupsAPI {
    * });
    */
   create({ name, description = '', visibility = 'open', iconData, headerImage } = {}) {
-    return this._client._post('/server/api/groups', {
+    return this._client._post('/groups', {
       name,
       description,
       visibility,
@@ -157,7 +157,7 @@ export class GroupsAPI {
    * @returns {Promise<{ group: object }>}
    */
   update(groupId, { name, description, visibility, iconData, headerImage } = {}) {
-    return this._client._patch(`/server/api/groups/${groupId}`, {
+    return this._client._patch(`/groups/${groupId}`, {
       name,
       description,
       visibility,
@@ -174,7 +174,7 @@ export class GroupsAPI {
    * @returns {Promise<{ group: object }>}
    */
   transferOwner(groupId, userId) {
-    return this._client._post(`/server/api/groups/${groupId}/transfer-owner`, {
+    return this._client._post(`/groups/${groupId}/transfer-owner`, {
       user_id: userId,
     });
   }
@@ -186,7 +186,7 @@ export class GroupsAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   delete(groupId) {
-    return this._client._delete(`/server/api/groups/${groupId}`);
+    return this._client._delete(`/groups/${groupId}`);
   }
 
   /**
@@ -196,7 +196,7 @@ export class GroupsAPI {
    * @returns {Promise<{ success: boolean, status: 'joined'|'requested', group?: object, request?: object }>}
    */
   join(groupId) {
-    return this._client._post(`/server/api/groups/${groupId}/join`, {});
+    return this._client._post(`/groups/${groupId}/join`, {});
   }
 
   /**
@@ -206,7 +206,7 @@ export class GroupsAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   leave(groupId) {
-    return this._client._post(`/server/api/groups/${groupId}/leave`, {});
+    return this._client._post(`/groups/${groupId}/leave`, {});
   }
 
   /**
@@ -217,7 +217,7 @@ export class GroupsAPI {
    * @returns {Promise<{ success: boolean, invite: object }>}
    */
   invite(groupId, userId) {
-    return this._client._post(`/server/api/groups/${groupId}/invites`, {
+    return this._client._post(`/groups/${groupId}/invites`, {
       user_id: userId,
     });
   }
@@ -229,7 +229,7 @@ export class GroupsAPI {
    * @returns {Promise<{ requests: object[] }>}
    */
   getJoinRequests(groupId) {
-    return this._client._get(`/server/api/groups/${groupId}/join-requests`);
+    return this._client._get(`/groups/${groupId}/join-requests`);
   }
 
   /**
@@ -241,7 +241,7 @@ export class GroupsAPI {
    * @returns {Promise<{ success: boolean, request: object }>}
    */
   respondJoinRequest(groupId, requestId, decision) {
-    return this._client._post(`/server/api/groups/${groupId}/join-requests/${requestId}/respond`, {
+    return this._client._post(`/groups/${groupId}/join-requests/${requestId}/respond`, {
       decision,
     });
   }
@@ -253,7 +253,7 @@ export class GroupsAPI {
    * @returns {Promise<{ roles: object[] }>}
    */
   getRoles(groupId) {
-    return this._client._get(`/server/api/groups/${groupId}/roles`);
+    return this._client._get(`/groups/${groupId}/roles`);
   }
 
   /**
@@ -267,7 +267,7 @@ export class GroupsAPI {
    * @returns {Promise<{ role: object }>}
    */
   createRole(groupId, { name, permissions, sortOrder = 0 } = {}) {
-    return this._client._post(`/server/api/groups/${groupId}/roles`, {
+    return this._client._post(`/groups/${groupId}/roles`, {
       name,
       permissions,
       sort_order: sortOrder,
@@ -286,7 +286,7 @@ export class GroupsAPI {
    * @returns {Promise<{ role: object }>}
    */
   updateRole(groupId, roleId, { name, permissions, sortOrder } = {}) {
-    return this._client._patch(`/server/api/groups/${groupId}/roles/${roleId}`, {
+    return this._client._patch(`/groups/${groupId}/roles/${roleId}`, {
       name,
       permissions,
       sort_order: sortOrder,
@@ -301,7 +301,7 @@ export class GroupsAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   deleteRole(groupId, roleId) {
-    return this._client._delete(`/server/api/groups/${groupId}/roles/${roleId}`);
+    return this._client._delete(`/groups/${groupId}/roles/${roleId}`);
   }
 
   /**
@@ -315,7 +315,7 @@ export class GroupsAPI {
    * @returns {Promise<{ members: object[] }>}
    */
   getMembers(groupId, { status = 'active', limit = 50, offset = 0 } = {}) {
-    return this._client._get(`/server/api/groups/${groupId}/members`, {
+    return this._client._get(`/groups/${groupId}/members`, {
       status,
       limit,
       offset,
@@ -331,7 +331,7 @@ export class GroupsAPI {
    * @returns {Promise<{ member: object }>}
    */
   updateMember(groupId, userId, roleId) {
-    return this._client._patch(`/server/api/groups/${groupId}/members/${userId}`, {
+    return this._client._patch(`/groups/${groupId}/members/${userId}`, {
       role_id: roleId,
     });
   }
@@ -344,7 +344,7 @@ export class GroupsAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   banMember(groupId, userId) {
-    return this._client._post(`/server/api/groups/${groupId}/members/${userId}/ban`, {});
+    return this._client._post(`/groups/${groupId}/members/${userId}/ban`, {});
   }
 
   /**
@@ -355,7 +355,7 @@ export class GroupsAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   unbanMember(groupId, userId) {
-    return this._client._post(`/server/api/groups/${groupId}/members/${userId}/unban`, {});
+    return this._client._post(`/groups/${groupId}/members/${userId}/unban`, {});
   }
 
   /**
@@ -369,7 +369,7 @@ export class GroupsAPI {
    * @returns {Promise<{ posts: object[], has_next: boolean, next_cursor: any }>}
    */
   getPosts(groupId, { limit = 30, offset = 0, beforeId } = {}) {
-    return this._client._get(`/server/api/groups/${groupId}/posts`, {
+    return this._client._get(`/groups/${groupId}/posts`, {
       limit,
       offset,
       before_id: beforeId,

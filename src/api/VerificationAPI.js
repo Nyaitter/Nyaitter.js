@@ -20,7 +20,7 @@ export class VerificationAPI {
    * }
    */
   getStatus() {
-    return this._client._get('/server/api/verification-applications/me');
+    return this._client._get('/verification-applications/me');
   }
 
   /**
@@ -32,6 +32,6 @@ export class VerificationAPI {
    * await client.verification.apply();
    */
   apply() {
-    return this._client._post('/server/api/verification-applications', {});
+    return this._client._post('/verification-applications', {});
   }
 }

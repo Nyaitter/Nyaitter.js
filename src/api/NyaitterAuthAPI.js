@@ -39,7 +39,7 @@ export class NyaitterAuthAPI {
    * // ユーザーを auth_url へ案内する
    */
   initiate({ appId, redirectUri, scopes, name, iconUrl, state } = {}) {
-    return this._client._post('/server/api/nyaitter-auth/initiate', {
+    return this._client._post('/nyaitter-auth/initiate', {
       app_id: appId,
       api_token: this._client.getToken(),
       redirect_uri: redirectUri,
@@ -75,7 +75,7 @@ export class NyaitterAuthAPI {
    * await userClient.posts.create({ content: 'ユーザーとして投稿！' });
    */
   exchangeToken({ appId, code } = {}) {
-    return this._client._post('/server/api/nyaitter-auth/token', {
+    return this._client._post('/nyaitter-auth/token', {
       app_id: appId,
       api_token: this._client.getToken(),
       code,
@@ -88,7 +88,7 @@ export class NyaitterAuthAPI {
    * @returns {Promise<{ apps: object[] }>}
    */
   getAuthorizedApps() {
-    return this._client._get('/server/api/nyaitter-auth/authorized-apps');
+    return this._client._get('/nyaitter-auth/authorized-apps');
   }
 
   /**
@@ -101,7 +101,7 @@ export class NyaitterAuthAPI {
    * console.log(`連携ユーザー: ${info.user.name}, スコープ:`, info.scopes);
    */
   getUserInfo() {
-    return this._client._get('/server/api/nyaitter-auth/userinfo');
+    return this._client._get('/nyaitter-auth/userinfo');
   }
 
   /**
@@ -112,7 +112,7 @@ export class NyaitterAuthAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   updateAuthorizedApp(appAuthId, scopes) {
-    return this._client._patch(`/server/api/nyaitter-auth/authorized-apps/${appAuthId}`, { scopes });
+    return this._client._patch(`/nyaitter-auth/authorized-apps/${appAuthId}`, { scopes });
   }
 
   /**
@@ -122,7 +122,7 @@ export class NyaitterAuthAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   revokeAuthorizedApp(appAuthId) {
-    return this._client._delete(`/server/api/nyaitter-auth/authorized-apps/${appAuthId}`);
+    return this._client._delete(`/nyaitter-auth/authorized-apps/${appAuthId}`);
   }
 }
 
