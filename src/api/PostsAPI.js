@@ -93,6 +93,44 @@ export class PostsAPI {
   }
 
   /**
+   * 指定したハッシュタグの投稿一覧を取得します。
+   *
+   * @param {string} tag - ハッシュタグ（#なし）
+   * @param {object} [params]
+   * @param {number} [params.limit=20] - 取得件数
+   * @param {number} [params.offset=0] - 取得開始位置
+   * @returns {Promise<{ posts: object[] }>}
+   */
+  getByTag(tag, { limit = 20, offset = 0 } = {}) {
+    const cleanTag = String(tag || '').replace(/^#/, '').trim();
+    return this._client._get(`/posts/tags/${encodeURIComponent(cleanTag)}`, { limit, offset });
+  }
+
+  /**
+   * ログイン中ユーザーがいいねした投稿一覧を取得します。
+   *
+   * @param {object} [params]
+   * @param {number} [params.limit=20] - 取得件数
+   * @param {number} [params.offset=0] - 取得開始位置
+   * @returns {Promise<{ posts: object[] }>}
+   */
+  getLiked({ limit = 20, offset = 0 } = {}) {
+    return this._client._get('/posts/liked', { limit, offset });
+  }
+
+  /**
+   * ログイン中ユーザーがスターした投稿一覧を取得します。
+   *
+   * @param {object} [params]
+   * @param {number} [params.limit=20] - 取得件数
+   * @param {number} [params.offset=0] - 取得開始位置
+   * @returns {Promise<{ posts: object[] }>}
+   */
+  getStarred({ limit = 20, offset = 0 } = {}) {
+    return this._client._get('/posts/starred', { limit, offset });
+  }
+
+  /**
    * タイムライン・おすすめ・検索・プロフィール等の投稿ページを汎用取得します。
    *
    * @param {object} [params]
@@ -187,33 +225,48 @@ export class PostsAPI {
   }
 
   /**
+   * 投稿のリアクション詳細（いいねしたユーザー等）を取得します。
+   *
+   * @param {number} postId - 投稿 ID
+   * @returns {Promise<{ reactions: object }>}
+   */
+  getReactions(postId) {
+    return this._client._get(`/posts/${postId}/reactions`);
+  }
+
+  /**
+   * 投稿の引用ポスト一覧を取得します。
+   *
+   * @param {number} postId - 投稿 ID
+   * @param {object} [params]
+   * @param {number} [params.limit=20] - 取得件数
+   * @param {number} [params.offset=0] - 取得開始位置
+   * @returns {Promise<{ quotes: object[] }>}
+   */
+  getQuotes(postId, { limit = 20, offset = 0 } = {}) {
+    return this._client._get(`/posts/${postId}/quotes`, { limit, offset });
+  }
+
+  /**
    * 新しい投稿を作成します。
    *
    * @param {object} params
    * @param {string} [params.content] - 投稿本文
    * @param {number} [params.replyToId] - 返信先の投稿 ID（返信投稿の場合）
    * @param {number} [params.quoteId] - 引用・リポストする投稿 ID
-   * @param {Array<object>} [params.attachments] - 添付ファイル一覧
+   * @param {Array<object>} [params.attachments] - 添付ファイル/投票一覧
    * @param {boolean} [params.mask=false] - 閲覧注意（CW）マスクフラグ
    * @param {boolean} [params.lock=false] - フォロワー限定公開フラグ
    * @param {boolean} [params.announcement=false] - アナウンス投稿フラグ（管理者のみ）
    * @param {string} [params.groupId] - グループ内投稿時のグループID
    * @param {boolean} [params.groupAnnouncement=false] - グループ内アナウンスフラグ
+   * @param {'everyone'|'following'|'mentioned_only'} [params.replyControl='everyone'] - 返信可能範囲
    * @param {number} [params.postAsUserId] - インポスター等の代理投稿ユーザーID
    * @returns {Promise<{ success: boolean, queued: boolean, action_id?: string }>}
    *
    * @example
    * // 通常投稿
    * await client.posts.create({ content: 'こんにちは！' });
-   *
-   * // 返信
-   * await client.posts.create({ content: '返信です', replyToId: 123 });
-   *
-   * // 画像付き投稿
-   * await client.posts.create({
-   *   content: '画像添付テスト',
-   *   attachments: [{ id: 'attachments/12/example.png' }],
-   * });
    */
   create({
     content,
@@ -225,6 +278,7 @@ export class PostsAPI {
     announcement = false,
     groupId,
     groupAnnouncement = false,
+    replyControl = 'everyone',
     postAsUserId,
   } = {}) {
     return this._client._post('/posts', {
@@ -237,6 +291,7 @@ export class PostsAPI {
       announcement: Boolean(announcement),
       group_id: groupId,
       group_announcement: Boolean(groupAnnouncement),
+      reply_control: replyControl,
       post_as_user_id: postAsUserId,
     });
   }
@@ -253,7 +308,7 @@ export class PostsAPI {
    * @returns {Promise<{ success: boolean, post: object }>}
    */
   update(postId, { content, attachments, mask, lock } = {}) {
-    return this._client._put(`/posts/${postId}`, {
+    return this._client._patch(`/posts/${postId}`, {
       content,
       attachments,
       mask,
@@ -283,10 +338,6 @@ export class PostsAPI {
    *
    * @param {number} postId - いいねする投稿 ID
    * @returns {Promise<{ success: boolean, liked: boolean, count: number, updated_likes: number[] }>}
-   *
-   * @example
-   * const res = await client.posts.like(123);
-   * console.log('いいね状態:', res.liked);
    */
   like(postId) {
     return this._client._post(`/posts/${postId}/like`, {});
@@ -294,7 +345,6 @@ export class PostsAPI {
 
   /**
    * 投稿のいいねを取り消します。
-   * サーバー側でトグル処理されるため、いいね済みの投稿に対して実行すると解除されます。
    *
    * @param {number} postId - いいねを取り消す投稿 ID
    * @returns {Promise<{ success: boolean, liked: boolean, count: number, updated_likes: number[] }>}
@@ -304,7 +354,7 @@ export class PostsAPI {
   }
 
   /**
-   * 投稿をスターします（ブックマーク的な機能、トグル）。
+   * 投稿をスターします（トグル）。
    *
    * @param {number} postId - スターする投稿 ID
    * @returns {Promise<{ success: boolean, starred: boolean, count: number, updated_stars: number[] }>}
@@ -328,9 +378,6 @@ export class PostsAPI {
    *
    * @param {number} postId - リポストする投稿 ID
    * @returns {Promise<{ success: boolean, post: object }>}
-   *
-   * @example
-   * await client.posts.repost(123);
    */
   repost(postId) {
     return this._client._post(`/posts/${postId}/repost`, {});
@@ -369,6 +416,17 @@ export class PostsAPI {
   }
 
   /**
+   * 投稿を既読として送信します。
+   *
+   * @param {number[]|number} postIds - 既読にする投稿 ID 配列
+   * @returns {Promise<{ success: boolean }>}
+   */
+  markAsRead(postIds) {
+    const ids = Array.isArray(postIds) ? postIds : [postIds];
+    return this._client._post('/posts/read', { post_ids: ids });
+  }
+
+  /**
    * 複数の投稿 ID を一括で詳細データに変換（ハイドレーション）します。
    *
    * @param {number[]} postIds - 取得する投稿 ID 配列
@@ -379,7 +437,7 @@ export class PostsAPI {
   }
 
   /**
-   * 複数の投稿 ID のメトリクス（いいね数・スター数・リプライ数・リポスト数）を一括取得します。
+   * 複数の投稿 ID のメトリクスを一括取得します。
    *
    * @param {number[]} postIds - 投稿 ID 配列
    * @returns {Promise<{ metrics: Array<{ post_id: number, like_count: number, star_count: number, reply_count: number, repost_count: number }> }>}
@@ -388,4 +446,3 @@ export class PostsAPI {
     return this._client._post('/posts/metrics', { post_ids: postIds });
   }
 }
-

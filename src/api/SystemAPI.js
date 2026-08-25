@@ -1,6 +1,6 @@
 /**
  * システム / ユーティリティ API
- * サーバー状態・コミュニティルール・URL カード展開・oEmbed・ナビゲーション集計などの取得を行います。
+ * サーバー状態・ヘルスチェック・コミュニティルール・URL カード展開・oEmbed・ナビゲーション集計などの取得を行います。
  */
 export class SystemAPI {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
@@ -22,13 +22,27 @@ export class SystemAPI {
   }
 
   /**
+   * サーバーのヘルスチェック状態を取得します。
+   *
+   * @returns {Promise<{ status: string, timestamp: string, version: string, uptime: number, env: string }>}
+   */
+  getHealth() {
+    return this._client._get('/health');
+  }
+
+  /**
+   * サーバーのレディネス（DB接続準備）状態を取得します。
+   *
+   * @returns {Promise<{ status: string, timestamp: string }>}
+   */
+  getReady() {
+    return this._client._get('/ready');
+  }
+
+  /**
    * コミュニティルール・利用規約を取得します。
    *
    * @returns {Promise<{ success: boolean, rules: string, updated_at: string }>}
-   *
-   * @example
-   * const { rules } = await client.system.getRules();
-   * console.log(rules);
    */
   getRules() {
     return this._client._get('/rules');
@@ -39,10 +53,6 @@ export class SystemAPI {
    *
    * @param {string} url - 展開対象の URL
    * @returns {Promise<{ card: object }>}
-   *
-   * @example
-   * const { card } = await client.system.getUrlCard('https://example.com');
-   * console.log('タイトル:', card.title);
    */
   getUrlCard(url) {
     return this._client._get('/url-cards', { url });
@@ -62,10 +72,6 @@ export class SystemAPI {
    * ナビゲーション表示用の未読カウントサマリー（通知未読数・DM未読数）を取得します。
    *
    * @returns {Promise<{ notification_unread_count: number, dm_unread_count: number }>}
-   *
-   * @example
-   * const summary = await client.system.getUiSummary();
-   * console.log(`通知未読: ${summary.notification_unread_count}, DM未読: ${summary.dm_unread_count}`);
    */
   getUiSummary() {
     return this._client._get('/ui/summary');

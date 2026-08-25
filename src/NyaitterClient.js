@@ -13,7 +13,9 @@
  * await client.posts.create({ content: 'こんにちは！' });
  */
 
+import { AuthAPI } from './api/AuthAPI.js';
 import { PostsAPI } from './api/PostsAPI.js';
+import { PollsAPI } from './api/PollsAPI.js';
 import { UsersAPI } from './api/UsersAPI.js';
 import { DmAPI } from './api/DmAPI.js';
 import { NotificationsAPI } from './api/NotificationsAPI.js';
@@ -21,7 +23,14 @@ import { GroupsAPI } from './api/GroupsAPI.js';
 import { UploadsAPI } from './api/UploadsAPI.js';
 import { RankingAPI } from './api/RankingAPI.js';
 import { ReportsAPI } from './api/ReportsAPI.js';
+import { AppealsAPI } from './api/AppealsAPI.js';
 import { VerificationAPI } from './api/VerificationAPI.js';
+import { ImpostersAPI } from './api/ImpostersAPI.js';
+import { PushAPI } from './api/PushAPI.js';
+import { RulesAPI } from './api/RulesAPI.js';
+import { UrlCardsAPI } from './api/UrlCardsAPI.js';
+import { OEmbedAPI } from './api/OEmbedAPI.js';
+import { UIAPI } from './api/UIAPI.js';
 import { SystemAPI } from './api/SystemAPI.js';
 import { NyaitterAuthAPI } from './api/NyaitterAuthAPI.js';
 import { RealtimeClient } from './RealtimeClient.js';
@@ -47,7 +56,9 @@ export class NyaitterClient {
     }
 
     // 各 API カテゴリ
+    this.auth = new AuthAPI(this);
     this.posts = new PostsAPI(this);
+    this.polls = new PollsAPI(this);
     this.users = new UsersAPI(this);
     this.dm = new DmAPI(this);
     this.notifications = new NotificationsAPI(this);
@@ -55,7 +66,14 @@ export class NyaitterClient {
     this.uploads = new UploadsAPI(this);
     this.ranking = new RankingAPI(this);
     this.reports = new ReportsAPI(this);
+    this.appeals = new AppealsAPI(this);
     this.verification = new VerificationAPI(this);
+    this.imposters = new ImpostersAPI(this);
+    this.push = new PushAPI(this);
+    this.rules = new RulesAPI(this);
+    this.urlCards = new UrlCardsAPI(this);
+    this.oembed = new OEmbedAPI(this);
+    this.ui = new UIAPI(this);
     this.system = new SystemAPI(this);
     this.nyaitterAuth = new NyaitterAuthAPI(this);
   }
@@ -81,10 +99,6 @@ export class NyaitterClient {
    * `client.users.getMe()` のエイリアスです。
    *
    * @returns {Promise<{ user: object, isBot: boolean, tokenType: string }>}
-   *
-   * @example
-   * const me = await client.getMe();
-   * console.log(`ログイン中: ${me.user.name} (@${me.user.nyaitter_id || me.user.id})`);
    */
   getMe() {
     return this.users.getMe();
@@ -93,11 +107,8 @@ export class NyaitterClient {
   /**
    * ユーザーオブジェクトまたはユーザー ID から、適切なアカウントアイコン URL を返します。
    *
-   * @param {object|number|string} user - ユーザーオブジェクト（{ id, icon_data, icon_available }）またはユーザー ID
+   * @param {object|number|string} user - ユーザーオブジェクトまたはユーザー ID
    * @returns {string} アイコンの URL
-   *
-   * @example
-   * const iconUrl = client.getUserIconUrl(user);
    */
   getUserIconUrl(user) {
     return this.users.getIconUrl(user);
@@ -106,11 +117,8 @@ export class NyaitterClient {
   /**
    * グループオブジェクトまたはアイコン文字列から、適切なグループアイコン URL を返します。
    *
-   * @param {object|string} group - グループオブジェクト（{ id, icon_data, iconData }）またはアイコン文字列
+   * @param {object|string} group - グループオブジェクトまたはアイコン文字列
    * @returns {string} グループアイコンの URL
-   *
-   * @example
-   * const iconUrl = client.getGroupIconUrl(group);
    */
   getGroupIconUrl(group) {
     return this.groups.getIconUrl(group);
@@ -123,12 +131,6 @@ export class NyaitterClient {
    * @param {boolean} [options.autoReconnect=true] - 切断時の自動再接続
    * @param {number} [options.reconnectDelayMs=3000] - 再接続待機時間（ミリ秒）
    * @returns {RealtimeClient}
-   *
-   * @example
-   * const realtime = client.realtime();
-   * realtime.on('notification', (n) => console.log('通知:', n));
-   * realtime.on('dm', ({ dmId, message }) => console.log('DM:', message.content));
-   * await realtime.connect();
    */
   realtime(options = {}) {
     return new RealtimeClient(this, options);

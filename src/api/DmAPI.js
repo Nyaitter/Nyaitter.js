@@ -1,6 +1,6 @@
 /**
  * ダイレクトメッセージ（DM）API
- * DM グループの作成・取得・メッセージ送受信・未読管理・鍵管理などを行います。
+ * DM グループの作成・取得・編集・脱退・メッセージ送受信・リアクション・未読管理などを行います。
  */
 export class DmAPI {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
@@ -18,10 +18,16 @@ export class DmAPI {
    *
    * @example
    * const { dm, unread_total } = await client.dm.list();
-   * console.log(`未読 DM: ${unread_total} 件`);
    */
   list({ limit = 20, offset = 0 } = {}) {
     return this._client._get('/dm', { limit, offset });
+  }
+
+  /**
+   * `list()` のエイリアスです。
+   */
+  getRooms(params) {
+    return this.list(params);
   }
 
   /**
@@ -61,12 +67,16 @@ export class DmAPI {
    * @param {number} [params.limit=50] - 取得するメッセージ数
    * @param {number} [params.offset=0] - 取得開始位置
    * @returns {Promise<{ dm: object[], members: object[], unread_total: number }>}
-   *
-   * @example
-   * const dm = await client.dm.get('dm-group-id');
    */
   get(dmId, { limit = 50, offset = 0 } = {}) {
     return this._client._get(`/dm/${dmId}`, { limit, offset });
+  }
+
+  /**
+   * `get()` のエイリアスです。
+   */
+  getRoom(dmId, params) {
+    return this.get(dmId, params);
   }
 
   /**
@@ -75,17 +85,36 @@ export class DmAPI {
    * @param {object} params
    * @param {number[]} params.members - 招待するユーザー ID の配列
    * @param {string} [params.title] - グループ名
-   * @param {string} [params.name] - グループ名（title の別名）
+   * @param {string} [params.name] - グループ名
    * @returns {Promise<{ dm: object, created: boolean }>}
-   *
-   * @example
-   * const { dm } = await client.dm.create({ members: [12, 34], title: '企画グループ' });
    */
   create({ members, title, name } = {}) {
     return this._client._post('/dm', {
       member: members,
       title: title !== undefined ? title : name,
     });
+  }
+
+  /**
+   * DM グループのタイトルや設定を更新します。
+   *
+   * @param {string} dmId - DM グループ ID
+   * @param {object} params
+   * @param {string} [params.title] - グループ名
+   * @returns {Promise<{ dm: object }>}
+   */
+  updateRoom(dmId, { title } = {}) {
+    return this._client._patch(`/dm/${dmId}`, { title });
+  }
+
+  /**
+   * DM グループから脱退します。
+   *
+   * @param {string} dmId - DM グループ ID
+   * @returns {Promise<{ success: boolean }>}
+   */
+  leave(dmId) {
+    return this._client._delete(`/dm/${dmId}/leave`);
   }
 
   /**
@@ -97,142 +126,97 @@ export class DmAPI {
    * @param {Array<object>} [params.attachments] - 添付ファイル
    * @param {object} [params.e2e] - E2E 暗号化ペイロード
    * @returns {Promise<{ dm: object, message: object }>}
-   *
-   * @example
-   * await client.dm.send('dm-group-id', { content: 'こんにちは！' });
    */
-  send(dmId, { content = '', attachments, e2e } = {}) {
+  sendMessage(dmId, { content, attachments, e2e } = {}) {
     return this._client._post(`/dm/${dmId}/messages`, {
-      message: {
-        content,
-        attachments,
-        e2e,
-      },
+      content,
+      attachments,
+      e2e,
     });
   }
 
   /**
-   * DM グループの設定（タイトル・メンバー・ホスト・メッセージ履歴）を更新します。
+   * 送信済みメッセージを編集します。
    *
    * @param {string} dmId - DM グループ ID
+   * @param {string|number} messageId - メッセージ ID
    * @param {object} params
-   * @param {string} [params.title] - グループ名
-   * @param {number[]} [params.members] - メンバー ID 配列
-   * @param {number} [params.hostId] - 新ホストのユーザー ID
-   * @param {Array<object>} [params.post] - メッセージ配列（履歴編集）
-   * @returns {Promise<{ dm: object }>}
+   * @param {string} params.content - 編集後のメッセージ本文
+   * @returns {Promise<{ success: boolean, message: object }>}
    */
-  update(dmId, { title, members, hostId, post } = {}) {
-    return this._client._put(`/dm/${dmId}`, {
-      title,
-      member: members,
-      host_id: hostId,
-      post,
+  editMessage(dmId, messageId, { content } = {}) {
+    return this._client._patch(`/dm/${dmId}/messages/${messageId}`, { content });
+  }
+
+  /**
+   * 送信済みメッセージを削除します。
+   *
+   * @param {string} dmId - DM グループ ID
+   * @param {string|number} messageId - 削除するメッセージ ID
+   * @returns {Promise<{ success: boolean }>}
+   */
+  deleteMessage(dmId, messageId) {
+    return this._client._delete(`/dm/${dmId}/messages/${messageId}`);
+  }
+
+  /**
+   * DM グループのメッセージを既読にします。
+   *
+   * @param {string} dmId - DM グループ ID
+   * @param {object} [params]
+   * @param {string|number} [params.messageId] - 既読にする最後のメッセージ ID
+   * @returns {Promise<{ success: boolean }>}
+   */
+  markAsRead(dmId, { messageId } = {}) {
+    return this._client._post(`/dm/${dmId}/read`, {
+      message_id: messageId,
     });
   }
 
   /**
-   * DM グループにメンバーを追加します。
+   * DM グループに新しいメンバーを追加します。
    *
    * @param {string} dmId - DM グループ ID
-   * @param {number} userId - 追加するユーザー ID
-   * @returns {Promise<{ dm: object }>}
+   * @param {number|{ userId: number }} params - 追加するユーザー ID
+   * @returns {Promise<{ dm: object, member: object }>}
    */
-  async addMember(dmId, userId) {
-    const dmRes = await this.get(dmId);
-    const dmObj = dmRes?.dm?.[0] || dmRes;
-    const currentMembers = Array.isArray(dmObj?.member) ? dmObj.member.map(Number) : [];
-    if (!currentMembers.includes(Number(userId))) {
-      currentMembers.push(Number(userId));
-    }
-    return this.update(dmId, { members: currentMembers });
+  addMember(dmId, params) {
+    const userId = typeof params === 'object' && params !== null ? params.userId : params;
+    return this._client._post(`/dm/${dmId}/members`, { user_id: userId });
   }
 
   /**
-   * DM グループからメンバーを削除します（ホストのみ）。
+   * DM グループからメンバーを退出させます。
    *
    * @param {string} dmId - DM グループ ID
    * @param {number} userId - 削除するユーザー ID
-   * @returns {Promise<{ dm: object }>}
-   */
-  async removeMember(dmId, userId) {
-    const dmRes = await this.get(dmId);
-    const dmObj = dmRes?.dm?.[0] || dmRes;
-    const currentMembers = Array.isArray(dmObj?.member)
-      ? dmObj.member.map(Number).filter((id) => id !== Number(userId))
-      : [];
-    return this.update(dmId, { members: currentMembers });
-  }
-
-  /**
-   * DM グループを解散・削除します（ホストのみ）。
-   *
-   * @param {string} dmId - DM グループ ID
    * @returns {Promise<{ success: boolean }>}
    */
-  delete(dmId) {
-    return this._client._delete(`/dm/${dmId}`);
+  removeMember(dmId, userId) {
+    return this._client._delete(`/dm/${dmId}/members/${userId}`);
   }
 
   /**
-   * メッセージリクエストを承認します。
+   * メッセージに絵文字リアクションを付けます。
    *
    * @param {string} dmId - DM グループ ID
-   * @returns {Promise<{ success: boolean, dm: object }>}
+   * @param {string|number} messageId - メッセージ ID
+   * @param {string} reaction - 絵文字またはリアクション文字列
+   * @returns {Promise<{ success: boolean, reactions: object }>}
    */
-  accept(dmId) {
-    return this._client._post(`/dm/${dmId}/accept`, {});
+  addReaction(dmId, messageId, reaction) {
+    return this._client._post(`/dm/${dmId}/messages/${messageId}/reactions`, { reaction });
   }
 
   /**
-   * メッセージリクエストを拒否して退出します。
+   * メッセージの絵文字リアクションを取り消します。
    *
    * @param {string} dmId - DM グループ ID
-   * @returns {Promise<{ success: boolean }>}
+   * @param {string|number} messageId - メッセージ ID
+   * @param {string} reaction - 絵文字またはリアクション文字列
+   * @returns {Promise<{ success: boolean, reactions: object }>}
    */
-  decline(dmId) {
-    return this._client._post(`/dm/${dmId}/decline`, {});
-  }
-
-  /**
-   * DM グループから退出します。
-   *
-   * @param {string} dmId - DM グループ ID
-   * @returns {Promise<{ success: boolean }>}
-   */
-  leave(dmId) {
-    return this._client._post(`/dm/${dmId}/leave`, {});
-  }
-
-  /**
-   * DM グループを既読にします。
-   *
-   * @param {string} dmId - DM グループ ID
-   * @returns {Promise<{ success: boolean }>}
-   */
-  markAsRead(dmId) {
-    return this._client._post(`/dm/${dmId}/read`, {});
-  }
-
-  /**
-   * 指定ユーザーたちの E2E 暗号化公開鍵を取得します。
-   *
-   * @param {number[]|string} userIds - ユーザー ID 配列またはカンマ区切り文字列
-   * @returns {Promise<{ keys: Record<string, string> }>}
-   */
-  getKeys(userIds) {
-    const ids = Array.isArray(userIds) ? userIds.join(',') : userIds;
-    return this._client._get('/dm/keys', { user_ids: ids });
-  }
-
-  /**
-   * 自分の E2E 暗号化公開鍵を登録します。
-   *
-   * @param {string} publicKey - 公開鍵文字列
-   * @returns {Promise<{ success: boolean }>}
-   */
-  setKeys(publicKey) {
-    return this._client._post('/dm/keys', { public_key: publicKey });
+  removeReaction(dmId, messageId, reaction) {
+    return this._client._delete(`/dm/${dmId}/messages/${messageId}/reactions`, { reaction });
   }
 }
-

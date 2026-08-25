@@ -17,21 +17,11 @@ export class UploadsAPI {
    * @param {string} [params.contentType='image/png'] - MIME タイプ
    * @param {number} [params.asUserId] - インポスター代理アップロード時のユーザー ID
    * @returns {Promise<{ id: string, url: string, contentType: string, size: number }>}
-   *
-   * @example
-   * // Base64 文字列でアップロード
-   * const res = await client.uploads.upload({
-   *   file: base64Data,
-   *   fileName: 'avatar.png',
-   *   contentType: 'image/png',
-   * });
-   * console.log('アップロード完了:', res.url, res.id);
    */
   async upload({ file, fileName, contentType = 'image/png', asUserId } = {}) {
     let base64String = '';
 
     if (typeof file === 'string') {
-      // data:image/png;base64,... 形式のプレフィックスを除去
       base64String = file.replace(/^data:[^;]+;base64,/, '').trim();
     } else if (file instanceof Uint8Array || (typeof Buffer !== 'undefined' && Buffer.isBuffer(file))) {
       if (typeof Buffer !== 'undefined') {
@@ -86,10 +76,6 @@ export class UploadsAPI {
    * 自分のストレージ使用状況とファイル一覧を取得します。
    *
    * @returns {Promise<{ limit_mb: number, limit_bytes: number, used_bytes: number, used_percent: number, files: Array<{ id: string, url: string, size: number, lastModified: string }> }>}
-   *
-   * @example
-   * const storage = await client.uploads.getStorage();
-   * console.log(`ストレージ使用量: ${storage.used_percent.toFixed(1)}% (${storage.used_bytes} / ${storage.limit_bytes} bytes)`);
    */
   getStorage() {
     return this._client._get('/uploads/storage');
@@ -99,7 +85,7 @@ export class UploadsAPI {
    * アップロード済みファイルを削除します。
    *
    * @param {object|string[]} params - 削除するファイル ID リストまたはオプション
-   * @param {string[]} [params.fileIds] - ファイル ID 配列（例: `['attachments/12/example.png']`）
+   * @param {string[]} [params.fileIds] - ファイル ID 配列
    * @param {number} [params.asUserId] - インポスター代理削除時のユーザー ID
    * @returns {Promise<{ success: boolean, deleted_count: number }>}
    */
@@ -115,7 +101,7 @@ export class UploadsAPI {
   /**
    * 添付画像ファイルのサムネイル（プレビュー）URL を取得します。
    *
-   * @param {string} fileId - ファイル ID（例: `'attachments/12/photo.png'`）
+   * @param {string} fileId - ファイル ID
    * @returns {string} プレビュー URL
    */
   getPreviewUrl(fileId) {

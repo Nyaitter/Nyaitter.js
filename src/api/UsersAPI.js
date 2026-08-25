@@ -5,9 +5,6 @@
  * @param {object} [options]
  * @param {string} [options.baseUrl] - サーバーのベース URL（省略時は空文字列）
  * @returns {string} アイコンの URL
- *
- * @example
- * const url = getUserIconUrl(user, { baseUrl: 'https://nyaitter.example.com' });
  */
 export function getUserIconUrl(user, { baseUrl = '' } = {}) {
   const base = baseUrl ? String(baseUrl).replace(/\/+$/, '') : '';
@@ -16,7 +13,6 @@ export function getUserIconUrl(user, { baseUrl = '' } = {}) {
     return base ? `${base}/emoji/neko.svg` : '/emoji/neko.svg';
   }
 
-  // 数値または数値文字列（ID 直接指定）の場合
   if (typeof user === 'number' || (typeof user === 'string' && /^\d+$/.test(user.trim()))) {
     const id = typeof user === 'number' ? user : parseInt(user.trim(), 10);
     if (Number.isSafeInteger(id) && id > 0) {
@@ -64,12 +60,8 @@ export class UsersAPI {
   /**
    * ユーザーオブジェクトまたはユーザー ID から、適切なアカウントアイコン URL を返します。
    *
-   * @param {object|number|string} user - ユーザーオブジェクト（{ id, icon_data, icon_available }）またはユーザー ID
+   * @param {object|number|string} user - ユーザーオブジェクトまたはユーザー ID
    * @returns {string} アイコンの URL
-   *
-   * @example
-   * const iconUrl = client.users.getIconUrl(user);
-   * const myIconUrl = client.users.getIconUrl(12);
    */
   getIconUrl(user) {
     return getUserIconUrl(user, { baseUrl: this._client._baseUrl });
@@ -80,23 +72,15 @@ export class UsersAPI {
    *
    * @param {number} userId - ユーザー ID
    * @returns {Promise<{ user: object }>}
-   *
-   * @example
-   * const { user } = await client.users.get(12);
-   * console.log(user.name);
    */
   get(userId) {
     return this._client._get(`/users/${userId}`);
   }
 
   /**
-   * ログイン中のユーザー（Bot の所有者アカウント）の情報を取得します。
+   * ログイン中のユーザー情報を取得します。
    *
    * @returns {Promise<{ user: object, isBot: boolean, tokenType: string }>}
-   *
-   * @example
-   * const { user } = await client.users.getMe();
-   * console.log(`ログイン中: ${user.name}`);
    */
   getMe() {
     return this._client._get('/auth/me');
@@ -105,17 +89,13 @@ export class UsersAPI {
   /**
    * ユーザー名（ハンドル / Scratch ID / NyaitterID）でユーザーを検索・取得します。
    *
-   * @param {string} handle - ユーザー名（例: 'nyanko' または '12'）
+   * @param {string} handle - ユーザー名
    * @returns {Promise<{ user: object|null }>}
-   *
-   * @example
-   * const { user } = await client.users.getByHandle('nyanko');
    */
   async getByHandle(handle) {
     const cleanHandle = String(handle || '').replace(/^[@#]/, '').trim();
     if (!cleanHandle) return { user: null };
 
-    // 数値 ID の場合は直接取得を試みる
     const numericId = parseInt(cleanHandle, 10);
     if (Number.isInteger(numericId) && numericId >= 0 && String(numericId) === cleanHandle) {
       try {
@@ -124,7 +104,6 @@ export class UsersAPI {
       } catch (_) {}
     }
 
-    // 検索エンドポイントでハンドル一致を探す
     const { users = [] } = await this.search({ query: cleanHandle, limit: 10 });
     const exact = users.find(
       (u) =>
@@ -148,9 +127,6 @@ export class UsersAPI {
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @returns {Promise<{ users: object[] }>}
-   *
-   * @example
-   * const { users } = await client.users.search({ query: 'nyanko' });
    */
   search({ query, limit = 20, offset = 0 } = {}) {
     return this._client._get('/users/search', { q: query, limit, offset });
@@ -224,16 +200,26 @@ export class UsersAPI {
    *
    * @param {number} userId - ユーザー ID
    * @param {object} [params]
-   * @param {'all'|'posts'|'replies'} [params.mode='all'] - 投稿の絞り込み（'all': すべて、'posts': 通常投稿のみ、'replies': リプライのみ）
+   * @param {'all'|'posts'|'replies'} [params.mode='all'] - 投稿の絞り込み
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @returns {Promise<{ posts: object[], has_more: boolean }>}
-   *
-   * @example
-   * const { posts } = await client.users.getPosts(12, { mode: 'posts' });
    */
   getPosts(userId, { limit = 20, offset = 0, mode = 'all' } = {}) {
     return this._client._get(`/users/${userId}/posts`, { limit, offset, mode });
+  }
+
+  /**
+   * ユーザーのリプライ一覧を取得します。
+   *
+   * @param {number} userId - ユーザー ID
+   * @param {object} [params]
+   * @param {number} [params.limit=20] - 取得件数
+   * @param {number} [params.offset=0] - 取得開始位置
+   * @returns {Promise<{ replies: object[], has_more: boolean }>}
+   */
+  getReplies(userId, { limit = 20, offset = 0 } = {}) {
+    return this._client._get(`/users/${userId}/replies`, { limit, offset });
   }
 
   /**
@@ -289,23 +275,75 @@ export class UsersAPI {
   }
 
   /**
-   * ユーザーの固定投稿 ID を取得します。
+   * ユーザーの固定投稿一覧を取得します。
    *
    * @param {number} userId - ユーザー ID
-   * @returns {Promise<{ pin_id: number|null }>}
+   * @returns {Promise<{ pinned_posts: object[] }>}
    */
-  getPinnedPost(userId) {
-    return this._client._get(`/users/${userId}/pin`);
+  getPinnedPosts(userId) {
+    return this._client._get(`/users/${userId}/pinned-posts`);
   }
 
   /**
-   * ユーザーのアイコン画像の URL を取得します。
+   * 投稿をプロフィールに固定します。
    *
    * @param {number} userId - ユーザー ID
-   * @returns {string} アイコン画像の URL
+   * @param {number} postId - 投稿 ID
+   * @returns {Promise<{ success: boolean }>}
    */
-  getIconUrl(userId) {
-    return `${this._client._baseUrl}/users/${userId}/icon`;
+  pinPost(userId, postId) {
+    return this._client._post(`/users/${userId}/pinned-posts/${postId}`, {});
+  }
+
+  /**
+   * プロフィールの固定投稿を解除します。
+   *
+   * @param {number} userId - ユーザー ID
+   * @param {number} postId - 投稿 ID
+   * @returns {Promise<{ success: boolean }>}
+   */
+  unpinPost(userId, postId) {
+    return this._client._delete(`/users/${userId}/pinned-posts/${postId}`);
+  }
+
+  /**
+   * ユーザーのブロック一覧を取得します。
+   *
+   * @param {number} userId - ユーザー ID
+   * @returns {Promise<{ blocks: object[] }>}
+   */
+  getBlocks(userId) {
+    return this._client._get(`/users/${userId}/blocks`);
+  }
+
+  /**
+   * ユーザーのミュート一覧を取得します。
+   *
+   * @param {number} userId - ユーザー ID
+   * @returns {Promise<{ mutes: object[] }>}
+   */
+  getMutes(userId) {
+    return this._client._get(`/users/${userId}/mutes`);
+  }
+
+  /**
+   * ユーザーをミュートします。
+   *
+   * @param {number} userId - ミュートするユーザー ID
+   * @returns {Promise<{ success: boolean }>}
+   */
+  mute(userId) {
+    return this._client._post(`/users/${userId}/mute`, {});
+  }
+
+  /**
+   * ユーザーのミュートを解除します。
+   *
+   * @param {number} userId - ミュート解除するユーザー ID
+   * @returns {Promise<{ success: boolean }>}
+   */
+  unmute(userId) {
+    return this._client._delete(`/users/${userId}/mute`);
   }
 
   /**
@@ -313,10 +351,6 @@ export class UsersAPI {
    *
    * @param {number} userId - フォローするユーザー ID
    * @returns {Promise<{ success: boolean, following: boolean, updated_follows: number[] }>}
-   *
-   * @example
-   * const res = await client.users.follow(12);
-   * console.log('フォロー中:', res.following);
    */
   follow(userId) {
     return this._client._post(`/users/${userId}/follow`, {});
@@ -324,7 +358,6 @@ export class UsersAPI {
 
   /**
    * ユーザーのフォローを解除します。
-   * サーバー側でトグル処理されるため、フォロー済みの場合は解除されます。
    *
    * @param {number} userId - フォロー解除するユーザー ID
    * @returns {Promise<{ success: boolean, following: boolean, updated_follows: number[] }>}
@@ -334,60 +367,46 @@ export class UsersAPI {
   }
 
   /**
-   * 自分のプロフィールや設定を更新します。
-   *
-   * @param {object} params
-   * @param {string} [params.name] - 表示名
-   * @param {string} [params.me] - 自己紹介文
-   * @param {string} [params.bio] - 自己紹介文（me の別名）
-   * @param {string} [params.headerImage] - ヘッダー画像 URL / データ
-   * @param {string} [params.iconData] - アイコン画像データ
-   * @param {object} [params.settings] - 設定オブジェクト
-   * @param {number[]} [params.block] - ブロックユーザー ID 配列
-   * @returns {Promise<{ user: object }>}
-   *
-   * @example
-   * await client.users.updateProfile({ name: '新しい名前', me: '自己紹介です' });
-   */
-  updateProfile({ name, me, bio, headerImage, iconData, settings, block } = {}) {
-    return this._client._put('/users/me', {
-      name,
-      me: me !== undefined ? me : bio,
-      bio: bio !== undefined ? bio : me,
-      header_image: headerImage,
-      icon_data: iconData,
-      settings,
-      block,
-    });
-  }
-
-  /**
    * ユーザーをブロックします。
    *
    * @param {number} userId - ブロックするユーザー ID
-   * @returns {Promise<{ user: object }>}
+   * @returns {Promise<{ success: boolean }>}
    */
-  async block(userId) {
-    const meRes = await this.getMe();
-    const currentBlocks = Array.isArray(meRes?.user?.block) ? meRes.user.block.map(Number) : [];
-    if (!currentBlocks.includes(Number(userId))) {
-      currentBlocks.push(Number(userId));
-    }
-    return this.updateProfile({ block: currentBlocks });
+  block(userId) {
+    return this._client._post(`/users/${userId}/block`, {});
   }
 
   /**
    * ユーザーのブロックを解除します。
    *
    * @param {number} userId - ブロック解除するユーザー ID
+   * @returns {Promise<{ success: boolean }>}
+   */
+  unblock(userId) {
+    return this._client._delete(`/users/${userId}/block`);
+  }
+
+  /**
+   * 自分のプロフィールや設定を更新します。
+   *
+   * @param {object} params
+   * @param {string} [params.name] - 表示名
+   * @param {string} [params.me] - 自己紹介文
+   * @param {string} [params.bio] - 自己紹介文
+   * @param {string} [params.headerImage] - ヘッダー画像 URL / データ
+   * @param {string} [params.iconData] - アイコン画像データ
+   * @param {object} [params.settings] - 設定オブジェクト
    * @returns {Promise<{ user: object }>}
    */
-  async unblock(userId) {
-    const meRes = await this.getMe();
-    const currentBlocks = Array.isArray(meRes?.user?.block)
-      ? meRes.user.block.map(Number).filter((id) => id !== Number(userId))
-      : [];
-    return this.updateProfile({ block: currentBlocks });
+  updateProfile({ name, me, bio, headerImage, iconData, settings } = {}) {
+    return this._client._patch('/users/me', {
+      name,
+      me: me !== undefined ? me : bio,
+      bio: bio !== undefined ? bio : me,
+      header_image: headerImage,
+      icon_data: iconData,
+      settings,
+    });
   }
 
   /**
@@ -402,4 +421,3 @@ export class UsersAPI {
     return this._client._get('/users/logs', { limit, offset });
   }
 }
-
