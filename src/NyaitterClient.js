@@ -48,7 +48,7 @@ export class NyaitterClient {
 
     this._baseUrl = baseUrl.replace(/\/+$/, '');
     this._token = token;
-    this._fetch = customFetch || globalThis.fetch;
+    this._fetch = customFetch || (globalThis.fetch ? globalThis.fetch.bind(globalThis) : null);
     this._WebSocket = customWebSocket || globalThis.WebSocket;
 
     if (typeof this._fetch !== 'function') {

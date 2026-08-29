@@ -2767,7 +2767,7 @@ var Nyaitter = (() => {
       if (!baseUrl) throw new Error("baseUrl \u306F\u5FC5\u9808\u3067\u3059");
       this._baseUrl = baseUrl.replace(/\/+$/, "");
       this._token = token;
-      this._fetch = customFetch || globalThis.fetch;
+      this._fetch = customFetch || (globalThis.fetch ? globalThis.fetch.bind(globalThis) : null);
       this._WebSocket = customWebSocket || globalThis.WebSocket;
       if (typeof this._fetch !== "function") {
         throw new Error("fetch \u95A2\u6570\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3002Node.js 18+ \u307E\u305F\u306F fetch \u30DD\u30EA\u30D5\u30A3\u30EB\u304C\u5FC5\u8981\u3067\u3059\u3002");
