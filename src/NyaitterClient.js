@@ -1,7 +1,7 @@
 /**
  * NyaitterClient - Nyaitter API を JavaScript から簡単に使うための統合クライアント
  *
- * Bot トークン (`bot_...`) または NyaitterAuth アクセストークン (`nyauth_...`) を指定して初期化します。
+ * Bot トークン（`bot_` で始まる値）または NyaitterAuth アクセストークン（`nyauth_` で始まる値）を指定して初期化します。
  *
  * @example
  * const client = new NyaitterClient({
@@ -39,7 +39,7 @@ export class NyaitterClient {
   /**
    * @param {object} options
    * @param {string} options.baseUrl - Nyaitter サーバーの URL（例: 'https://nyaitter.example.com'）
-   * @param {string} [options.token] - Bot トークンまたはアクセストークン（`bot_...`, `nyauth_...`）
+   * @param {string} [options.token] - Bot トークンまたはアクセストークン（`bot_` または `nyauth_` で始まる値）
    * @param {typeof fetch} [options.fetch] - カスタム fetch 関数（省略時はグローバル fetch）
    * @param {any} [options.WebSocket] - カスタム WebSocket クラス（Node.js 環境用）
    */
@@ -148,8 +148,45 @@ export class NyaitterClient {
    * @returns {Promise<any>}
    */
   async request(method, path, { body, query, headers = {} } = {}) {
+    const response = await this.requestResponse(method, path, { body, query, headers });
+    const data = await this._parseResponse(response);
+
+    if (!response.ok) {
+      const message =
+        (typeof data === 'object' && (data?.error || data?.message)) ||
+        `HTTP ${response.status} ${response.statusText || ''}`.trim();
+      throw new NyaitterError(message, response.status, data);
+    }
+
+    return data;
+  }
+
+  /**
+   * API リクエストをレスポンス情報付きで送信します。
+   * @param {string} methodOrPath HTTP メソッド、または直接指定するエンドポイント
+   * @param {string|object} [pathOrOptions] エンドポイント、または GET 用オプション
+   * @param {object} [requestOptions]
+   * @example
+   * await client.requestResponse('/api/custom-endpoint');
+   * @returns {Promise<Response>}
+   */
+  async requestResponse(methodOrPath, pathOrOptions = {}, requestOptions = {}) {
+    const directEndpoint = typeof pathOrOptions === 'object' && pathOrOptions !== null;
+    const method = directEndpoint ? (pathOrOptions.method || 'GET') : methodOrPath;
+    const path = directEndpoint ? methodOrPath : pathOrOptions;
+    const { body, query, headers = {}, signal, cache } = directEndpoint ? pathOrOptions : requestOptions;
     const rawPath = path.startsWith('/') ? path : `/${path}`;
-    const url = new URL(`${this._baseUrl}${rawPath}`);
+    let url;
+    if (/^https?:\/\//i.test(path)) {
+      url = new URL(path);
+    } else {
+      const base = new URL(this._baseUrl);
+      const basePath = base.pathname.replace(/\/+$/, '');
+      const requestPath = basePath && (rawPath === basePath || rawPath.startsWith(`${basePath}/`))
+        ? rawPath.slice(basePath.length) || '/'
+        : rawPath;
+      url = new URL(`${base.origin}${basePath}${requestPath}`);
+    }
 
     if (query && typeof query === 'object') {
       for (const [key, value] of Object.entries(query)) {
@@ -175,14 +212,22 @@ export class NyaitterClient {
     const fetchOptions = {
       method,
       headers: reqHeaders,
+      credentials: 'include',
+      signal,
+      cache,
     };
 
     if (body !== undefined) {
-      fetchOptions.body = JSON.stringify(body);
+      const isBinary =
+        (typeof Blob !== 'undefined' && body instanceof Blob) ||
+        (typeof ArrayBuffer !== 'undefined' && (body instanceof ArrayBuffer || ArrayBuffer.isView(body)));
+      fetchOptions.body = typeof body === 'string' || isBinary ? body : JSON.stringify(body);
     }
 
-    const response = await this._fetch(url.toString(), fetchOptions);
+    return this._fetch(url.toString(), fetchOptions);
+  }
 
+  async _parseResponse(response) {
     let data;
     const contentType = response.headers?.get?.('content-type') || '';
     if (contentType.includes('application/json')) {
@@ -194,13 +239,6 @@ export class NyaitterClient {
       } catch {
         data = text;
       }
-    }
-
-    if (!response.ok) {
-      const message =
-        (typeof data === 'object' && (data?.error || data?.message)) ||
-        `HTTP ${response.status} ${response.statusText || ''}`.trim();
-      throw new NyaitterError(message, response.status, data);
     }
 
     return data;

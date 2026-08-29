@@ -8,6 +8,31 @@ export class SystemAPI {
     this._client = client;
   }
 
+  getStatusResponse() {
+    return this._client.requestResponse('/status');
+  }
+
+  getApiSpecResponse(options) {
+    return this._getWithFallback('/spec/endpoints', '/api/spec/endpoints', options);
+  }
+
+  getDocsResponse(options) {
+    return this._getWithFallback('/docs', '/api/docs', options);
+  }
+
+  getDocResponse(docId, options) {
+    return this._getWithFallback(`/docs/${encodeURIComponent(docId)}`, `/api/docs/${encodeURIComponent(docId)}`, options);
+  }
+
+  getRulesResponse(options) {
+    return this._client.requestResponse('/rules', options);
+  }
+
+  async _getWithFallback(primaryPath, fallbackPath, options) {
+    const response = await this._client.requestResponse(primaryPath, options);
+    return response.ok ? response : this._client.requestResponse(fallbackPath, options);
+  }
+
   /**
    * サーバーの稼働状態・制限値・認証プロバイダー設定を取得します。
    *

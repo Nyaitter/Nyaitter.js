@@ -1,14 +1,30 @@
 {
   "name": "nyaitter.js",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "NyaitterAPI を JavaScript から簡単に使えるクライアントライブラリ",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nyaitter/Nyaitter.js.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Nyaitter/Nyaitter.js/issues"
+  },
+  "homepage": "https://github.com/Nyaitter/Nyaitter.js#readme",
   "type": "module",
-  "main": "./src/index.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "browser": "./dist/nyaitter.js",
   "exports": {
-    ".": "./src/index.js"
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    }
   },
   "files": [
-    "src"
+    "src",
+    "dist"
   ],
   "keywords": [
     "nyaitter",
@@ -19,9 +35,19 @@
   ],
   "author": "nyantorusabu <nyantorusabu@outlook.jp>",
   "scripts": {
+    "build": "npm run build:esm && npm run build:cjs && npm run build:browser",
+    "build:esm": "esbuild src/index.js --bundle --format=esm --outfile=dist/index.js",
+    "build:cjs": "esbuild src/index.js --bundle --format=cjs --outfile=dist/index.cjs",
+    "build:browser": "esbuild src/index.js --bundle --format=iife --global-name=Nyaitter --outfile=dist/nyaitter.js",
     "test": "node --test"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
   },
   "engines": {
     "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

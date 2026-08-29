@@ -7,14 +7,26 @@
  *
  * ## 使い方の流れ
  * 1. `initiate()` で認証 URL を生成し、ユーザーをそこへ案内する
- * 2. ユーザーが許可すると `redirect_uri` に `?code=...` が届く
- * 3. `exchangeToken()` で code をアクセストークン（`nyauth_...`）と交換する
+ * 2. ユーザーが許可すると `redirect_uri` に認証コードが届く
+ * 3. `exchangeToken()` で認証コードをアクセストークン（`nyauth_` で始まる値）と交換する
  * 4. 以降はそのトークンで別の `NyaitterClient` を作り、そのユーザーとして API を呼び出せる
  */
 export class NyaitterAuthAPI {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
     this._client = client;
+  }
+
+  getRequestResponse(requestId, options) {
+    return this._client.requestResponse(`/nyaitter-auth/requests/${encodeURIComponent(requestId)}`, options);
+  }
+
+  approveResponse(body) {
+    return this._client.requestResponse('/nyaitter-auth/approve', { method: 'POST', body });
+  }
+
+  denyResponse(body) {
+    return this._client.requestResponse('/nyaitter-auth/deny', { method: 'POST', body });
   }
 
   /**
@@ -125,4 +137,3 @@ export class NyaitterAuthAPI {
     return this._client._delete(`/nyaitter-auth/authorized-apps/${appAuthId}`);
   }
 }
-

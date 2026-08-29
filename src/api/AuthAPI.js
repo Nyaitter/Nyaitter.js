@@ -8,6 +8,55 @@ export class AuthAPI {
     this._client = client;
   }
 
+  getProvidersResponse() {
+    return this._client.requestResponse('/auth/providers');
+  }
+
+  pollLoginApprovalResponse(approvalId, approvalToken) {
+    return this._client.requestResponse(`/auth/login-approvals/${encodeURIComponent(approvalId)}/poll`, {
+      method: 'POST',
+      body: { approval_token: approvalToken },
+    });
+  }
+
+  generateScratchResponse(username) {
+    return this._client.requestResponse('/auth/scratch/generate', {
+      method: 'POST',
+      body: { type: 'generateCode', username },
+    });
+  }
+
+  verifyScratchResponse(body) {
+    return this._client.requestResponse('/auth/scratch/verify', { method: 'POST', body });
+  }
+
+  initiateEmailResponse(email) {
+    return this._client.requestResponse('/auth/email/initiate', { method: 'POST', body: { email } });
+  }
+
+  verifyEmailResponse(body) {
+    return this._client.requestResponse('/auth/email/verify', { method: 'POST', body });
+  }
+
+  initiatePasskeyResponse(body = {}) {
+    return this._client.requestResponse('/auth/passkey/initiate', { method: 'POST', body });
+  }
+
+  verifyPasskeyResponse(body) {
+    return this._client.requestResponse('/auth/passkey/verify', { method: 'POST', body });
+  }
+
+  initiateNyaitterResponse(body) {
+    return this._client.requestResponse('/auth/nyaitter/initiate', { method: 'POST', body });
+  }
+
+  verifyProviderResponse(provider, body) {
+    return this._client.requestResponse(`/auth/${encodeURIComponent(provider)}/verify`, {
+      method: 'POST',
+      body,
+    });
+  }
+
   /**
    * ログインしてセッショントークンを取得します。
    *

@@ -1,7 +1,7 @@
 # Nyaitter.js
 
 **Nyaitter.js** は、[Nyaitter](https://github.com/Nyaitter/Server) の API を JavaScript / TypeScript から手軽に使える公式クライアントライブラリです。  
-Bot トークン（`bot_...`）、NyaitterAuth アクセストークン（`nyauth_...`）、またはセッショントークンを使用して、Nyaitter のすべての機能（投稿、投票、ユーザー、DM、グループ、通知、アップロード、ランキング、通報、異議申し立て、認証申請、インポスター、Push通知、ルール、URLカード、oEmbed、UI集計、NyaitterAuth、リアルタイム WebSocket など）をシンプルなコードで呼び出せます。
+Bot トークン（`bot_` で始まる値）、NyaitterAuth アクセストークン（`nyauth_` で始まる値）、またはセッショントークンを使用して、Nyaitter の機能をシンプルなコードで呼び出せます。
 
 ```js
 import { NyaitterClient } from 'nyaitter.js';
@@ -29,6 +29,35 @@ await client.posts.create({ content: 'Nyaitter.js からこんにちは！🐾' 
 
 ```bash
 npm install nyaitter.js
+```
+
+## Node.js とブラウザ CDN
+
+Node.js では ES Modules の `import` と CommonJS の `require` の両方を使えます。
+
+```js
+import { NyaitterClient } from 'nyaitter.js';
+// CommonJS: const { NyaitterClient } = require('nyaitter.js');
+```
+
+ブラウザでは CDN の script を読み込むと `Nyaitter` から同じ API を使えます。
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/nyaitter.js/dist/nyaitter.js"></script>
+<script>
+  const client = new Nyaitter.NyaitterClient({
+    baseUrl: 'https://nyaitter.example.com',
+    token: 'bot_xxxxxxxxxxxxxxxx',
+  });
+</script>
+```
+
+CDN で ES Modules として読み込む場合は、次のように `src/index.js` を指定できます。
+
+```html
+<script type="module">
+  import { NyaitterClient } from 'https://cdn.jsdelivr.net/npm/nyaitter.js/src/index.js';
+</script>
 ```
 
 ---

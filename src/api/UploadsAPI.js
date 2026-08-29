@@ -8,6 +8,17 @@ export class UploadsAPI {
     this._client = client;
   }
 
+  uploadPartResponse(uploadId, file, { contentType = 'application/octet-stream', asUserId = null } = {}) {
+    return this._client.requestResponse(`/uploads/${encodeURIComponent(uploadId)}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': contentType,
+        ...(Number.isInteger(asUserId) && asUserId > 0 ? { 'X-As-User-Id': String(asUserId) } : {}),
+      },
+      body: file,
+    });
+  }
+
   /**
    * 画像などのファイルを Nyaitter サーバーにアップロードします。
    *
