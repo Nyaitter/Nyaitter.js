@@ -9,7 +9,7 @@ export class RankingAPI {
   }
 
   /**
-   * 自分のランキング順位（フォロワー・投稿・いいね・スター）を取得します。
+   * 自分のランキング順位を取得します。
    *
    * @returns {Promise<{ followers: { rank: number|null, follower_count: number }, posts: { rank: number|null, post_count: number }, likes: { rank: number|null, like_count: number }, stars: { rank: number|null, star_count: number } }>}
    *
@@ -26,7 +26,7 @@ export class RankingAPI {
    *
    * @param {'followers'|'posts'|'likes'|'stars'} type - ランキング項目
    * @param {object} [params]
-   * @param {number} [params.limit=50] - 取得件数（最大 100）
+   * @param {number} [params.limit=50] - 取得件数
    * @returns {Promise<{ data: Array<{ rank: number, id: number, name: string, scid?: string, count: number }> }>}
    *
    * @example

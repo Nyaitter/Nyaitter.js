@@ -27,7 +27,7 @@ export class PollsAPI {
    *
    * @param {string} pollId - 投票 ID
    * @param {object} params
-   * @param {number[]|number} [params.optionIds] - 投票する選択肢のインデックス配列（または単一の番号）
+   * @param {number[]|number} [params.optionIds] - 投票する選択肢のインデックス配列
    * @param {string} [params.otherText] - 「その他」選択時の自由記述テキスト
    * @returns {Promise<{ poll: object }>}
    *

@@ -56,7 +56,7 @@ export class SystemAPI {
   }
 
   /**
-   * サーバーのレディネス（DB接続準備）状態を取得します。
+   * サーバーのレディネス状態を取得します。
    *
    * @returns {Promise<{ status: string, timestamp: string }>}
    */
@@ -74,7 +74,7 @@ export class SystemAPI {
   }
 
   /**
-   * 指定した URL の OGP カード情報（タイトル・説明・画像・著者など）を取得します。
+   * 指定した URL の OGP カード情報を取得します。
    *
    * @param {string} url - 展開対象の URL
    * @returns {Promise<{ card: object }>}
@@ -94,7 +94,7 @@ export class SystemAPI {
   }
 
   /**
-   * ナビゲーション表示用の未読カウントサマリー（通知未読数・DM未読数）を取得します。
+   * ナビゲーション表示用の未読カウントサマリーを取得します。
    *
    * @returns {Promise<{ notification_unread_count: number, dm_unread_count: number }>}
    */

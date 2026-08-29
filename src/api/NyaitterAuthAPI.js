@@ -8,7 +8,7 @@
  * ## 使い方の流れ
  * 1. `initiate()` で認証 URL を生成し、ユーザーをそこへ案内する
  * 2. ユーザーが許可すると `redirect_uri` に認証コードが届く
- * 3. `exchangeToken()` で認証コードをアクセストークン（`nyauth_` で始まる値）と交換する
+ * 3. `exchangeToken()` で認証コードをアクセストークンと交換する
  * 4. 以降はそのトークンで別の `NyaitterClient` を作り、そのユーザーとして API を呼び出せる
  */
 export class NyaitterAuthAPI {

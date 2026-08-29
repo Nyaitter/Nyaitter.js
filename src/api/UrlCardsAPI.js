@@ -9,7 +9,7 @@ export class UrlCardsAPI {
   }
 
   /**
-   * 指定した URL の OGP カード情報（タイトル・説明・画像・サイト名・著者など）を取得します。
+   * 指定した URL の OGP カード情報を取得します。
    *
    * @param {string} url - 展開対象の URL
    * @returns {Promise<{ card: object|null }>}

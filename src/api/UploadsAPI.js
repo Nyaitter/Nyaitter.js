@@ -23,8 +23,8 @@ export class UploadsAPI {
    * 画像などのファイルを Nyaitter サーバーにアップロードします。
    *
    * @param {object} params
-   * @param {string|Buffer|Uint8Array|ArrayBuffer|Blob} params.file - ファイルデータ（Base64 文字列、Buffer、Uint8Array、ArrayBuffer、または Blob/File）
-   * @param {string} params.fileName - ファイル名（例: 'photo.png'）
+   * @param {string|Buffer|Uint8Array|ArrayBuffer|Blob} params.file - ファイルデータ
+   * @param {string} params.fileName - ファイル名
    * @param {string} [params.contentType='image/png'] - MIME タイプ
    * @param {number} [params.asUserId] - インポスター代理アップロード時のユーザー ID
    * @returns {Promise<{ id: string, url: string, contentType: string, size: number }>}
@@ -110,7 +110,7 @@ export class UploadsAPI {
   }
 
   /**
-   * 添付画像ファイルのサムネイル（プレビュー）URL を取得します。
+   * 添付画像ファイルのサムネイルURL を取得します。
    *
    * @param {string} fileId - ファイル ID
    * @returns {string} プレビュー URL

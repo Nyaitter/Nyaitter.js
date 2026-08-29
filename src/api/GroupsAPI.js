@@ -1,10 +1,10 @@
 /**
  * グループオブジェクトまたはアイコンデータから、適切なグループアイコン URL を生成して返します。
  *
- * @param {object|string} group - グループオブジェクト（{ id, icon_data, iconData }）またはアイコン文字列
+ * @param {object|string} group - グループオブジェクトまたはアイコン文字列
  * @param {object} [options]
- * @param {string} [options.baseUrl] - サーバーのベース URL（省略時は空文字列）
- * @returns {string} グループアイコンの URL（設定されていない場合は空文字列）
+ * @param {string} [options.baseUrl] - サーバーのベース URL
+ * @returns {string} グループアイコンの URL
  *
  * @example
  * const url = getGroupIconUrl(group, { baseUrl: 'https://nyaitter.example.com' });
@@ -40,7 +40,7 @@ export class GroupsAPI {
   /**
    * グループオブジェクトまたはアイコン文字列から、適切なグループアイコン URL を返します。
    *
-   * @param {object|string} group - グループオブジェクト（{ id, icon_data, iconData }）またはアイコン文字列
+   * @param {object|string} group - グループオブジェクトまたはアイコン文字列
    * @returns {string} グループアイコンの URL
    *
    * @example
@@ -93,7 +93,7 @@ export class GroupsAPI {
   }
 
   /**
-   * グループ招待に応答（承認または拒否）します。
+   * グループ招待に応答します。
    *
    * @param {string} inviteId - 招待 ID
    * @param {'accept'|'decline'} decision - 応答判定
@@ -180,7 +180,7 @@ export class GroupsAPI {
   }
 
   /**
-   * グループを削除します（オーナーのみ）。
+   * グループを削除します。
    *
    * @param {string} groupId - グループ ID
    * @returns {Promise<{ success: boolean }>}
@@ -190,7 +190,7 @@ export class GroupsAPI {
   }
 
   /**
-   * グループに参加します（または参加申請を送信します）。
+   * グループに参加します。
    *
    * @param {string} groupId - グループ ID
    * @returns {Promise<{ success: boolean, status: 'joined'|'requested', group?: object, request?: object }>}
@@ -223,7 +223,7 @@ export class GroupsAPI {
   }
 
   /**
-   * 保留中の参加申請一覧を取得します（管理者のみ）。
+   * 保留中の参加申請一覧を取得します。
    *
    * @param {string} groupId - グループ ID
    * @returns {Promise<{ requests: object[] }>}
@@ -233,7 +233,7 @@ export class GroupsAPI {
   }
 
   /**
-   * 参加申請に応答（承認または拒否）します（管理者のみ）。
+   * 参加申請に応答します。
    *
    * @param {string} groupId - グループ ID
    * @param {string} requestId - 参加申請 ID
@@ -262,7 +262,7 @@ export class GroupsAPI {
    * @param {string} groupId - グループ ID
    * @param {object} params
    * @param {string} params.name - ロール名
-   * @param {string[]} params.permissions - 権限リスト（例: ['post', 'invite', 'manage_posts']）
+   * @param {string[]} params.permissions - 権限リスト
    * @param {number} [params.sortOrder=0] - 表示順序
    * @returns {Promise<{ role: object }>}
    */

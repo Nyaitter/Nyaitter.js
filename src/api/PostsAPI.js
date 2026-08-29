@@ -9,13 +9,13 @@ export class PostsAPI {
   }
 
   /**
-   * タイムライン（おすすめ・フォロー中）の投稿一覧を取得します。
+   * タイムラインの投稿一覧を取得します。
    *
    * @param {object} [params]
-   * @param {'foryou'|'following'} [params.tab='foryou'] - タブ（'foryou': おすすめ、'following': フォロー中）
-   * @param {number} [params.limit=20] - 取得件数（最大 100）
+   * @param {'foryou'|'following'} [params.tab='foryou'] - タブ
+   * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @param {number} [params.beforeId] - このID以前の投稿を取得（ページネーション）
+   * @param {number} [params.beforeId] - このID以前の投稿を取得
    * @returns {Promise<{ posts: object[] }>}
    *
    * @example
@@ -95,7 +95,7 @@ export class PostsAPI {
   /**
    * 指定したハッシュタグの投稿一覧を取得します。
    *
-   * @param {string} tag - ハッシュタグ（#なし）
+   * @param {string} tag - ハッシュタグ
    * @param {object} [params]
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
@@ -136,14 +136,14 @@ export class PostsAPI {
    * @param {object} [params]
    * @param {'timeline'|'recommended'|'search'|'profile'|'ids'} [params.mode='timeline'] - ページモード
    * @param {'foryou'|'following'} [params.tab='foryou'] - タイムライン時のタブ
-   * @param {string} [params.query] - 検索クエリ（mode: 'search'）
-   * @param {number} [params.userId] - ユーザーID（mode: 'profile'）
+   * @param {string} [params.query] - 検索クエリ
+   * @param {number} [params.userId] - ユーザーID
    * @param {'all'|'posts_only'|'replies_only'} [params.subType='all'] - プロフィール絞り込み
    * @param {number} [params.pinId] - 固定投稿ID
-   * @param {number[]|string} [params.ids] - 投稿IDリスト（mode: 'ids'）
+   * @param {number[]|string} [params.ids] - 投稿IDリスト
    * @param {number} [params.limit=30] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @param {number} [params.beforeId] - カーソル（投稿ID）
+   * @param {number} [params.beforeId] - カーソル
    * @returns {Promise<{ posts: object[], has_more: boolean, next_cursor: any, context?: any, meta?: any }>}
    */
   getPage({
@@ -212,7 +212,7 @@ export class PostsAPI {
   }
 
   /**
-   * 投稿のスレッド（親投稿＋リプライ階層）を取得します。
+   * 投稿のスレッドを取得します。
    *
    * @param {number} postId - 投稿 ID
    * @param {object} [params]
@@ -225,7 +225,7 @@ export class PostsAPI {
   }
 
   /**
-   * 投稿のリアクション詳細（いいねしたユーザー等）を取得します。
+   * 投稿のリアクション詳細を取得します。
    *
    * @param {number} postId - 投稿 ID
    * @returns {Promise<{ reactions: object }>}
@@ -252,12 +252,12 @@ export class PostsAPI {
    *
    * @param {object} params
    * @param {string} [params.content] - 投稿本文
-   * @param {number} [params.replyToId] - 返信先の投稿 ID（返信投稿の場合）
+   * @param {number} [params.replyToId] - 返信先の投稿 ID
    * @param {number} [params.quoteId] - 引用・リポストする投稿 ID
    * @param {Array<object>} [params.attachments] - 添付ファイル/投票一覧
-   * @param {boolean} [params.mask=false] - 閲覧注意（CW）マスクフラグ
+   * @param {boolean} [params.mask=false] - 閲覧注意マスクフラグ
    * @param {boolean} [params.lock=false] - フォロワー限定公開フラグ
-   * @param {boolean} [params.announcement=false] - アナウンス投稿フラグ（管理者のみ）
+   * @param {boolean} [params.announcement=false] - アナウンス投稿フラグ
    * @param {string} [params.groupId] - グループ内投稿時のグループID
    * @param {boolean} [params.groupAnnouncement=false] - グループ内アナウンスフラグ
    * @param {'everyone'|'following'|'mentioned_only'} [params.replyControl='everyone'] - 返信可能範囲
@@ -304,7 +304,7 @@ export class PostsAPI {
    * @param {string} params.content - 更新後の投稿本文
    * @param {Array<object>} [params.attachments] - 添付ファイル
    * @param {boolean} [params.mask] - 閲覧注意マスク
-   * @param {boolean} [params.lock] - 鍵（フォロワー限定）
+   * @param {boolean} [params.lock] - 鍵
    * @returns {Promise<{ success: boolean, post: object }>}
    */
   update(postId, { content, attachments, mask, lock } = {}) {
@@ -334,7 +334,7 @@ export class PostsAPI {
   }
 
   /**
-   * 投稿にいいねをつけます（トグル）。
+   * 投稿にいいねをつけます。
    *
    * @param {number} postId - いいねする投稿 ID
    * @returns {Promise<{ success: boolean, liked: boolean, count: number, updated_likes: number[] }>}
@@ -354,7 +354,7 @@ export class PostsAPI {
   }
 
   /**
-   * 投稿をスターします（トグル）。
+   * 投稿をスターします。
    *
    * @param {number} postId - スターする投稿 ID
    * @returns {Promise<{ success: boolean, starred: boolean, count: number, updated_stars: number[] }>}
@@ -384,7 +384,7 @@ export class PostsAPI {
   }
 
   /**
-   * リポストを取り消します（リポスト投稿自体を削除します）。
+   * リポストを取り消します。
    *
    * @param {number} repostPostId - 削除するリポスト投稿の ID
    * @returns {Promise<{ success: boolean }>}
@@ -406,7 +406,7 @@ export class PostsAPI {
   }
 
   /**
-   * 投稿をプロフィールにピン留め / 解除します（トグル）。
+   * 投稿をプロフィールにピン留め / 解除します。
    *
    * @param {number} postId - ピン留めする投稿 ID
    * @returns {Promise<{ success: boolean, pinned: boolean, pin_id: number|null }>}
@@ -427,7 +427,7 @@ export class PostsAPI {
   }
 
   /**
-   * 複数の投稿 ID を一括で詳細データに変換（ハイドレーション）します。
+   * 複数の投稿 ID を一括で詳細データに変換します。
    *
    * @param {number[]} postIds - 取得する投稿 ID 配列
    * @returns {Promise<{ posts: object[] }>}

@@ -1,9 +1,9 @@
 /**
  * ユーザーオブジェクトまたはユーザー ID から、適切なアカウントアイコン URL を生成して返します。
  *
- * @param {object|number|string} user - ユーザーオブジェクト（{ id, icon_data, icon_available }）またはユーザー ID
+ * @param {object|number|string} user - ユーザーオブジェクトまたはユーザー ID
  * @param {object} [options]
- * @param {string} [options.baseUrl] - サーバーのベース URL（省略時は空文字列）
+ * @param {string} [options.baseUrl] - サーバーのベース URL
  * @returns {string} アイコンの URL
  */
 export function getUserIconUrl(user, { baseUrl = '' } = {}) {
@@ -87,7 +87,7 @@ export class UsersAPI {
   }
 
   /**
-   * ユーザー名（ハンドル / Scratch ID / NyaitterID）でユーザーを検索・取得します。
+   * ユーザー名でユーザーを検索・取得します。
    *
    * @param {string} handle - ユーザー名
    * @returns {Promise<{ user: object|null }>}
@@ -163,7 +163,7 @@ export class UsersAPI {
   }
 
   /**
-   * ユーザーのカウント情報（投稿数・メディア数・フォロワー数・フォロー数）を取得します。
+   * ユーザーのカウント情報を取得します。
    *
    * @param {number} userId - ユーザー ID
    * @returns {Promise<{ post_count: number, media_count: number, follower_count: number, following_count: number }>}
@@ -173,7 +173,7 @@ export class UsersAPI {
   }
 
   /**
-   * ユーザーが投稿したメディア（画像など）一覧を取得します。
+   * ユーザーが投稿したメディア一覧を取得します。
    *
    * @param {number} userId - ユーザー ID
    * @param {object} [params]
@@ -186,7 +186,7 @@ export class UsersAPI {
   }
 
   /**
-   * ユーザーが非公開アカウント（鍵垢）かどうかを取得します。
+   * ユーザーが非公開アカウントかどうかを取得します。
    *
    * @param {number} userId - ユーザー ID
    * @returns {Promise<{ lock: boolean }>}
@@ -347,7 +347,7 @@ export class UsersAPI {
   }
 
   /**
-   * ユーザーをフォローします（トグル）。
+   * ユーザーをフォローします。
    *
    * @param {number} userId - フォローするユーザー ID
    * @returns {Promise<{ success: boolean, following: boolean, updated_follows: number[] }>}

@@ -164,7 +164,7 @@ var AuthAPI = class {
     });
   }
   /**
-   * 2要素認証（2FA）のセットアップを開始します。
+   * 2要素認証のセットアップを開始します。
    *
    * @returns {Promise<{ secret: string, qr_code_uri: string }>}
    */
@@ -172,7 +172,7 @@ var AuthAPI = class {
     return this._client._post("/auth/2fa/setup", {});
   }
   /**
-   * 2要素認証（2FA）を有効化します。
+   * 2要素認証を有効化します。
    *
    * @param {object} params
    * @param {string} params.code - 認証アプリの 6 桁コード
@@ -183,7 +183,7 @@ var AuthAPI = class {
     return this._client._post("/auth/2fa/verify", { code, secret });
   }
   /**
-   * 2要素認証（2FA）を無効化します。
+   * 2要素認証を無効化します。
    *
    * @param {string} code - 認証アプリの 6 桁コード
    * @returns {Promise<{ success: boolean }>}
@@ -200,7 +200,7 @@ var AuthAPI = class {
     return this._client._get("/auth/sessions");
   }
   /**
-   * 指定したログインセッションを取り消し（切断）します。
+   * 指定したログインセッションを取り消しします。
    *
    * @param {string} sessionId - セッション ID
    * @returns {Promise<{ success: boolean }>}
@@ -269,13 +269,13 @@ var PostsAPI = class {
     this._client = client;
   }
   /**
-   * タイムライン（おすすめ・フォロー中）の投稿一覧を取得します。
+   * タイムラインの投稿一覧を取得します。
    *
    * @param {object} [params]
-   * @param {'foryou'|'following'} [params.tab='foryou'] - タブ（'foryou': おすすめ、'following': フォロー中）
-   * @param {number} [params.limit=20] - 取得件数（最大 100）
+   * @param {'foryou'|'following'} [params.tab='foryou'] - タブ
+   * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @param {number} [params.beforeId] - このID以前の投稿を取得（ページネーション）
+   * @param {number} [params.beforeId] - このID以前の投稿を取得
    * @returns {Promise<{ posts: object[] }>}
    *
    * @example
@@ -350,7 +350,7 @@ var PostsAPI = class {
   /**
    * 指定したハッシュタグの投稿一覧を取得します。
    *
-   * @param {string} tag - ハッシュタグ（#なし）
+   * @param {string} tag - ハッシュタグ
    * @param {object} [params]
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
@@ -388,14 +388,14 @@ var PostsAPI = class {
    * @param {object} [params]
    * @param {'timeline'|'recommended'|'search'|'profile'|'ids'} [params.mode='timeline'] - ページモード
    * @param {'foryou'|'following'} [params.tab='foryou'] - タイムライン時のタブ
-   * @param {string} [params.query] - 検索クエリ（mode: 'search'）
-   * @param {number} [params.userId] - ユーザーID（mode: 'profile'）
+   * @param {string} [params.query] - 検索クエリ
+   * @param {number} [params.userId] - ユーザーID
    * @param {'all'|'posts_only'|'replies_only'} [params.subType='all'] - プロフィール絞り込み
    * @param {number} [params.pinId] - 固定投稿ID
-   * @param {number[]|string} [params.ids] - 投稿IDリスト（mode: 'ids'）
+   * @param {number[]|string} [params.ids] - 投稿IDリスト
    * @param {number} [params.limit=30] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @param {number} [params.beforeId] - カーソル（投稿ID）
+   * @param {number} [params.beforeId] - カーソル
    * @returns {Promise<{ posts: object[], has_more: boolean, next_cursor: any, context?: any, meta?: any }>}
    */
   getPage({
@@ -460,7 +460,7 @@ var PostsAPI = class {
     return this._client._get(`/posts/${postId}/replies`, { limit, offset });
   }
   /**
-   * 投稿のスレッド（親投稿＋リプライ階層）を取得します。
+   * 投稿のスレッドを取得します。
    *
    * @param {number} postId - 投稿 ID
    * @param {object} [params]
@@ -472,7 +472,7 @@ var PostsAPI = class {
     return this._client._get(`/posts/${postId}/thread`, { limit, offset });
   }
   /**
-   * 投稿のリアクション詳細（いいねしたユーザー等）を取得します。
+   * 投稿のリアクション詳細を取得します。
    *
    * @param {number} postId - 投稿 ID
    * @returns {Promise<{ reactions: object }>}
@@ -497,12 +497,12 @@ var PostsAPI = class {
    *
    * @param {object} params
    * @param {string} [params.content] - 投稿本文
-   * @param {number} [params.replyToId] - 返信先の投稿 ID（返信投稿の場合）
+   * @param {number} [params.replyToId] - 返信先の投稿 ID
    * @param {number} [params.quoteId] - 引用・リポストする投稿 ID
    * @param {Array<object>} [params.attachments] - 添付ファイル/投票一覧
-   * @param {boolean} [params.mask=false] - 閲覧注意（CW）マスクフラグ
+   * @param {boolean} [params.mask=false] - 閲覧注意マスクフラグ
    * @param {boolean} [params.lock=false] - フォロワー限定公開フラグ
-   * @param {boolean} [params.announcement=false] - アナウンス投稿フラグ（管理者のみ）
+   * @param {boolean} [params.announcement=false] - アナウンス投稿フラグ
    * @param {string} [params.groupId] - グループ内投稿時のグループID
    * @param {boolean} [params.groupAnnouncement=false] - グループ内アナウンスフラグ
    * @param {'everyone'|'following'|'mentioned_only'} [params.replyControl='everyone'] - 返信可能範囲
@@ -548,7 +548,7 @@ var PostsAPI = class {
    * @param {string} params.content - 更新後の投稿本文
    * @param {Array<object>} [params.attachments] - 添付ファイル
    * @param {boolean} [params.mask] - 閲覧注意マスク
-   * @param {boolean} [params.lock] - 鍵（フォロワー限定）
+   * @param {boolean} [params.lock] - 鍵
    * @returns {Promise<{ success: boolean, post: object }>}
    */
   update(postId, { content, attachments, mask, lock } = {}) {
@@ -575,7 +575,7 @@ var PostsAPI = class {
     return this._client._delete(`/posts/${postId}`);
   }
   /**
-   * 投稿にいいねをつけます（トグル）。
+   * 投稿にいいねをつけます。
    *
    * @param {number} postId - いいねする投稿 ID
    * @returns {Promise<{ success: boolean, liked: boolean, count: number, updated_likes: number[] }>}
@@ -593,7 +593,7 @@ var PostsAPI = class {
     return this.like(postId);
   }
   /**
-   * 投稿をスターします（トグル）。
+   * 投稿をスターします。
    *
    * @param {number} postId - スターする投稿 ID
    * @returns {Promise<{ success: boolean, starred: boolean, count: number, updated_stars: number[] }>}
@@ -620,7 +620,7 @@ var PostsAPI = class {
     return this._client._post(`/posts/${postId}/repost`, {});
   }
   /**
-   * リポストを取り消します（リポスト投稿自体を削除します）。
+   * リポストを取り消します。
    *
    * @param {number} repostPostId - 削除するリポスト投稿の ID
    * @returns {Promise<{ success: boolean }>}
@@ -640,7 +640,7 @@ var PostsAPI = class {
     return this._client._get(`/posts/${postId}/reposts`, { limit });
   }
   /**
-   * 投稿をプロフィールにピン留め / 解除します（トグル）。
+   * 投稿をプロフィールにピン留め / 解除します。
    *
    * @param {number} postId - ピン留めする投稿 ID
    * @returns {Promise<{ success: boolean, pinned: boolean, pin_id: number|null }>}
@@ -659,7 +659,7 @@ var PostsAPI = class {
     return this._client._post("/posts/read", { post_ids: ids });
   }
   /**
-   * 複数の投稿 ID を一括で詳細データに変換（ハイドレーション）します。
+   * 複数の投稿 ID を一括で詳細データに変換します。
    *
    * @param {number[]} postIds - 取得する投稿 ID 配列
    * @returns {Promise<{ posts: object[] }>}
@@ -702,7 +702,7 @@ var PollsAPI = class {
    *
    * @param {string} pollId - 投票 ID
    * @param {object} params
-   * @param {number[]|number} [params.optionIds] - 投票する選択肢のインデックス配列（または単一の番号）
+   * @param {number[]|number} [params.optionIds] - 投票する選択肢のインデックス配列
    * @param {string} [params.otherText] - 「その他」選択時の自由記述テキスト
    * @returns {Promise<{ poll: object }>}
    *
@@ -785,7 +785,7 @@ var UsersAPI = class {
     return this._client._get("/auth/me");
   }
   /**
-   * ユーザー名（ハンドル / Scratch ID / NyaitterID）でユーザーを検索・取得します。
+   * ユーザー名でユーザーを検索・取得します。
    *
    * @param {string} handle - ユーザー名
    * @returns {Promise<{ user: object|null }>}
@@ -850,7 +850,7 @@ var UsersAPI = class {
     return this.getBatch(userIds);
   }
   /**
-   * ユーザーのカウント情報（投稿数・メディア数・フォロワー数・フォロー数）を取得します。
+   * ユーザーのカウント情報を取得します。
    *
    * @param {number} userId - ユーザー ID
    * @returns {Promise<{ post_count: number, media_count: number, follower_count: number, following_count: number }>}
@@ -859,7 +859,7 @@ var UsersAPI = class {
     return this._client._get(`/users/${userId}/counts`);
   }
   /**
-   * ユーザーが投稿したメディア（画像など）一覧を取得します。
+   * ユーザーが投稿したメディア一覧を取得します。
    *
    * @param {number} userId - ユーザー ID
    * @param {object} [params]
@@ -871,7 +871,7 @@ var UsersAPI = class {
     return this._client._get(`/users/${userId}/media`, { limit, offset });
   }
   /**
-   * ユーザーが非公開アカウント（鍵垢）かどうかを取得します。
+   * ユーザーが非公開アカウントかどうかを取得します。
    *
    * @param {number} userId - ユーザー ID
    * @returns {Promise<{ lock: boolean }>}
@@ -1018,7 +1018,7 @@ var UsersAPI = class {
     return this._client._delete(`/users/${userId}/mute`);
   }
   /**
-   * ユーザーをフォローします（トグル）。
+   * ユーザーをフォローします。
    *
    * @param {number} userId - フォローするユーザー ID
    * @returns {Promise<{ success: boolean, following: boolean, updated_follows: number[] }>}
@@ -1095,7 +1095,7 @@ var DmAPI = class {
     this._client = client;
   }
   /**
-   * DM の一覧（グループ一覧）を取得します。
+   * DM の一覧を取得します。
    *
    * @param {object} [params]
    * @param {number} [params.limit=20] - 取得件数
@@ -1141,7 +1141,7 @@ var DmAPI = class {
     return this._client._get("/dm/find", { user_id: userId });
   }
   /**
-   * DM グループの詳細（メッセージ一覧）を取得します。
+   * DM グループの詳細を取得します。
    *
    * @param {string} dmId - DM グループ ID
    * @param {object} [params]
@@ -1300,7 +1300,7 @@ var NotificationsAPI = class {
    * 通知一覧を取得します。
    *
    * @param {object} [params]
-   * @param {number} [params.limit=50] - 取得件数（最大 100）
+   * @param {number} [params.limit=50] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {string|Date} [params.since] - この日時以降の通知のみ取得
    * @returns {Promise<{ notifications: object[], notification_unread_count: number }>}
@@ -1333,7 +1333,7 @@ var NotificationsAPI = class {
    * @param {object} params
    * @param {number} params.recipientId - 送信先ユーザー ID
    * @param {'mention'|'repost'|'dm_invite'|'dm_removed'|'dm_host_transfer'|'admin_notice'} params.type - 通知タイプ
-   * @param {object} [params.target] - 通知対象（例: `{ kind: 'post', id: 123 }` または `{ kind: 'dm', id: 'group-id' }`）
+   * @param {object} [params.target] - 通知対象
    * @returns {Promise<{ success: boolean, notification: object|null }>}
    *
    * @example
@@ -1421,7 +1421,7 @@ var GroupsAPI = class {
   /**
    * グループオブジェクトまたはアイコン文字列から、適切なグループアイコン URL を返します。
    *
-   * @param {object|string} group - グループオブジェクト（{ id, icon_data, iconData }）またはアイコン文字列
+   * @param {object|string} group - グループオブジェクトまたはアイコン文字列
    * @returns {string} グループアイコンの URL
    *
    * @example
@@ -1470,7 +1470,7 @@ var GroupsAPI = class {
     return this._client._get("/groups/invites/mine");
   }
   /**
-   * グループ招待に応答（承認または拒否）します。
+   * グループ招待に応答します。
    *
    * @param {string} inviteId - 招待 ID
    * @param {'accept'|'decline'} decision - 応答判定
@@ -1552,7 +1552,7 @@ var GroupsAPI = class {
     });
   }
   /**
-   * グループを削除します（オーナーのみ）。
+   * グループを削除します。
    *
    * @param {string} groupId - グループ ID
    * @returns {Promise<{ success: boolean }>}
@@ -1561,7 +1561,7 @@ var GroupsAPI = class {
     return this._client._delete(`/groups/${groupId}`);
   }
   /**
-   * グループに参加します（または参加申請を送信します）。
+   * グループに参加します。
    *
    * @param {string} groupId - グループ ID
    * @returns {Promise<{ success: boolean, status: 'joined'|'requested', group?: object, request?: object }>}
@@ -1591,7 +1591,7 @@ var GroupsAPI = class {
     });
   }
   /**
-   * 保留中の参加申請一覧を取得します（管理者のみ）。
+   * 保留中の参加申請一覧を取得します。
    *
    * @param {string} groupId - グループ ID
    * @returns {Promise<{ requests: object[] }>}
@@ -1600,7 +1600,7 @@ var GroupsAPI = class {
     return this._client._get(`/groups/${groupId}/join-requests`);
   }
   /**
-   * 参加申請に応答（承認または拒否）します（管理者のみ）。
+   * 参加申請に応答します。
    *
    * @param {string} groupId - グループ ID
    * @param {string} requestId - 参加申請 ID
@@ -1627,7 +1627,7 @@ var GroupsAPI = class {
    * @param {string} groupId - グループ ID
    * @param {object} params
    * @param {string} params.name - ロール名
-   * @param {string[]} params.permissions - 権限リスト（例: ['post', 'invite', 'manage_posts']）
+   * @param {string[]} params.permissions - 権限リスト
    * @param {number} [params.sortOrder=0] - 表示順序
    * @returns {Promise<{ role: object }>}
    */
@@ -1755,8 +1755,8 @@ var UploadsAPI = class {
    * 画像などのファイルを Nyaitter サーバーにアップロードします。
    *
    * @param {object} params
-   * @param {string|Buffer|Uint8Array|ArrayBuffer|Blob} params.file - ファイルデータ（Base64 文字列、Buffer、Uint8Array、ArrayBuffer、または Blob/File）
-   * @param {string} params.fileName - ファイル名（例: 'photo.png'）
+   * @param {string|Buffer|Uint8Array|ArrayBuffer|Blob} params.file - ファイルデータ
+   * @param {string} params.fileName - ファイル名
    * @param {string} [params.contentType='image/png'] - MIME タイプ
    * @param {number} [params.asUserId] - インポスター代理アップロード時のユーザー ID
    * @returns {Promise<{ id: string, url: string, contentType: string, size: number }>}
@@ -1837,7 +1837,7 @@ var UploadsAPI = class {
     });
   }
   /**
-   * 添付画像ファイルのサムネイル（プレビュー）URL を取得します。
+   * 添付画像ファイルのサムネイルURL を取得します。
    *
    * @param {string} fileId - ファイル ID
    * @returns {string} プレビュー URL
@@ -1855,7 +1855,7 @@ var RankingAPI = class {
     this._client = client;
   }
   /**
-   * 自分のランキング順位（フォロワー・投稿・いいね・スター）を取得します。
+   * 自分のランキング順位を取得します。
    *
    * @returns {Promise<{ followers: { rank: number|null, follower_count: number }, posts: { rank: number|null, post_count: number }, likes: { rank: number|null, like_count: number }, stars: { rank: number|null, star_count: number } }>}
    *
@@ -1871,7 +1871,7 @@ var RankingAPI = class {
    *
    * @param {'followers'|'posts'|'likes'|'stars'} type - ランキング項目
    * @param {object} [params]
-   * @param {number} [params.limit=50] - 取得件数（最大 100）
+   * @param {number} [params.limit=50] - 取得件数
    * @returns {Promise<{ data: Array<{ rank: number, id: number, name: string, scid?: string, count: number }> }>}
    *
    * @example
@@ -1933,7 +1933,7 @@ var ReportsAPI = class {
    * 不適切な投稿またはユーザーを通報・報告します。
    *
    * @param {object} params
-   * @param {'post'|'user'} params.targetKind - 報告対象の種類（'post' または 'user'）
+   * @param {'post'|'user'} params.targetKind - 報告対象の種類
    * @param {number|string} params.targetId - 報告対象の投稿 ID またはユーザー ID
    * @param {string} params.description - 通報理由・詳細説明
    * @param {number} [params.postAsUserId] - 代理通報ユーザー ID
@@ -1955,7 +1955,7 @@ var ReportsAPI = class {
     });
   }
   /**
-   * 通報一覧を取得します（モデレーター用）。
+   * 通報一覧を取得します。
    *
    * @param {object} [params]
    * @param {string} [params.status] - 絞り込みステータス
@@ -1967,7 +1967,7 @@ var ReportsAPI = class {
     return this._client._get("/reports", { status, limit, offset });
   }
   /**
-   * 通報の詳細を取得します（モデレーター用）。
+   * 通報の詳細を取得します。
    *
    * @param {number} reportId - 通報 ID
    * @returns {Promise<{ report: object }>}
@@ -1976,7 +1976,7 @@ var ReportsAPI = class {
     return this._client._get(`/reports/${reportId}`);
   }
   /**
-   * 通報の審査ステータスを更新します（モデレーター用）。
+   * 通報の審査ステータスを更新します。
    *
    * @param {number} reportId - 通報 ID
    * @param {object} params
@@ -2063,7 +2063,7 @@ var VerificationAPI = class {
     return this._client._post("/verification-applications", {});
   }
   /**
-   * 認証バッジ申請一覧を取得します（モデレーター用）。
+   * 認証バッジ申請一覧を取得します。
    *
    * @param {object} [params]
    * @param {string} [params.status] - ステータス絞り込み
@@ -2075,7 +2075,7 @@ var VerificationAPI = class {
     return this._client._get("/verification-applications", { status, limit, offset });
   }
   /**
-   * 認証バッジ申請の詳細を取得します（モデレーター用）。
+   * 認証バッジ申請の詳細を取得します。
    *
    * @param {number} applicationId - 申請 ID
    * @returns {Promise<{ application: object }>}
@@ -2084,7 +2084,7 @@ var VerificationAPI = class {
     return this._client._get(`/verification-applications/${applicationId}`);
   }
   /**
-   * 認証バッジ申請の審査結果を更新します（モデレーター用）。
+   * 認証バッジ申請の審査結果を更新します。
    *
    * @param {number} applicationId - 申請 ID
    * @param {object} params
@@ -2187,7 +2187,7 @@ var PushAPI = class {
     this._client = client;
   }
   /**
-   * Web Push 通知のサーバー設定（VAPID 公開鍵、購読数）を取得します。
+   * Web Push 通知のサーバー設定を取得します。
    *
    * @returns {Promise<{ enabled: boolean, vapid_public_key: string|null, subscription_count: number }>}
    */
@@ -2243,7 +2243,7 @@ var UrlCardsAPI = class {
     this._client = client;
   }
   /**
-   * 指定した URL の OGP カード情報（タイトル・説明・画像・サイト名・著者など）を取得します。
+   * 指定した URL の OGP カード情報を取得します。
    *
    * @param {string} url - 展開対象の URL
    * @returns {Promise<{ card: object|null }>}
@@ -2292,7 +2292,7 @@ var UIAPI = class {
     this._client = client;
   }
   /**
-   * ナビゲーション表示用の未読カウントサマリー（通知未読数・DM未読数）を取得します。
+   * ナビゲーション表示用の未読カウントサマリーを取得します。
    *
    * @returns {Promise<{ notification_unread_count: number, dm_unread_count: number }>}
    *
@@ -2351,7 +2351,7 @@ var SystemAPI = class {
     return this._client._get("/health");
   }
   /**
-   * サーバーのレディネス（DB接続準備）状態を取得します。
+   * サーバーのレディネス状態を取得します。
    *
    * @returns {Promise<{ status: string, timestamp: string }>}
    */
@@ -2367,7 +2367,7 @@ var SystemAPI = class {
     return this._client._get("/rules");
   }
   /**
-   * 指定した URL の OGP カード情報（タイトル・説明・画像・著者など）を取得します。
+   * 指定した URL の OGP カード情報を取得します。
    *
    * @param {string} url - 展開対象の URL
    * @returns {Promise<{ card: object }>}
@@ -2385,7 +2385,7 @@ var SystemAPI = class {
     return this._client._get("/oembed", { url });
   }
   /**
-   * ナビゲーション表示用の未読カウントサマリー（通知未読数・DM未読数）を取得します。
+   * ナビゲーション表示用の未読カウントサマリーを取得します。
    *
    * @returns {Promise<{ notification_unread_count: number, dm_unread_count: number }>}
    */
@@ -2580,7 +2580,7 @@ var RealtimeClient = class {
    *
    * @param {object} [options]
    * @param {boolean} [options.autoReconnect=true] - 切断時に自動再接続するか
-   * @param {number}  [options.reconnectDelayMs=3000] - 再接続までの待機時間（ミリ秒）
+   * @param {number}  [options.reconnectDelayMs=3000] - 再接続までの待機時間
    * @returns {Promise<void>} 接続完了で resolve
    */
   connect({ autoReconnect = true, reconnectDelayMs = 3e3 } = {}) {
@@ -2667,7 +2667,7 @@ var RealtimeClient = class {
           authorId: data.author_id
         });
         break;
-      // pong はライブラリが内部で処理するだけ（ユーザーには公開しない）
+      // pong はライブラリが内部で処理するだけ
       case "pong":
         break;
     }
@@ -2709,10 +2709,10 @@ var RealtimeClient = class {
 var NyaitterClient = class {
   /**
    * @param {object} options
-   * @param {string} options.baseUrl - Nyaitter サーバーの URL（例: 'https://nyaitter.example.com'）
-   * @param {string} [options.token] - Bot トークンまたはアクセストークン（`bot_` または `nyauth_` で始まる値）
-   * @param {typeof fetch} [options.fetch] - カスタム fetch 関数（省略時はグローバル fetch）
-   * @param {any} [options.WebSocket] - カスタム WebSocket クラス（Node.js 環境用）
+   * @param {string} options.baseUrl - Nyaitter サーバーの URL
+   * @param {string} [options.token] - Bot トークンまたはアクセストークン
+   * @param {typeof fetch} [options.fetch] - カスタム fetch 関数
+   * @param {any} [options.WebSocket] - カスタム WebSocket クラス
    */
   constructor({ baseUrl, token = null, fetch: customFetch = null, WebSocket: customWebSocket = null } = {}) {
     if (!baseUrl) throw new Error("baseUrl \u306F\u5FC5\u9808\u3067\u3059");
@@ -2745,21 +2745,21 @@ var NyaitterClient = class {
     this.nyaitterAuth = new NyaitterAuthAPI(this);
   }
   /**
-   * アクセストークン（Bot トークン）を設定します。
+   * アクセストークンを設定します。
    * @param {string|null} token
    */
   setToken(token) {
     this._token = token;
   }
   /**
-   * 現在のアクセストークン（Bot トークン）を取得します。
+   * 現在のアクセストークンを取得します。
    * @returns {string|null}
    */
   getToken() {
     return this._token;
   }
   /**
-   * 認証中のユーザー（Bot の所有者アカウント）の情報を取得します。
+   * 認証中のユーザーの情報を取得します。
    * `client.users.getMe()` のエイリアスです。
    *
    * @returns {Promise<{ user: object, isBot: boolean, tokenType: string }>}
@@ -2790,7 +2790,7 @@ var NyaitterClient = class {
    *
    * @param {object} [options]
    * @param {boolean} [options.autoReconnect=true] - 切断時の自動再接続
-   * @param {number} [options.reconnectDelayMs=3000] - 再接続待機時間（ミリ秒）
+   * @param {number} [options.reconnectDelayMs=3000] - 再接続待機時間
    * @returns {RealtimeClient}
    */
   realtime(options = {}) {
@@ -2799,8 +2799,8 @@ var NyaitterClient = class {
   /**
    * API リクエストを送信する内部メソッド。
    *
-   * @param {string} method - HTTP メソッド（'GET', 'POST', 'PUT', 'PATCH', 'DELETE'）
-   * @param {string} path - エンドポイントのパス（例: '/posts'）
+   * @param {string} method - HTTP メソッド
+   * @param {string} path - エンドポイントのパス
    * @param {object} [options]
    * @param {any} [options.body] - 送信する JSON ボディ
    * @param {object} [options.query] - URL クエリパラメータ

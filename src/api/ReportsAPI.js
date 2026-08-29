@@ -1,5 +1,5 @@
 /**
- * 報告（通報）API
+ * 報告API
  * 不適切な投稿やユーザーの通報、およびモデレーション審査状況の取得・更新を行います。
  */
 export class ReportsAPI {
@@ -12,7 +12,7 @@ export class ReportsAPI {
    * 不適切な投稿またはユーザーを通報・報告します。
    *
    * @param {object} params
-   * @param {'post'|'user'} params.targetKind - 報告対象の種類（'post' または 'user'）
+   * @param {'post'|'user'} params.targetKind - 報告対象の種類
    * @param {number|string} params.targetId - 報告対象の投稿 ID またはユーザー ID
    * @param {string} params.description - 通報理由・詳細説明
    * @param {number} [params.postAsUserId] - 代理通報ユーザー ID
@@ -35,7 +35,7 @@ export class ReportsAPI {
   }
 
   /**
-   * 通報一覧を取得します（モデレーター用）。
+   * 通報一覧を取得します。
    *
    * @param {object} [params]
    * @param {string} [params.status] - 絞り込みステータス
@@ -48,7 +48,7 @@ export class ReportsAPI {
   }
 
   /**
-   * 通報の詳細を取得します（モデレーター用）。
+   * 通報の詳細を取得します。
    *
    * @param {number} reportId - 通報 ID
    * @returns {Promise<{ report: object }>}
@@ -58,7 +58,7 @@ export class ReportsAPI {
   }
 
   /**
-   * 通報の審査ステータスを更新します（モデレーター用）。
+   * 通報の審査ステータスを更新します。
    *
    * @param {number} reportId - 通報 ID
    * @param {object} params

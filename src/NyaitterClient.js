@@ -1,7 +1,7 @@
 /**
  * NyaitterClient - Nyaitter API を JavaScript から簡単に使うための統合クライアント
  *
- * Bot トークン（`bot_` で始まる値）または NyaitterAuth アクセストークン（`nyauth_` で始まる値）を指定して初期化します。
+ * Bot トークンまたは NyaitterAuth アクセストークンを指定して初期化します。
  *
  * @example
  * const client = new NyaitterClient({
@@ -38,10 +38,10 @@ import { RealtimeClient } from './RealtimeClient.js';
 export class NyaitterClient {
   /**
    * @param {object} options
-   * @param {string} options.baseUrl - Nyaitter サーバーの URL（例: 'https://nyaitter.example.com'）
-   * @param {string} [options.token] - Bot トークンまたはアクセストークン（`bot_` または `nyauth_` で始まる値）
-   * @param {typeof fetch} [options.fetch] - カスタム fetch 関数（省略時はグローバル fetch）
-   * @param {any} [options.WebSocket] - カスタム WebSocket クラス（Node.js 環境用）
+   * @param {string} options.baseUrl - Nyaitter サーバーの URL
+   * @param {string} [options.token] - Bot トークンまたはアクセストークン
+   * @param {typeof fetch} [options.fetch] - カスタム fetch 関数
+   * @param {any} [options.WebSocket] - カスタム WebSocket クラス
    */
   constructor({ baseUrl, token = null, fetch: customFetch = null, WebSocket: customWebSocket = null } = {}) {
     if (!baseUrl) throw new Error('baseUrl は必須です');
@@ -79,7 +79,7 @@ export class NyaitterClient {
   }
 
   /**
-   * アクセストークン（Bot トークン）を設定します。
+   * アクセストークンを設定します。
    * @param {string|null} token
    */
   setToken(token) {
@@ -87,7 +87,7 @@ export class NyaitterClient {
   }
 
   /**
-   * 現在のアクセストークン（Bot トークン）を取得します。
+   * 現在のアクセストークンを取得します。
    * @returns {string|null}
    */
   getToken() {
@@ -95,7 +95,7 @@ export class NyaitterClient {
   }
 
   /**
-   * 認証中のユーザー（Bot の所有者アカウント）の情報を取得します。
+   * 認証中のユーザーの情報を取得します。
    * `client.users.getMe()` のエイリアスです。
    *
    * @returns {Promise<{ user: object, isBot: boolean, tokenType: string }>}
@@ -129,7 +129,7 @@ export class NyaitterClient {
    *
    * @param {object} [options]
    * @param {boolean} [options.autoReconnect=true] - 切断時の自動再接続
-   * @param {number} [options.reconnectDelayMs=3000] - 再接続待機時間（ミリ秒）
+   * @param {number} [options.reconnectDelayMs=3000] - 再接続待機時間
    * @returns {RealtimeClient}
    */
   realtime(options = {}) {
@@ -139,8 +139,8 @@ export class NyaitterClient {
   /**
    * API リクエストを送信する内部メソッド。
    *
-   * @param {string} method - HTTP メソッド（'GET', 'POST', 'PUT', 'PATCH', 'DELETE'）
-   * @param {string} path - エンドポイントのパス（例: '/posts'）
+   * @param {string} method - HTTP メソッド
+   * @param {string} path - エンドポイントのパス
    * @param {object} [options]
    * @param {any} [options.body] - 送信する JSON ボディ
    * @param {object} [options.query] - URL クエリパラメータ

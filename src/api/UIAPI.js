@@ -9,7 +9,7 @@ export class UIAPI {
   }
 
   /**
-   * ナビゲーション表示用の未読カウントサマリー（通知未読数・DM未読数）を取得します。
+   * ナビゲーション表示用の未読カウントサマリーを取得します。
    *
    * @returns {Promise<{ notification_unread_count: number, dm_unread_count: number }>}
    *

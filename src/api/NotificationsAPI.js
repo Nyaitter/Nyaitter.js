@@ -12,7 +12,7 @@ export class NotificationsAPI {
    * 通知一覧を取得します。
    *
    * @param {object} [params]
-   * @param {number} [params.limit=50] - 取得件数（最大 100）
+   * @param {number} [params.limit=50] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {string|Date} [params.since] - この日時以降の通知のみ取得
    * @returns {Promise<{ notifications: object[], notification_unread_count: number }>}
@@ -47,7 +47,7 @@ export class NotificationsAPI {
    * @param {object} params
    * @param {number} params.recipientId - 送信先ユーザー ID
    * @param {'mention'|'repost'|'dm_invite'|'dm_removed'|'dm_host_transfer'|'admin_notice'} params.type - 通知タイプ
-   * @param {object} [params.target] - 通知対象（例: `{ kind: 'post', id: 123 }` または `{ kind: 'dm', id: 'group-id' }`）
+   * @param {object} [params.target] - 通知対象
    * @returns {Promise<{ success: boolean, notification: object|null }>}
    *
    * @example

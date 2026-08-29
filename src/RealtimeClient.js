@@ -89,7 +89,7 @@ export class RealtimeClient {
    *
    * @param {object} [options]
    * @param {boolean} [options.autoReconnect=true] - 切断時に自動再接続するか
-   * @param {number}  [options.reconnectDelayMs=3000] - 再接続までの待機時間（ミリ秒）
+   * @param {number}  [options.reconnectDelayMs=3000] - 再接続までの待機時間
    * @returns {Promise<void>} 接続完了で resolve
    */
   connect({ autoReconnect = true, reconnectDelayMs = 3000 } = {}) {
@@ -192,7 +192,7 @@ export class RealtimeClient {
         });
         break;
 
-      // pong はライブラリが内部で処理するだけ（ユーザーには公開しない）
+      // pong はライブラリが内部で処理するだけ
       case 'pong':
         break;
     }

@@ -1,7 +1,7 @@
 # Nyaitter.js
 
 **Nyaitter.js** は、[Nyaitter](https://github.com/Nyaitter/Server) の API を JavaScript / TypeScript から手軽に使える公式クライアントライブラリです。  
-Bot トークン（`bot_` で始まる値）、NyaitterAuth アクセストークン（`nyauth_` で始まる値）、またはセッショントークンを使用して、Nyaitter の機能をシンプルなコードで呼び出せます。
+Bot トークン、NyaitterAuth アクセストークン、またはセッショントークンを使用して、Nyaitter の機能をシンプルなコードで呼び出せます。
 
 ```js
 import { NyaitterClient } from 'nyaitter.js';
@@ -19,9 +19,9 @@ await client.posts.create({ content: 'Nyaitter.js からこんにちは！🐾' 
 
 ## 必要な環境
 
-- **Node.js 18 以上**（または `fetch` / `WebSocket` が動作するブラウザ・Runtime）
+- **Node.js 18 以上**
 - **Nyaitter サーバーの URL**
-- **Bot トークン**（Nyaitter の設定画面 → 「API キー」から即座に発行可能）
+- **Bot トークン**
 
 ---
 
@@ -96,21 +96,21 @@ const { trends } = await client.posts.getTrendingHashtags({ limit: 10 });
 const { posts: searchResults } = await client.posts.search({ query: 'ねこ', limit: 20 });
 const { posts: tagPosts } = await client.posts.getByTag('猫');
 
-// 投稿の詳細・リプライ・スレッド（ツリー階層）・リアクション・引用を取得
+// 投稿の詳細・リプライ・スレッド・リアクション・引用を取得
 const { post } = await client.posts.get(123);
 const { replies } = await client.posts.getReplies(123);
 const thread = await client.posts.getThread(123);
 const { reactions } = await client.posts.getReactions(123);
 const { quotes } = await client.posts.getQuotes(123);
 
-// 新規投稿（返信・引用・画像添付・閲覧注意CW・鍵垢限定など）
+// 新規投稿
 await client.posts.create({
   content: 'はじめての投稿！',
-  mask: false, // CW（閲覧注意）
+  mask: false, // CW
   lock: false, // フォロワー限定
 });
 
-// リプライ（返信）
+// リプライ
 await client.posts.create({ content: '返信です', replyToId: 123 });
 
 // 引用リポスト
@@ -122,11 +122,11 @@ await client.posts.update(123, { content: '編集後の本文' });
 // 投稿の削除
 await client.posts.delete(123);
 
-// いいね / いいね解除（トグル）
+// いいね / いいね解除
 await client.posts.like(123);
 await client.posts.unlike(123);
 
-// スター（ブックマーク）/ 解除（トグル）
+// スター/ 解除
 await client.posts.star(123);
 await client.posts.unstar(123);
 
@@ -415,7 +415,7 @@ const { card } = await client.urlCards.get('https://example.com');
 // oEmbed 埋め込みメタデータを取得
 const embed = await client.oembed.get('https://nyaitter.example.com/posts/123');
 
-// ナビゲーション用サマリー（通知未読数・DM未読数）
+// ナビゲーション用サマリー
 const summary = await client.ui.getSummary();
 
 // サーバーの稼働状態・ヘルスチェック
@@ -451,7 +451,7 @@ await realtime.connect();
 
 ---
 
-### 15. 他のユーザーとの連携（NyaitterAuth: `client.nyaitterAuth`）
+### 15. 他のユーザーとの連携
 
 自分の Web サービスやアプリに他の Nyaitter ユーザーをログイン・連携させます。
 

@@ -9,7 +9,7 @@ export class PushAPI {
   }
 
   /**
-   * Web Push 通知のサーバー設定（VAPID 公開鍵、購読数）を取得します。
+   * Web Push 通知のサーバー設定を取得します。
    *
    * @returns {Promise<{ enabled: boolean, vapid_public_key: string|null, subscription_count: number }>}
    */

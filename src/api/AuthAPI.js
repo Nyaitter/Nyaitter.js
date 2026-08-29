@@ -188,7 +188,7 @@ export class AuthAPI {
   }
 
   /**
-   * 2要素認証（2FA）のセットアップを開始します。
+   * 2要素認証のセットアップを開始します。
    *
    * @returns {Promise<{ secret: string, qr_code_uri: string }>}
    */
@@ -197,7 +197,7 @@ export class AuthAPI {
   }
 
   /**
-   * 2要素認証（2FA）を有効化します。
+   * 2要素認証を有効化します。
    *
    * @param {object} params
    * @param {string} params.code - 認証アプリの 6 桁コード
@@ -209,7 +209,7 @@ export class AuthAPI {
   }
 
   /**
-   * 2要素認証（2FA）を無効化します。
+   * 2要素認証を無効化します。
    *
    * @param {string} code - 認証アプリの 6 桁コード
    * @returns {Promise<{ success: boolean }>}
@@ -228,7 +228,7 @@ export class AuthAPI {
   }
 
   /**
-   * 指定したログインセッションを取り消し（切断）します。
+   * 指定したログインセッションを取り消しします。
    *
    * @param {string} sessionId - セッション ID
    * @returns {Promise<{ success: boolean }>}

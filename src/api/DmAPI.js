@@ -1,5 +1,5 @@
 /**
- * ダイレクトメッセージ（DM）API
+ * ダイレクトメッセージAPI
  * DM グループの作成・取得・編集・脱退・メッセージ送受信・リアクション・未読管理などを行います。
  */
 export class DmAPI {
@@ -9,7 +9,7 @@ export class DmAPI {
   }
 
   /**
-   * DM の一覧（グループ一覧）を取得します。
+   * DM の一覧を取得します。
    *
    * @param {object} [params]
    * @param {number} [params.limit=20] - 取得件数
@@ -60,7 +60,7 @@ export class DmAPI {
   }
 
   /**
-   * DM グループの詳細（メッセージ一覧）を取得します。
+   * DM グループの詳細を取得します。
    *
    * @param {string} dmId - DM グループ ID
    * @param {object} [params]

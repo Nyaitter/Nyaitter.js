@@ -36,7 +36,7 @@ export class VerificationAPI {
   }
 
   /**
-   * 認証バッジ申請一覧を取得します（モデレーター用）。
+   * 認証バッジ申請一覧を取得します。
    *
    * @param {object} [params]
    * @param {string} [params.status] - ステータス絞り込み
@@ -49,7 +49,7 @@ export class VerificationAPI {
   }
 
   /**
-   * 認証バッジ申請の詳細を取得します（モデレーター用）。
+   * 認証バッジ申請の詳細を取得します。
    *
    * @param {number} applicationId - 申請 ID
    * @returns {Promise<{ application: object }>}
@@ -59,7 +59,7 @@ export class VerificationAPI {
   }
 
   /**
-   * 認証バッジ申請の審査結果を更新します（モデレーター用）。
+   * 認証バッジ申請の審査結果を更新します。
    *
    * @param {number} applicationId - 申請 ID
    * @param {object} params
