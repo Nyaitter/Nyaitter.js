@@ -390,23 +390,33 @@ export class UsersAPI {
   }
 
   /**
+   * ユーザーのブロック状態を切り替えます（ブロック/ブロック解除）。
+   *
+   * @param {number} userId - ブロック切り替えするユーザー ID
+   * @returns {Promise<{ success: boolean, blocked: boolean, block: number[], user_id: number }>}
+   */
+  toggleBlock(userId) {
+    return this._client._post(`/users/${userId}/block`, {});
+  }
+
+  /**
    * ユーザーをブロックします。
    *
    * @param {number} userId - ブロックするユーザー ID
-   * @returns {Promise<{ success: boolean }>}
+   * @returns {Promise<{ success: boolean, blocked: boolean, block: number[], user_id: number }>}
    */
   block(userId) {
-    return this._client._post(`/users/${userId}/block`, {});
+    return this.toggleBlock(userId);
   }
 
   /**
    * ユーザーのブロックを解除します。
    *
    * @param {number} userId - ブロック解除するユーザー ID
-   * @returns {Promise<{ success: boolean }>}
+   * @returns {Promise<{ success: boolean, blocked: boolean, block: number[], user_id: number }>}
    */
   unblock(userId) {
-    return this._client._delete(`/users/${userId}/block`);
+    return this.toggleBlock(userId);
   }
 
   /**

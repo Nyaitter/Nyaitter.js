@@ -1,4 +1,4 @@
-// Nyaitter.js/src/api/AuthAPI.js
+// src/api/AuthAPI.js
 var AuthAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -262,7 +262,7 @@ var AuthAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/PostsAPI.js
+// src/api/PostsAPI.js
 var PostsAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -276,18 +276,20 @@ var PostsAPI = class {
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {number} [params.beforeId] - このID以前の投稿を取得
-   * @returns {Promise<{ posts: object[] }>}
+   * @param {string} [params.cursor] - キーセットカーソル
+   * @returns {Promise<{ posts: object[], has_more?: boolean, next_cursor?: any }>}
    *
    * @example
    * const { posts } = await client.posts.getTimeline({ tab: 'following' });
    */
-  getTimeline({ tab = "foryou", limit = 20, offset = 0, beforeId } = {}) {
+  getTimeline({ tab = "foryou", limit = 20, offset = 0, beforeId, cursor } = {}) {
     return this._client._get("/posts/page", {
       mode: "timeline",
       tab,
       limit,
       offset,
-      before_id: beforeId
+      before_id: beforeId,
+      ...cursor !== void 0 && cursor !== null ? { cursor } : {}
     });
   }
   /**
@@ -297,13 +299,15 @@ var PostsAPI = class {
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {number} [params.beforeId] - このID以前の投稿を取得
+   * @param {string} [params.cursor] - キーセットカーソル
    * @returns {Promise<{ posts: object[], has_next?: boolean, next_cursor?: any }>}
    */
-  getRecommended({ limit = 20, offset = 0, beforeId } = {}) {
+  getRecommended({ limit = 20, offset = 0, beforeId, cursor } = {}) {
     return this._client._get("/posts/recommended", {
       limit,
       offset,
-      before_id: beforeId
+      before_id: beforeId,
+      ...cursor !== void 0 && cursor !== null ? { cursor } : {}
     });
   }
   /**
@@ -334,17 +338,19 @@ var PostsAPI = class {
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {number} [params.beforeId] - このID以前の投稿を取得
+   * @param {string} [params.cursor] - キーセットカーソル
    * @returns {Promise<{ posts: object[], has_next?: boolean, next_cursor?: any }>}
    *
    * @example
    * const { posts } = await client.posts.search({ query: 'ねこ' });
    */
-  search({ query, limit = 20, offset = 0, beforeId } = {}) {
+  search({ query, limit = 20, offset = 0, beforeId, cursor } = {}) {
     return this._client._get("/posts/search", {
       q: query,
       limit,
       offset,
-      before_id: beforeId
+      before_id: beforeId,
+      ...cursor !== void 0 && cursor !== null ? { cursor } : {}
     });
   }
   /**
@@ -396,6 +402,7 @@ var PostsAPI = class {
    * @param {number} [params.limit=30] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {number} [params.beforeId] - カーソル
+   * @param {string} [params.cursor] - キーセットカーソル
    * @returns {Promise<{ posts: object[], has_more: boolean, next_cursor: any, context?: any, meta?: any }>}
    */
   getPage({
@@ -408,7 +415,8 @@ var PostsAPI = class {
     ids,
     limit = 30,
     offset = 0,
-    beforeId
+    beforeId,
+    cursor
   } = {}) {
     return this._client._get("/posts/page", {
       mode,
@@ -420,7 +428,8 @@ var PostsAPI = class {
       ids: Array.isArray(ids) ? ids.join(",") : ids,
       limit,
       offset,
-      before_id: beforeId
+      before_id: beforeId,
+      ...cursor !== void 0 && cursor !== null ? { cursor } : {}
     });
   }
   /**
@@ -430,10 +439,16 @@ var PostsAPI = class {
    * @param {'foryou'|'following'} [params.tab='foryou'] - タブ
    * @param {number} [params.limit=30] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ ids: number[], has_more: boolean }>}
+   * @param {string} [params.cursor] - キーセットカーソル
+   * @returns {Promise<{ ids: number[], has_more: boolean, next_cursor?: string }>}
    */
-  getIds({ tab = "foryou", limit = 30, offset = 0 } = {}) {
-    return this._client._get("/posts/ids", { tab, limit, offset });
+  getIds({ tab = "foryou", limit = 30, offset = 0, cursor } = {}) {
+    return this._client._get("/posts/ids", {
+      tab,
+      limit,
+      offset,
+      ...cursor !== void 0 && cursor !== null ? { cursor } : {}
+    });
   }
   /**
    * 投稿を取得します。
@@ -454,10 +469,15 @@ var PostsAPI = class {
    * @param {object} [params]
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ replies: object[], has_more: boolean, offset: number, limit: number }>}
+   * @param {string} [params.cursor] - キーセットカーソル
+   * @returns {Promise<{ replies: object[], has_more: boolean, next_cursor?: string|null, offset: number, limit: number }>}
    */
-  getReplies(postId, { limit = 20, offset = 0 } = {}) {
-    return this._client._get(`/posts/${postId}/replies`, { limit, offset });
+  getReplies(postId, { limit = 20, offset = 0, cursor } = {}) {
+    return this._client._get(`/posts/${postId}/replies`, {
+      limit,
+      offset,
+      ...cursor !== void 0 && cursor !== null ? { cursor } : {}
+    });
   }
   /**
    * 投稿のスレッドを取得します。
@@ -678,7 +698,7 @@ var PostsAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/PollsAPI.js
+// src/api/PollsAPI.js
 var PollsAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -720,7 +740,7 @@ var PollsAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/UsersAPI.js
+// src/api/UsersAPI.js
 function getUserIconUrl(user, { baseUrl = "" } = {}) {
   const base = baseUrl ? String(baseUrl).replace(/\/+$/, "") : "";
   if (!user && user !== 0) {
@@ -817,10 +837,16 @@ var UsersAPI = class {
    * @param {string} params.query - 検索キーワード
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ users: object[] }>}
+   * @param {string|null} [params.cursor=null] - ページネーションカーソル
+   * @returns {Promise<{ users: object[], has_more?: boolean, next_cursor?: string|null }>}
    */
-  search({ query, limit = 20, offset = 0 } = {}) {
-    return this._client._get("/users/search", { q: query, limit, offset });
+  search({ query, limit = 20, offset = 0, cursor = null } = {}) {
+    return this._client._get("/users/search", {
+      q: query,
+      limit,
+      offset: cursor ? void 0 : offset,
+      cursor: cursor || void 0
+    });
   }
   /**
    * おすすめユーザー一覧を取得します。
@@ -865,10 +891,17 @@ var UsersAPI = class {
    * @param {object} [params]
    * @param {number} [params.limit=15] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ media_items: object[] }>}
+   * @param {string} [params.type] - メディア種類 ('image' | 'video')
+   * @param {string} [params.cursor] - キーセットカーソル
+   * @returns {Promise<{ media_items: object[], next_cursor?: string|null }>}
    */
-  getMedia(userId, { limit = 15, offset = 0 } = {}) {
-    return this._client._get(`/users/${userId}/media`, { limit, offset });
+  getMedia(userId, { limit = 15, offset = 0, type, cursor } = {}) {
+    return this._client._get(`/users/${userId}/media`, {
+      limit,
+      offset,
+      ...type ? { type } : {},
+      ...cursor !== void 0 && cursor !== null ? { cursor } : {}
+    });
   }
   /**
    * ユーザーが非公開アカウントかどうかを取得します。
@@ -935,10 +968,15 @@ var UsersAPI = class {
    * @param {object} [params]
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ followers: object[], has_more: boolean }>}
+   * @param {string|null} [params.cursor=null] - ページネーションカーソル
+   * @returns {Promise<{ followers: object[], has_more: boolean, next_cursor?: string|null }>}
    */
-  getFollowers(userId, { limit = 20, offset = 0 } = {}) {
-    return this._client._get(`/users/${userId}/followers`, { limit, offset });
+  getFollowers(userId, { limit = 20, offset = 0, cursor = null } = {}) {
+    return this._client._get(`/users/${userId}/followers`, {
+      limit,
+      offset: cursor ? void 0 : offset,
+      cursor: cursor || void 0
+    });
   }
   /**
    * ユーザーのフォロー中一覧を取得します。
@@ -947,10 +985,15 @@ var UsersAPI = class {
    * @param {object} [params]
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ following: object[], has_more: boolean }>}
+   * @param {string|null} [params.cursor=null] - ページネーションカーソル
+   * @returns {Promise<{ following: object[], has_more: boolean, next_cursor?: string|null }>}
    */
-  getFollowing(userId, { limit = 20, offset = 0 } = {}) {
-    return this._client._get(`/users/${userId}/following`, { limit, offset });
+  getFollowing(userId, { limit = 20, offset = 0, cursor = null } = {}) {
+    return this._client._get(`/users/${userId}/following`, {
+      limit,
+      offset: cursor ? void 0 : offset,
+      cursor: cursor || void 0
+    });
   }
   /**
    * ユーザーの固定投稿一覧を取得します。
@@ -1036,22 +1079,31 @@ var UsersAPI = class {
     return this.follow(userId);
   }
   /**
+   * ユーザーのブロック状態を切り替えます（ブロック/ブロック解除）。
+   *
+   * @param {number} userId - ブロック切り替えするユーザー ID
+   * @returns {Promise<{ success: boolean, blocked: boolean, block: number[], user_id: number }>}
+   */
+  toggleBlock(userId) {
+    return this._client._post(`/users/${userId}/block`, {});
+  }
+  /**
    * ユーザーをブロックします。
    *
    * @param {number} userId - ブロックするユーザー ID
-   * @returns {Promise<{ success: boolean }>}
+   * @returns {Promise<{ success: boolean, blocked: boolean, block: number[], user_id: number }>}
    */
   block(userId) {
-    return this._client._post(`/users/${userId}/block`, {});
+    return this.toggleBlock(userId);
   }
   /**
    * ユーザーのブロックを解除します。
    *
    * @param {number} userId - ブロック解除するユーザー ID
-   * @returns {Promise<{ success: boolean }>}
+   * @returns {Promise<{ success: boolean, blocked: boolean, block: number[], user_id: number }>}
    */
   unblock(userId) {
-    return this._client._delete(`/users/${userId}/block`);
+    return this.toggleBlock(userId);
   }
   /**
    * 自分のプロフィールや設定を更新します。
@@ -1088,7 +1140,7 @@ var UsersAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/DmAPI.js
+// src/api/DmAPI.js
 var DmAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -1290,7 +1342,7 @@ var DmAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/NotificationsAPI.js
+// src/api/NotificationsAPI.js
 var NotificationsAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -1398,7 +1450,7 @@ var NotificationsAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/GroupsAPI.js
+// src/api/GroupsAPI.js
 function getGroupIconUrl(group, { baseUrl = "" } = {}) {
   const base = baseUrl ? String(baseUrl).replace(/\/+$/, "") : "";
   if (!group) return "";
@@ -1724,18 +1776,20 @@ var GroupsAPI = class {
    * @param {number} [params.limit=30] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {number} [params.beforeId] - この ID 以前の投稿を取得
+   * @param {string} [params.cursor] - キーセットカーソル
    * @returns {Promise<{ posts: object[], has_next: boolean, next_cursor: any }>}
    */
-  getPosts(groupId, { limit = 30, offset = 0, beforeId } = {}) {
+  getPosts(groupId, { limit = 30, offset = 0, beforeId, cursor } = {}) {
     return this._client._get(`/groups/${groupId}/posts`, {
       limit,
       offset,
-      before_id: beforeId
+      before_id: beforeId,
+      ...cursor !== void 0 && cursor !== null ? { cursor } : {}
     });
   }
 };
 
-// Nyaitter.js/src/api/UploadsAPI.js
+// src/api/UploadsAPI.js
 var UploadsAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -1848,7 +1902,7 @@ var UploadsAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/RankingAPI.js
+// src/api/RankingAPI.js
 var RankingAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -1923,7 +1977,7 @@ var RankingAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/ReportsAPI.js
+// src/api/ReportsAPI.js
 var ReportsAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -1994,7 +2048,7 @@ var ReportsAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/AppealsAPI.js
+// src/api/AppealsAPI.js
 var AppealsAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2031,7 +2085,7 @@ var AppealsAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/VerificationAPI.js
+// src/api/VerificationAPI.js
 var VerificationAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2100,7 +2154,7 @@ var VerificationAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/ImpostersAPI.js
+// src/api/ImpostersAPI.js
 var ImpostersAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2180,7 +2234,7 @@ var ImpostersAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/PushAPI.js
+// src/api/PushAPI.js
 var PushAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2216,7 +2270,7 @@ var PushAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/RulesAPI.js
+// src/api/RulesAPI.js
 var RulesAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2236,7 +2290,7 @@ var RulesAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/UrlCardsAPI.js
+// src/api/UrlCardsAPI.js
 var UrlCardsAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2257,7 +2311,7 @@ var UrlCardsAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/OEmbedAPI.js
+// src/api/OEmbedAPI.js
 var OEmbedAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2285,7 +2339,7 @@ var OEmbedAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/UIAPI.js
+// src/api/UIAPI.js
 var UIAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2305,7 +2359,7 @@ var UIAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/SystemAPI.js
+// src/api/SystemAPI.js
 var SystemAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2394,7 +2448,7 @@ var SystemAPI = class {
   }
 };
 
-// Nyaitter.js/src/api/NyaitterAuthAPI.js
+// src/api/NyaitterAuthAPI.js
 var NyaitterAuthAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2513,7 +2567,7 @@ var NyaitterAuthAPI = class {
   }
 };
 
-// Nyaitter.js/src/RealtimeClient.js
+// src/RealtimeClient.js
 var RealtimeClient = class {
   /**
    * @param {import('./NyaitterClient.js').NyaitterClient} client
@@ -2705,7 +2759,7 @@ var RealtimeClient = class {
   }
 };
 
-// Nyaitter.js/src/NyaitterClient.js
+// src/NyaitterClient.js
 var NyaitterClient = class {
   /**
    * @param {object} options

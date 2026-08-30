@@ -185,6 +185,7 @@ await client.users.unfollow(12);
 // ブロック / ブロック解除
 await client.users.block(12);
 await client.users.unblock(12);
+await client.users.toggleBlock(12);
 
 // ミュート / ミュート解除
 await client.users.mute(12);
