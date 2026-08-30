@@ -1,6 +1,6 @@
 {
   "name": "nyaitter.js",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "NyaitterAPI を JavaScript から簡単に使えるクライアントライブラリ",
   "license": "MIT",
   "repository": {
