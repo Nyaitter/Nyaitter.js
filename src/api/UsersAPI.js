@@ -126,10 +126,16 @@ export class UsersAPI {
    * @param {string} params.query - 検索キーワード
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ users: object[] }>}
+   * @param {string|null} [params.cursor=null] - ページネーションカーソル
+   * @returns {Promise<{ users: object[], has_more?: boolean, next_cursor?: string|null }>}
    */
-  search({ query, limit = 20, offset = 0 } = {}) {
-    return this._client._get('/users/search', { q: query, limit, offset });
+  search({ query, limit = 20, offset = 0, cursor = null } = {}) {
+    return this._client._get('/users/search', {
+      q: query,
+      limit,
+      offset: cursor ? undefined : offset,
+      cursor: cursor || undefined,
+    });
   }
 
   /**
@@ -262,10 +268,15 @@ export class UsersAPI {
    * @param {object} [params]
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ followers: object[], has_more: boolean }>}
+   * @param {string|null} [params.cursor=null] - ページネーションカーソル
+   * @returns {Promise<{ followers: object[], has_more: boolean, next_cursor?: string|null }>}
    */
-  getFollowers(userId, { limit = 20, offset = 0 } = {}) {
-    return this._client._get(`/users/${userId}/followers`, { limit, offset });
+  getFollowers(userId, { limit = 20, offset = 0, cursor = null } = {}) {
+    return this._client._get(`/users/${userId}/followers`, {
+      limit,
+      offset: cursor ? undefined : offset,
+      cursor: cursor || undefined,
+    });
   }
 
   /**
@@ -275,10 +286,15 @@ export class UsersAPI {
    * @param {object} [params]
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ following: object[], has_more: boolean }>}
+   * @param {string|null} [params.cursor=null] - ページネーションカーソル
+   * @returns {Promise<{ following: object[], has_more: boolean, next_cursor?: string|null }>}
    */
-  getFollowing(userId, { limit = 20, offset = 0 } = {}) {
-    return this._client._get(`/users/${userId}/following`, { limit, offset });
+  getFollowing(userId, { limit = 20, offset = 0, cursor = null } = {}) {
+    return this._client._get(`/users/${userId}/following`, {
+      limit,
+      offset: cursor ? undefined : offset,
+      cursor: cursor || undefined,
+    });
   }
 
   /**
