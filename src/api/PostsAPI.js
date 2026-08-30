@@ -16,18 +16,20 @@ export class PostsAPI {
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {number} [params.beforeId] - このID以前の投稿を取得
-   * @returns {Promise<{ posts: object[] }>}
+   * @param {string} [params.cursor] - キーセットカーソル
+   * @returns {Promise<{ posts: object[], has_more?: boolean, next_cursor?: any }>}
    *
    * @example
    * const { posts } = await client.posts.getTimeline({ tab: 'following' });
    */
-  getTimeline({ tab = 'foryou', limit = 20, offset = 0, beforeId } = {}) {
+  getTimeline({ tab = 'foryou', limit = 20, offset = 0, beforeId, cursor } = {}) {
     return this._client._get('/posts/page', {
       mode: 'timeline',
       tab,
       limit,
       offset,
       before_id: beforeId,
+      ...(cursor !== undefined && cursor !== null ? { cursor } : {}),
     });
   }
 
@@ -38,13 +40,15 @@ export class PostsAPI {
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {number} [params.beforeId] - このID以前の投稿を取得
+   * @param {string} [params.cursor] - キーセットカーソル
    * @returns {Promise<{ posts: object[], has_next?: boolean, next_cursor?: any }>}
    */
-  getRecommended({ limit = 20, offset = 0, beforeId } = {}) {
+  getRecommended({ limit = 20, offset = 0, beforeId, cursor } = {}) {
     return this._client._get('/posts/recommended', {
       limit,
       offset,
       before_id: beforeId,
+      ...(cursor !== undefined && cursor !== null ? { cursor } : {}),
     });
   }
 
@@ -78,17 +82,19 @@ export class PostsAPI {
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {number} [params.beforeId] - このID以前の投稿を取得
+   * @param {string} [params.cursor] - キーセットカーソル
    * @returns {Promise<{ posts: object[], has_next?: boolean, next_cursor?: any }>}
    *
    * @example
    * const { posts } = await client.posts.search({ query: 'ねこ' });
    */
-  search({ query, limit = 20, offset = 0, beforeId } = {}) {
+  search({ query, limit = 20, offset = 0, beforeId, cursor } = {}) {
     return this._client._get('/posts/search', {
       q: query,
       limit,
       offset,
       before_id: beforeId,
+      ...(cursor !== undefined && cursor !== null ? { cursor } : {}),
     });
   }
 
@@ -144,6 +150,7 @@ export class PostsAPI {
    * @param {number} [params.limit=30] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {number} [params.beforeId] - カーソル
+   * @param {string} [params.cursor] - キーセットカーソル
    * @returns {Promise<{ posts: object[], has_more: boolean, next_cursor: any, context?: any, meta?: any }>}
    */
   getPage({
@@ -157,6 +164,7 @@ export class PostsAPI {
     limit = 30,
     offset = 0,
     beforeId,
+    cursor,
   } = {}) {
     return this._client._get('/posts/page', {
       mode,
@@ -169,6 +177,7 @@ export class PostsAPI {
       limit,
       offset,
       before_id: beforeId,
+      ...(cursor !== undefined && cursor !== null ? { cursor } : {}),
     });
   }
 
@@ -179,10 +188,16 @@ export class PostsAPI {
    * @param {'foryou'|'following'} [params.tab='foryou'] - タブ
    * @param {number} [params.limit=30] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ ids: number[], has_more: boolean }>}
+   * @param {string} [params.cursor] - キーセットカーソル
+   * @returns {Promise<{ ids: number[], has_more: boolean, next_cursor?: string }>}
    */
-  getIds({ tab = 'foryou', limit = 30, offset = 0 } = {}) {
-    return this._client._get('/posts/ids', { tab, limit, offset });
+  getIds({ tab = 'foryou', limit = 30, offset = 0, cursor } = {}) {
+    return this._client._get('/posts/ids', {
+      tab,
+      limit,
+      offset,
+      ...(cursor !== undefined && cursor !== null ? { cursor } : {}),
+    });
   }
 
   /**
@@ -205,10 +220,15 @@ export class PostsAPI {
    * @param {object} [params]
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ replies: object[], has_more: boolean, offset: number, limit: number }>}
+   * @param {string} [params.cursor] - キーセットカーソル
+   * @returns {Promise<{ replies: object[], has_more: boolean, next_cursor?: string|null, offset: number, limit: number }>}
    */
-  getReplies(postId, { limit = 20, offset = 0 } = {}) {
-    return this._client._get(`/posts/${postId}/replies`, { limit, offset });
+  getReplies(postId, { limit = 20, offset = 0, cursor } = {}) {
+    return this._client._get(`/posts/${postId}/replies`, {
+      limit,
+      offset,
+      ...(cursor !== undefined && cursor !== null ? { cursor } : {}),
+    });
   }
 
   /**

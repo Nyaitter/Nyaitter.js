@@ -366,13 +366,15 @@ export class GroupsAPI {
    * @param {number} [params.limit=30] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {number} [params.beforeId] - この ID 以前の投稿を取得
+   * @param {string} [params.cursor] - キーセットカーソル
    * @returns {Promise<{ posts: object[], has_next: boolean, next_cursor: any }>}
    */
-  getPosts(groupId, { limit = 30, offset = 0, beforeId } = {}) {
+  getPosts(groupId, { limit = 30, offset = 0, beforeId, cursor } = {}) {
     return this._client._get(`/groups/${groupId}/posts`, {
       limit,
       offset,
       before_id: beforeId,
+      ...(cursor !== undefined && cursor !== null ? { cursor } : {}),
     });
   }
 }

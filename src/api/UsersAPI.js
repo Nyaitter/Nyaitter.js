@@ -179,10 +179,17 @@ export class UsersAPI {
    * @param {object} [params]
    * @param {number} [params.limit=15] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ media_items: object[] }>}
+   * @param {string} [params.type] - メディア種類 ('image' | 'video')
+   * @param {string} [params.cursor] - キーセットカーソル
+   * @returns {Promise<{ media_items: object[], next_cursor?: string|null }>}
    */
-  getMedia(userId, { limit = 15, offset = 0 } = {}) {
-    return this._client._get(`/users/${userId}/media`, { limit, offset });
+  getMedia(userId, { limit = 15, offset = 0, type, cursor } = {}) {
+    return this._client._get(`/users/${userId}/media`, {
+      limit,
+      offset,
+      ...(type ? { type } : {}),
+      ...(cursor !== undefined && cursor !== null ? { cursor } : {}),
+    });
   }
 
   /**
