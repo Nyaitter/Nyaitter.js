@@ -200,12 +200,19 @@ export class NyaitterClient {
       }
     }
 
+    const isBinary =
+      (typeof Blob !== 'undefined' && body instanceof Blob) ||
+      (typeof ArrayBuffer !== 'undefined' && (body instanceof ArrayBuffer || ArrayBuffer.isView(body)));
+
     const reqHeaders = {
-      'Content-Type': 'application/json',
       ...headers,
     };
 
-    if (this._token) {
+    if (body !== undefined && !isBinary && !reqHeaders['Content-Type'] && !reqHeaders['content-type']) {
+      reqHeaders['Content-Type'] = 'application/json';
+    }
+
+    if (this._token && !reqHeaders['Authorization'] && !reqHeaders['authorization']) {
       reqHeaders['Authorization'] = `Bearer ${this._token}`;
     }
 
@@ -218,9 +225,6 @@ export class NyaitterClient {
     };
 
     if (body !== undefined) {
-      const isBinary =
-        (typeof Blob !== 'undefined' && body instanceof Blob) ||
-        (typeof ArrayBuffer !== 'undefined' && (body instanceof ArrayBuffer || ArrayBuffer.isView(body)));
       fetchOptions.body = typeof body === 'string' || isBinary ? body : JSON.stringify(body);
     }
 

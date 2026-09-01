@@ -2954,11 +2954,14 @@ var Nyaitter = (() => {
           }
         }
       }
+      const isBinary = typeof Blob !== "undefined" && body instanceof Blob || typeof ArrayBuffer !== "undefined" && (body instanceof ArrayBuffer || ArrayBuffer.isView(body));
       const reqHeaders = {
-        "Content-Type": "application/json",
         ...headers
       };
-      if (this._token) {
+      if (body !== void 0 && !isBinary && !reqHeaders["Content-Type"] && !reqHeaders["content-type"]) {
+        reqHeaders["Content-Type"] = "application/json";
+      }
+      if (this._token && !reqHeaders["Authorization"] && !reqHeaders["authorization"]) {
         reqHeaders["Authorization"] = `Bearer ${this._token}`;
       }
       const fetchOptions = {
@@ -2969,7 +2972,6 @@ var Nyaitter = (() => {
         cache
       };
       if (body !== void 0) {
-        const isBinary = typeof Blob !== "undefined" && body instanceof Blob || typeof ArrayBuffer !== "undefined" && (body instanceof ArrayBuffer || ArrayBuffer.isView(body));
         fetchOptions.body = typeof body === "string" || isBinary ? body : JSON.stringify(body);
       }
       return this._fetch(url.toString(), fetchOptions);
