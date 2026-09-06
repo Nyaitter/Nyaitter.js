@@ -110,7 +110,13 @@ export class RealtimeClient {
         throw new Error('WebSocket 実装が見つかりません。globalThis.WebSocket または client オプションに WebSocket を渡してください。');
       }
 
-      const wsOptions = token ? { headers: { Authorization: `Bearer ${token}` } } : undefined;
+      // ブラウザ標準WebSocketの第2引数はプロトコル配列であり、Node.js wsの
+      // headersオプションは受け付けない。ブラウザではCookie認証を利用する。
+      const isBrowserWebSocket = typeof globalThis.WebSocket === 'function'
+        && WSClass === globalThis.WebSocket;
+      const wsOptions = token && !isBrowserWebSocket
+        ? { headers: { Authorization: `Bearer ${token}` } }
+        : undefined;
       const ws = wsOptions ? new WSClass(url, wsOptions) : new WSClass(url);
       this._ws = ws;
 

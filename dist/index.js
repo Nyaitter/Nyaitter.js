@@ -1,4 +1,4 @@
-// src/api/AuthAPI.js
+// Nyaitter.js/src/api/AuthAPI.js
 var AuthAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -262,7 +262,7 @@ var AuthAPI = class {
   }
 };
 
-// src/api/PostsAPI.js
+// Nyaitter.js/src/api/PostsAPI.js
 var PostsAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -698,7 +698,7 @@ var PostsAPI = class {
   }
 };
 
-// src/api/PollsAPI.js
+// Nyaitter.js/src/api/PollsAPI.js
 var PollsAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -740,7 +740,7 @@ var PollsAPI = class {
   }
 };
 
-// src/api/UsersAPI.js
+// Nyaitter.js/src/api/UsersAPI.js
 function getUserIconUrl(user, { baseUrl = "" } = {}) {
   const base = baseUrl ? String(baseUrl).replace(/\/+$/, "") : "";
   if (!user && user !== 0) {
@@ -1140,7 +1140,7 @@ var UsersAPI = class {
   }
 };
 
-// src/api/DmAPI.js
+// Nyaitter.js/src/api/DmAPI.js
 var DmAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -1342,7 +1342,7 @@ var DmAPI = class {
   }
 };
 
-// src/api/NotificationsAPI.js
+// Nyaitter.js/src/api/NotificationsAPI.js
 var NotificationsAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -1450,7 +1450,7 @@ var NotificationsAPI = class {
   }
 };
 
-// src/api/GroupsAPI.js
+// Nyaitter.js/src/api/GroupsAPI.js
 function getGroupIconUrl(group, { baseUrl = "" } = {}) {
   const base = baseUrl ? String(baseUrl).replace(/\/+$/, "") : "";
   if (!group) return "";
@@ -1789,7 +1789,7 @@ var GroupsAPI = class {
   }
 };
 
-// src/api/UploadsAPI.js
+// Nyaitter.js/src/api/UploadsAPI.js
 var UploadsAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -1902,7 +1902,7 @@ var UploadsAPI = class {
   }
 };
 
-// src/api/RankingAPI.js
+// Nyaitter.js/src/api/RankingAPI.js
 var RankingAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -1977,7 +1977,7 @@ var RankingAPI = class {
   }
 };
 
-// src/api/ReportsAPI.js
+// Nyaitter.js/src/api/ReportsAPI.js
 var ReportsAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2048,7 +2048,7 @@ var ReportsAPI = class {
   }
 };
 
-// src/api/AppealsAPI.js
+// Nyaitter.js/src/api/AppealsAPI.js
 var AppealsAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2085,7 +2085,7 @@ var AppealsAPI = class {
   }
 };
 
-// src/api/VerificationAPI.js
+// Nyaitter.js/src/api/VerificationAPI.js
 var VerificationAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2154,7 +2154,7 @@ var VerificationAPI = class {
   }
 };
 
-// src/api/ImpostersAPI.js
+// Nyaitter.js/src/api/ImpostersAPI.js
 var ImpostersAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2234,7 +2234,7 @@ var ImpostersAPI = class {
   }
 };
 
-// src/api/PushAPI.js
+// Nyaitter.js/src/api/PushAPI.js
 var PushAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2270,7 +2270,7 @@ var PushAPI = class {
   }
 };
 
-// src/api/RulesAPI.js
+// Nyaitter.js/src/api/RulesAPI.js
 var RulesAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2290,7 +2290,7 @@ var RulesAPI = class {
   }
 };
 
-// src/api/UrlCardsAPI.js
+// Nyaitter.js/src/api/UrlCardsAPI.js
 var UrlCardsAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2311,7 +2311,7 @@ var UrlCardsAPI = class {
   }
 };
 
-// src/api/OEmbedAPI.js
+// Nyaitter.js/src/api/OEmbedAPI.js
 var OEmbedAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2339,7 +2339,7 @@ var OEmbedAPI = class {
   }
 };
 
-// src/api/UIAPI.js
+// Nyaitter.js/src/api/UIAPI.js
 var UIAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2359,7 +2359,7 @@ var UIAPI = class {
   }
 };
 
-// src/api/SystemAPI.js
+// Nyaitter.js/src/api/SystemAPI.js
 var SystemAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2448,7 +2448,7 @@ var SystemAPI = class {
   }
 };
 
-// src/api/NyaitterAuthAPI.js
+// Nyaitter.js/src/api/NyaitterAuthAPI.js
 var NyaitterAuthAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -2567,7 +2567,7 @@ var NyaitterAuthAPI = class {
   }
 };
 
-// src/RealtimeClient.js
+// Nyaitter.js/src/RealtimeClient.js
 var RealtimeClient = class {
   /**
    * @param {import('./NyaitterClient.js').NyaitterClient} client
@@ -2652,7 +2652,8 @@ var RealtimeClient = class {
       if (!WSClass) {
         throw new Error("WebSocket \u5B9F\u88C5\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3002globalThis.WebSocket \u307E\u305F\u306F client \u30AA\u30D7\u30B7\u30E7\u30F3\u306B WebSocket \u3092\u6E21\u3057\u3066\u304F\u3060\u3055\u3044\u3002");
       }
-      const wsOptions = token ? { headers: { Authorization: `Bearer ${token}` } } : void 0;
+      const isBrowserWebSocket = typeof globalThis.WebSocket === "function" && WSClass === globalThis.WebSocket;
+      const wsOptions = token && !isBrowserWebSocket ? { headers: { Authorization: `Bearer ${token}` } } : void 0;
       const ws = wsOptions ? new WSClass(url, wsOptions) : new WSClass(url);
       this._ws = ws;
       const onOpen = () => {
@@ -2759,7 +2760,7 @@ var RealtimeClient = class {
   }
 };
 
-// src/NyaitterClient.js
+// Nyaitter.js/src/NyaitterClient.js
 var NyaitterClient = class {
   /**
    * @param {object} options
