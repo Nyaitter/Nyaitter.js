@@ -78,7 +78,7 @@ export class PostsAPI {
    * 投稿を検索します。
    *
    * @param {object} params
-   * @param {string} params.query - 検索キーワード
+   * @param {string} params.query - キーワード、from:#1234、at:YYYY-MM-DD、since:/until:、has:media/links、is:reply/quote/repost を併用可能（日付は UTC）
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {number} [params.beforeId] - このID以前の投稿を取得

@@ -33,7 +33,7 @@
     "sns",
     "scratch"
   ],
-  "author": "nyantorusabu <nyantorusabu@outlook.jp>",
+  "author": "Nyaitter",
   "scripts": {
     "build": "npm run build:esm && npm run build:cjs && npm run build:browser",
     "build:esm": "esbuild src/index.js --bundle --format=esm --outfile=dist/index.js",

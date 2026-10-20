@@ -18,6 +18,7 @@ import { PostsAPI } from './api/PostsAPI.js';
 import { PollsAPI } from './api/PollsAPI.js';
 import { UsersAPI } from './api/UsersAPI.js';
 import { DmAPI } from './api/DmAPI.js';
+import { CallsAPI } from './api/CallsAPI.js';
 import { NotificationsAPI } from './api/NotificationsAPI.js';
 import { GroupsAPI } from './api/GroupsAPI.js';
 import { UploadsAPI } from './api/UploadsAPI.js';
@@ -55,12 +56,12 @@ export class NyaitterClient {
       throw new Error('fetch 関数が見つかりません。Node.js 18+ または fetch ポリフィルが必要です。');
     }
 
-    // 各 API カテゴリ
     this.auth = new AuthAPI(this);
     this.posts = new PostsAPI(this);
     this.polls = new PollsAPI(this);
     this.users = new UsersAPI(this);
     this.dm = new DmAPI(this);
+    this.calls = new CallsAPI(this);
     this.notifications = new NotificationsAPI(this);
     this.groups = new GroupsAPI(this);
     this.uploads = new UploadsAPI(this);

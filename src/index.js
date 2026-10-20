@@ -5,6 +5,7 @@ export { PostsAPI } from './api/PostsAPI.js';
 export { PollsAPI } from './api/PollsAPI.js';
 export { UsersAPI, getUserIconUrl } from './api/UsersAPI.js';
 export { DmAPI } from './api/DmAPI.js';
+export { CallsAPI } from './api/CallsAPI.js';
 export { NotificationsAPI } from './api/NotificationsAPI.js';
 export { GroupsAPI, getGroupIconUrl } from './api/GroupsAPI.js';
 export { UploadsAPI } from './api/UploadsAPI.js';

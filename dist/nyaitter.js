@@ -17,11 +17,12 @@ var Nyaitter = (() => {
   };
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // Nyaitter.js/src/index.js
+  // src/index.js
   var index_exports = {};
   __export(index_exports, {
     AppealsAPI: () => AppealsAPI,
     AuthAPI: () => AuthAPI,
+    CallsAPI: () => CallsAPI,
     DmAPI: () => DmAPI,
     GroupsAPI: () => GroupsAPI,
     ImpostersAPI: () => ImpostersAPI,
@@ -47,7 +48,7 @@ var Nyaitter = (() => {
     getUserIconUrl: () => getUserIconUrl
   });
 
-  // Nyaitter.js/src/api/AuthAPI.js
+  // src/api/AuthAPI.js
   var AuthAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -311,7 +312,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/PostsAPI.js
+  // src/api/PostsAPI.js
   var PostsAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -747,7 +748,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/PollsAPI.js
+  // src/api/PollsAPI.js
   var PollsAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -789,7 +790,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/UsersAPI.js
+  // src/api/UsersAPI.js
   function getUserIconUrl(user, { baseUrl = "" } = {}) {
     const base = baseUrl ? String(baseUrl).replace(/\/+$/, "") : "";
     if (!user && user !== 0) {
@@ -1189,7 +1190,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/DmAPI.js
+  // src/api/DmAPI.js
   var DmAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -1391,7 +1392,154 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/NotificationsAPI.js
+  // src/api/CallsAPI.js
+  var CallsAPI = class {
+    /** @param {import('../NyaitterClient.js').NyaitterClient} client */
+    constructor(client) {
+      this._client = client;
+    }
+    /**
+     * 参加可能なステージを検索・取得します。
+     *
+     * @param {object} [params]
+     * @param {string} [params.query] - 検索キーワード（最大200文字）
+     * @param {number} [params.offset=0] - 取得開始位置
+     * @returns {Promise<{ stages: object[], has_more: boolean }>}
+     *
+     * @example
+     * const { stages } = await client.calls.listStages({ query: '雑談' });
+     */
+    listStages({ query, offset = 0 } = {}) {
+      return this._client._get("/calls/stages", { query, offset });
+    }
+    /**
+     * ステージを開始、または未来の日時で予約します。
+     *
+     * @param {object} params
+     * @param {string} params.name - ステージ名
+     * @param {string} [params.description] - 説明（最大2000文字）
+     * @param {'public'|'group'|'private'} [params.visibility='public'] - 公開範囲
+     * @param {string} [params.group_id] - `visibility` が `'group'` のときの対象グループ ID
+     * @param {string} [params.scheduled_at] - 予約開始日時（ISO 8601、未来のみ）
+     * @param {number[]} [params.invite_ids] - 招待するユーザー ID の配列
+     * @param {number[]} [params.speaker_ids] - スピーカーにするユーザー ID の配列
+     * @param {boolean} [params.allow_guest_join] - ゲスト参加を許可するか
+     * @returns {Promise<{ stage: object }>}
+     *
+     * @example
+     * const { stage } = await client.calls.createStage({ name: 'はじめてのステージ' });
+     */
+    createStage({
+      name,
+      description,
+      visibility,
+      group_id,
+      groupId,
+      scheduled_at,
+      scheduledAt,
+      invite_ids,
+      inviteIds,
+      speaker_ids,
+      speakerIds,
+      allow_guest_join,
+      allowGuestJoin
+    } = {}) {
+      return this._client._post("/calls/stages", {
+        name,
+        description,
+        visibility,
+        group_id: group_id ?? groupId,
+        scheduled_at: scheduled_at ?? scheduledAt,
+        invite_ids: invite_ids ?? inviteIds,
+        speaker_ids: speaker_ids ?? speakerIds,
+        allow_guest_join: allow_guest_join ?? allowGuestJoin
+      });
+    }
+    /**
+     * ステージの参加情報を取得します。
+     * 応答には WebRTC 接続に使う `ice_servers` と `ice_transport_policy` が含まれます。
+     *
+     * @param {string} id - ステージ ID
+     * @returns {Promise<{ stage: object, role: string, guest: boolean, host: object, participants: object[], ice_transport_policy: string, bundle_policy: string, rtcp_mux_policy: string, ice_servers: object[] }>}
+     *
+     * @example
+     * const info = await client.calls.getStage(stage.id);
+     */
+    getStage(id) {
+      return this._client._get(`/calls/stages/${id}`);
+    }
+    /**
+     * ステージの状態・スピーカー・招待・ゲスト参加設定を更新します（ホストのみ）。
+     *
+     * @param {string} id - ステージ ID
+     * @param {object} [params]
+     * @param {'live'|'ended'} [params.status] - ステージの状態
+     * @param {number[]} [params.speaker_ids] - スピーカーにするユーザー ID の配列
+     * @param {number[]} [params.invite_ids] - 追加で招待するユーザー ID の配列
+     * @param {boolean} [params.allow_guest_join] - ゲスト参加を許可するか
+     * @returns {Promise<{ stage: object }>}
+     */
+    updateStage(id, { status, speaker_ids, speakerIds, invite_ids, inviteIds, allow_guest_join, allowGuestJoin } = {}) {
+      return this._client._patch(`/calls/stages/${id}`, {
+        status,
+        speaker_ids: speaker_ids ?? speakerIds,
+        invite_ids: invite_ids ?? inviteIds,
+        allow_guest_join: allow_guest_join ?? allowGuestJoin
+      });
+    }
+    /**
+     * 未ログインのゲストとしてステージに参加するためのセッションを発行します。
+     * 実際の制御は `client.realtime()` の `call:*` メッセージで行います。
+     *
+     * @param {string} id - ステージ ID
+     * @returns {Promise<{ guest_id: string }>}
+     */
+    createGuestSession(id) {
+      return this._client._post(`/calls/stages/${id}/guest-session`);
+    }
+    /**
+     * 発行済みのゲスト参加セッションを終了します。
+     *
+     * @returns {Promise<{ ok: boolean }>}
+     */
+    deleteGuestSession() {
+      return this._client._delete("/calls/stages/guest-session");
+    }
+    /**
+     * DM 通話の参加情報を取得します。
+     * 応答には WebRTC 接続に使う `ice_servers` と `ice_transport_policy` が含まれます。
+     *
+     * @param {string} dmId - DM グループ ID
+     * @returns {Promise<{ title: string, members: object[], participants: object[], active: boolean, ice_transport_policy: string, bundle_policy: string, rtcp_mux_policy: string, ice_servers: object[] }>}
+     *
+     * @example
+     * const call = await client.calls.getDmCall('dm_group_id');
+     */
+    getDmCall(dmId) {
+      return this._client._get(`/calls/dm/${dmId}`);
+    }
+    /**
+     * 参加情報レスポンスから WebRTC 用の ICE 設定を取り出します。
+     *
+     * @param {object} info - `getStage()` または `getDmCall()` の戻り値
+     * @returns {{ iceServers: object[], iceTransportPolicy: string, bundlePolicy: string, rtcpMuxPolicy: string }}
+     *
+     * @example
+     * const pc = new RTCPeerConnection(client.calls.getIceConfig(await client.calls.getStage(id)));
+     */
+    getIceConfig(info = {}) {
+      return {
+        iceServers: Array.isArray(info.ice_servers) ? info.ice_servers : [],
+        iceTransportPolicy: info.ice_transport_policy || "all",
+        // max-bundle で音声・映像を単一トランスポートに集約し、ICE candidate 数・
+        // SDP サイズ・接続確立時間を削減する（サーバー未対応時は既定値を使用）。
+        bundlePolicy: info.bundle_policy || "max-bundle",
+        rtcpMuxPolicy: info.rtcp_mux_policy || "require"
+      };
+    }
+  };
+
+  // src/api/NotificationsAPI.js
   var NotificationsAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -1499,7 +1647,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/GroupsAPI.js
+  // src/api/GroupsAPI.js
   function getGroupIconUrl(group, { baseUrl = "" } = {}) {
     const base = baseUrl ? String(baseUrl).replace(/\/+$/, "") : "";
     if (!group) return "";
@@ -1838,7 +1986,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/UploadsAPI.js
+  // src/api/UploadsAPI.js
   var UploadsAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -1951,7 +2099,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/RankingAPI.js
+  // src/api/RankingAPI.js
   var RankingAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -2026,7 +2174,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/ReportsAPI.js
+  // src/api/ReportsAPI.js
   var ReportsAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -2097,7 +2245,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/AppealsAPI.js
+  // src/api/AppealsAPI.js
   var AppealsAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -2134,7 +2282,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/VerificationAPI.js
+  // src/api/VerificationAPI.js
   var VerificationAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -2203,7 +2351,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/ImpostersAPI.js
+  // src/api/ImpostersAPI.js
   var ImpostersAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -2283,7 +2431,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/PushAPI.js
+  // src/api/PushAPI.js
   var PushAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -2319,7 +2467,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/RulesAPI.js
+  // src/api/RulesAPI.js
   var RulesAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -2339,7 +2487,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/UrlCardsAPI.js
+  // src/api/UrlCardsAPI.js
   var UrlCardsAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -2360,7 +2508,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/OEmbedAPI.js
+  // src/api/OEmbedAPI.js
   var OEmbedAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -2388,7 +2536,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/UIAPI.js
+  // src/api/UIAPI.js
   var UIAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -2408,7 +2556,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/SystemAPI.js
+  // src/api/SystemAPI.js
   var SystemAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -2497,7 +2645,7 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/api/NyaitterAuthAPI.js
+  // src/api/NyaitterAuthAPI.js
   var NyaitterAuthAPI = class {
     /** @param {import('../NyaitterClient.js').NyaitterClient} client */
     constructor(client) {
@@ -2616,7 +2764,22 @@ var Nyaitter = (() => {
     }
   };
 
-  // Nyaitter.js/src/RealtimeClient.js
+  // src/RealtimeClient.js
+  var CALL_EVENTS = {
+    "call:joined": "callJoined",
+    "call:watching": "callWatching",
+    "call:roster": "callRoster",
+    "call:signal": "callSignal",
+    "call:state": "callState",
+    "call:moderated": "callModerated",
+    "call:kicked": "callKicked",
+    "call:screen": "callScreen",
+    "call:ended": "callEnded",
+    "call:stage": "callStage",
+    "call:error": "callError",
+    "call:chat": "callChat",
+    "call:transcript": "callTranscript"
+  };
   var RealtimeClient = class {
     /**
      * @param {import('./NyaitterClient.js').NyaitterClient} client
@@ -2628,6 +2791,7 @@ var Nyaitter = (() => {
       this._pingInterval = null;
       this._reconnectTimer = null;
       this._shouldReconnect = false;
+      this._callRoom = null;
     }
     /**
      * イベントリスナーを登録します。
@@ -2638,6 +2802,20 @@ var Nyaitter = (() => {
      * - `'dm'`            — DM 新着メッセージ `({ dmId, message, sender }) => void`
      * - `'dmUnreadCount'` — DM 未読数の更新 `(count: number) => void`
      * - `'timelinePost'`  — フォロー中タイムラインの新着 `({ postId, authorId }) => void`
+     * - `'call'`          — 通話系イベント全般（サーバーの `call:*` 生ペイロード） `(payload: object) => void`
+     * - `'callJoined'`    — 通話に参加した `({ room, role, roster, owner_id, request_id }) => void`
+     * - `'callWatching'`  — 予約ステージの待機に入った `({ room }) => void`
+     * - `'callRoster'`    — 参加者一覧の更新 `({ room, roster }) => void`
+     * - `'callSignal'`    — WebRTC シグナル `({ room, from, data }) => void`
+     * - `'callState'`     — 通話状態の変化 `(payload) => void`
+     * - `'callModerated'` — ホストによる操作を受けた `({ room, action }) => void`
+     * - `'callKicked'`    — ステージから追放された `({ room, message }) => void`
+     * - `'callScreen'`    — 画面共有の開始・終了 `({ room, user_id, active, stream_id, label }) => void`
+     * - `'callEnded'`     — 通話が終了・退出になった `({ room, message }) => void`
+     * - `'callStage'`     — ステージ状態の更新 `({ room, status }) => void`
+     * - `'callError'`     — 通話操作のエラー `({ request_id, message }) => void`
+     * - `'callChat'`      — 通話チャット `({ room, user_id, name, text, at }) => void`
+     * - `'callTranscript'`— 文字起こし `({ room, user_id, name, text, at }) => void`
      * - `'open'`          — 接続完了 `() => void`
      * - `'close'`         — 切断 `() => void`
      * - `'error'`         — エラー `(error: Event) => void`
@@ -2747,6 +2925,12 @@ var Nyaitter = (() => {
         return;
       }
       this._emit("raw", data);
+      if (typeof data?.type === "string" && data.type.startsWith("call:")) {
+        const event = CALL_EVENTS[data.type];
+        if (event) this._emit(event, data);
+        this._emit("call", data);
+        return;
+      }
       switch (data.type) {
         case "notification_new":
           this._emit("notification", data.notification);
@@ -2807,9 +2991,160 @@ var Nyaitter = (() => {
     get connected() {
       return this._ws?.readyState === 1;
     }
+    /**
+     * 現在参加中の通話ルームを返します。未参加のときは `null` です。
+     * @returns {{ kind: string, id: string|number }|null}
+     */
+    get callRoom() {
+      return this._callRoom;
+    }
+    /**
+     * WebSocket へ生の JSON メッセージを送信します。
+     * 通話プロトコル（`call:*`）もこれで送信できます。
+     *
+     * @param {object} message - `type` を含むメッセージ
+     * @throws {Error} 未接続のとき
+     *
+     * @example
+     * realtime.send({ type: 'call:leave' });
+     */
+    send(message) {
+      if (!this.connected) throw new Error("WebSocket \u304C\u63A5\u7D9A\u3055\u308C\u3066\u3044\u307E\u305B\u3093\u3002");
+      this._ws.send(JSON.stringify(message));
+    }
+    /** @internal */
+    _resolveCallRoom({ kind, id } = {}) {
+      const resolvedKind = kind ?? this._callRoom?.kind;
+      const resolvedId = id ?? this._callRoom?.id;
+      if (!resolvedKind || resolvedId === void 0 || resolvedId === null) {
+        throw new Error("\u901A\u8A71\u30EB\u30FC\u30E0\u304C\u6307\u5B9A\u3055\u308C\u3066\u3044\u307E\u305B\u3093\u3002\u5148\u306B joinCall() \u306A\u3069\u3092\u547C\u3073\u51FA\u3057\u3066\u304F\u3060\u3055\u3044\u3002");
+      }
+      return { kind: resolvedKind, id: resolvedId };
+    }
+    /**
+     * 通話（ステージまたは DM）に参加します。
+     * 以後の操作はこのルームが既定の対象になります。
+     *
+     * @param {object} params
+     * @param {'stage'|'dm'} params.kind - 通話の種類
+     * @param {string|number} params.id - ステージ ID または DM グループ ID
+     * @param {string} [params.requestId] - 応答を対応付ける任意の ID
+     * @param {boolean} [params.muted] - 初期ミュート状態
+     * @param {boolean} [params.camera] - 初期カメラ状態
+     *
+     * @example
+     * realtime.joinCall({ kind: 'dm', id: 'dm_group_id' });
+     */
+    joinCall({ kind, id, requestId, muted, camera } = {}) {
+      if (!kind || id === void 0 || id === null) throw new Error("kind \u3068 id \u306F\u5FC5\u9808\u3067\u3059\u3002");
+      this._callRoom = { kind, id };
+      this.send({ type: "call:join", kind, id, request_id: requestId, muted, camera });
+    }
+    /**
+     * 予約済み（開始前）のステージを待機入りします。
+     * ステージが `live` になると自動的に参加扱いになります。
+     *
+     * @param {string} id - ステージ ID
+     * @param {object} [options]
+     * @param {string} [options.requestId] - 応答を対応付ける任意の ID
+     */
+    watchStage(id, { requestId } = {}) {
+      this._callRoom = { kind: "stage", id };
+      this.send({ type: "call:watch", kind: "stage", id, request_id: requestId });
+    }
+    /**
+     * 通話から退出します。
+     */
+    leaveCall() {
+      this._callRoom = null;
+      this.send({ type: "call:leave" });
+    }
+    /**
+     * 特定の参加者へ WebRTC シグナル（SDP / ICE）を送信します。
+     *
+     * @param {object} params
+     * @param {string|number} params.to - 送信先のユーザー ID
+     * @param {object} params.data - `{ description }` または `{ candidate }`
+     * @param {string|number} [params.kind] - 対象ルームの種類（既定は参加中のルーム）
+     * @param {string|number} [params.id] - 対象ルームの ID（既定は参加中のルーム）
+     */
+    sendCallSignal({ to, data, kind, id } = {}) {
+      const room = this._resolveCallRoom({ kind, id });
+      this.send({ type: "call:signal", ...room, to, data });
+    }
+    /**
+     * 自分のマイク・カメラ・文字起こしの状態を通知します。
+     *
+     * @param {object} [params]
+     * @param {boolean} [params.muted]
+     * @param {boolean} [params.camera]
+     * @param {boolean} [params.transcriptionEnabled]
+     * @param {string|number} [params.kind]
+     * @param {string|number} [params.id]
+     */
+    setCallState({ muted, camera, transcriptionEnabled, transcription_enabled, kind, id } = {}) {
+      const room = this._resolveCallRoom({ kind, id });
+      this.send({
+        type: "call:state",
+        ...room,
+        muted,
+        camera,
+        transcription_enabled: transcriptionEnabled ?? transcription_enabled
+      });
+    }
+    /**
+     * ステージのホストとして参加者を操作します。
+     *
+     * @param {object} params
+     * @param {string|number} params.target - 対象ユーザー ID
+     * @param {'mute'|'camera'|'chat'|'kick'|'pin'|'promote'|'demote'} params.action - 操作
+     * @param {string|number} [params.kind]
+     * @param {string|number} [params.id]
+     */
+    moderateCall({ target, action, kind, id } = {}) {
+      const room = this._resolveCallRoom({ kind, id });
+      this.send({ type: "call:moderate", ...room, target, action });
+    }
+    /**
+     * 画面共有の開始・終了を通知します。
+     *
+     * @param {object} params
+     * @param {boolean} params.active - 共有中かどうか
+     * @param {string} [params.streamId] - 共有ストリーム ID（開始時は必須）
+     * @param {string|number} [params.kind]
+     * @param {string|number} [params.id]
+     */
+    setCallScreen({ active, streamId, stream_id, kind, id } = {}) {
+      const room = this._resolveCallRoom({ kind, id });
+      this.send({ type: "call:screen", ...room, active, stream_id: streamId ?? stream_id });
+    }
+    /**
+     * 通話チャットを送信します。
+     *
+     * @param {object} params
+     * @param {string} params.text - 本文（最大2000文字）
+     * @param {string|number} [params.kind]
+     * @param {string|number} [params.id]
+     */
+    sendCallChat({ text, kind, id } = {}) {
+      const room = this._resolveCallRoom({ kind, id });
+      this.send({ type: "call:chat", ...room, text });
+    }
+    /**
+     * 文字起こしを送信します（スピーカー・ミュート解除中のみ）。
+     *
+     * @param {object} params
+     * @param {string} params.text - 本文（最大2000文字）
+     * @param {string|number} [params.kind]
+     * @param {string|number} [params.id]
+     */
+    sendCallTranscript({ text, kind, id } = {}) {
+      const room = this._resolveCallRoom({ kind, id });
+      this.send({ type: "call:transcript", ...room, text });
+    }
   };
 
-  // Nyaitter.js/src/NyaitterClient.js
+  // src/NyaitterClient.js
   var NyaitterClient = class {
     /**
      * @param {object} options
@@ -2832,6 +3167,7 @@ var Nyaitter = (() => {
       this.polls = new PollsAPI(this);
       this.users = new UsersAPI(this);
       this.dm = new DmAPI(this);
+      this.calls = new CallsAPI(this);
       this.notifications = new NotificationsAPI(this);
       this.groups = new GroupsAPI(this);
       this.uploads = new UploadsAPI(this);
