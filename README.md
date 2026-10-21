@@ -1,25 +1,10 @@
 # Nyaitter.js
 
-Nyaitter の API を JavaScript / TypeScript から呼ぶクライアントライブラリです。Bot や外部アプリから、投稿・DM・リアルタイム受信を短いコードで扱えます。
+Nyaitter の API を JavaScript / TypeScript から呼ぶクライアントです。
 
-```js
-import { NyaitterClient } from 'nyaitter.js';
+## 使い始める
 
-const client = new NyaitterClient({
-  baseUrl: 'https://nyaitter.example.com',
-  token: 'bot_xxxxxxxxxxxxxxxx',
-});
-
-await client.posts.create({ content: 'Nyaitter.js からこんにちは！' });
-```
-
-## 用意するもの
-
-- Node.js 18 以上（またはブラウザ）
-- Nyaitter サーバーの URL
-- Bot トークン、NyaitterAuth アクセストークン、またはセッショントークン
-
-## インストール
+### インストール
 
 ```bash
 npm install nyaitter.js
@@ -30,7 +15,7 @@ import { NyaitterClient } from 'nyaitter.js';
 // CommonJS: const { NyaitterClient } = require('nyaitter.js');
 ```
 
-ブラウザでは CDN のスクリプトを読み込むと、`Nyaitter` から同じ API を使えます。
+ブラウザでは CDN から読み込むと `Nyaitter` で同じ API を使えます。
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/nyaitter.js/dist/nyaitter.js"></script>
@@ -42,45 +27,28 @@ import { NyaitterClient } from 'nyaitter.js';
 </script>
 ```
 
-## 初期化
+### 初期化
 
 ```js
 const client = new NyaitterClient({
   baseUrl: 'https://nyaitter.example.com',
   token: 'bot_xxxxxxxxxxxxxxxx',
-  fetch: customFetch,
-  WebSocket: customWebSocket,
+  fetch: customFetch,       // 省略可
+  WebSocket: customWebSocket, // 省略可
 });
 ```
 
-`token`、`fetch`、`WebSocket` は省略できます。Node.js 18 以上なら `fetch` の指定は不要です。
+`token` には Bot トークン、NyaitterAuth アクセストークン、またはセッショントークンを指定します。Node.js 18 以上なら `fetch` の指定は不要です。トークンは `client.setToken(...)` / `client.getToken()` で変更・取得できます。
 
-トークンは後から変更できます。
-
-```js
-client.setToken('nyauth_xxxxxxxx');
-client.getToken();
-```
-
-## 投稿する
+### クイックスタート
 
 ```js
 const { posts } = await client.posts.getTimeline();
-const { post } = await client.posts.create({ content: 'はじめての投稿！' });
-await client.posts.create({ content: '返信です', replyToId: post.id });
+const { post } = await client.posts.create({ content: 'Nyaitter.js からこんにちは！' });
 await client.posts.like(post.id);
-await client.posts.delete(post.id);
 ```
 
-## DM を送る
-
-```js
-const { dm: rooms } = await client.dm.list();
-const { dm: newRoom } = await client.dm.create({ members: [12, 34], title: '企画チャット' });
-await client.dm.sendMessage(newRoom.id, { content: 'こんにちは！' });
-```
-
-## リアルタイムに受け取る
+### リアルタイム
 
 ```js
 const realtime = client.realtime({ autoReconnect: true, reconnectDelayMs: 3000 });
@@ -89,53 +57,49 @@ realtime.on('dm', ({ dmId, message }) => console.log(`[DM ${dmId}]`, message.con
 await realtime.connect();
 ```
 
-## ステージ・通話
+### NyaitterAuth
 
-音声・映像は `client.realtime()` の `call:*` メッセージ（WebRTC シグナリング）でやり取りします。
+自サービスのユーザーを Nyaitter アカウントでログイン・連携させます。
 
 ```js
-const { stages } = await client.calls.listStages({ query: '雑談' });
-
-const { stage } = await client.calls.createStage({
-  name: 'はじめてのステージ',
-  description: 'みんなで雑談します',
-  visibility: 'public',
-  allow_guest_join: true,
+const { auth_url } = await client.nyaitterAuth.initiate({
+  appId: 'my_app',
+  redirectUri: 'https://example.com/callback',
+  scopes: ['profile:read', 'posts:write', 'continuous_access'],
+  name: '私のWebサービス',
 });
 
-const info = await client.calls.getStage(stage.id);
-const pc = new RTCPeerConnection(client.calls.getIceConfig(info));
+const { user, access_token } = await client.nyaitterAuth.exchangeToken({
+  appId: 'my_app',
+  code: callbackCode,
+});
 
-const realtime = client.realtime();
-await realtime.connect();
-realtime.joinCall({ kind: 'stage', id: stage.id });
-realtime.sendCallSignal({ to: 12, data: { description: offer } });
-realtime.setCallState({ muted: false, camera: true });
-realtime.leaveCall();
-
-await client.calls.updateStage(stage.id, { status: 'ended' });
+const userClient = new NyaitterClient({
+  baseUrl: 'https://nyaitter.example.com',
+  token: access_token,
+});
 ```
 
 ## API リファレンス
 
-すべてのメソッドは Promise を返します。戻り値はサーバーのレスポンスそのままです（例: `{ posts }`、`{ user }`）。
+すべてのメソッドは Promise を返し、サーバーのレスポンスをそのまま返します（例: `{ posts }`、`{ user }`）。
 
 ### 投稿 `client.posts`
 
 | メソッド | できること |
 |---|---|
-| `getTimeline({ tab, limit })` | タイムラインを取得（`recommended` / `following` など） |
-| `getRecommended()` / `getPage()` / `getIds()` | おすすめ、ページ分割、ID 一覧を取得 |
-| `getTrending({ limit })` / `getTrendingHashtags({ limit })` | トレンド投稿・ハッシュタグを取得 |
-| `search({ query, limit })` / `getByTag(tag)` | 投稿を検索・タグ別に取得 |
-| `get(id)` / `getReplies(id)` / `getThread(id)` | 投稿詳細、返信、スレッドを取得 |
-| `getReactions(id)` / `getQuotes(id)` / `getReposts(id)` | リアクション、引用、リポスト一覧を取得 |
-| `getLiked()` / `getStarred()` / `getMetrics(id)` | いいね、スター、指標を取得 |
+| `getTimeline({ tab, limit })` | タイムライン取得（`recommended` / `following` など） |
+| `getRecommended()` / `getPage()` / `getIds()` | おすすめ、ページ分割、ID 一覧 |
+| `getTrending({ limit })` / `getTrendingHashtags({ limit })` | トレンド投稿・ハッシュタグ |
+| `search({ query, limit })` / `getByTag(tag)` | 検索、タグ別取得 |
+| `get(id)` / `getReplies(id)` / `getThread(id)` | 詳細、返信、スレッド |
+| `getReactions(id)` / `getQuotes(id)` / `getReposts(id)` | リアクション、引用、リポスト一覧 |
+| `getLiked()` / `getStarred()` / `getMetrics(id)` | いいね、スター、指標 |
 | `create({ content, replyToId, quoteId, mask, lock })` | 投稿・返信・引用を作成（`mask` は CW、`lock` はフォロワー限定） |
 | `update(id, { content })` / `edit(id, { content })` / `delete(id)` | 編集・削除 |
 | `like(id)` / `unlike(id)` / `star(id)` / `unstar(id)` | いいね・スター |
 | `repost(id)` / `unrepost(id)` / `pin(id)` / `markAsRead(ids)` | リポスト、ピン留め、既読送信 |
-| `hydrate(ids)` | 複数の投稿をまとめて取得 |
+| `hydrate(ids)` | 複数投稿をまとめて取得 |
 
 ### ユーザー `client.users`
 
@@ -148,7 +112,7 @@ await client.calls.updateStage(stage.id, { status: 'ended' });
 | `follow(id)` / `unfollow(id)` / `toggleBlock(id)` / `block(id)` / `unblock(id)` | フォロー、ブロック |
 | `mute(id)` / `unmute(id)` / `getMutes()` / `getBlocks()` | ミュート、ブロック一覧 |
 | `pinPost(userId, postId)` / `unpinPost(userId, postId)` | 固定投稿の設定・解除 |
-| `updateProfile({ name, me, ... })` | プロフィールを更新 |
+| `updateProfile({ name, me, ... })` | プロフィール更新 |
 | `getLogs(id)` / `isLocked(id)` / `getRecommended()` | その他の取得 |
 
 ### ダイレクトメッセージ `client.dm`
@@ -157,8 +121,8 @@ await client.calls.updateStage(stage.id, { status: 'ended' });
 |---|---|
 | `list()` / `getRooms()` / `find(query)` | ルーム一覧、検索 |
 | `get(id)` / `getRoom(id)` | ルームとメッセージを取得 |
-| `create({ members, title })` / `updateRoom(id, { title })` | ルームを作成・編集 |
-| `sendMessage(id, { content })` / `editMessage(id, msgId, { content })` / `deleteMessage(id, msgId)` | メッセージを送信・編集・削除 |
+| `create({ members, title })` / `updateRoom(id, { title })` | ルーム作成・編集 |
+| `sendMessage(id, { content })` / `editMessage(id, msgId, { content })` / `deleteMessage(id, msgId)` | メッセージの送信・編集・削除 |
 | `addReaction(id, msgId, emoji)` / `removeReaction(id, msgId, emoji)` | リアクション |
 | `markAsRead(id)` / `leave(id)` / `addMember(id, userId)` / `removeMember(id, userId)` | 既読、退出、メンバー管理 |
 | `getUnreadCount()` / `getUnreadCounts()` | 未読件数 |
@@ -167,25 +131,27 @@ await client.calls.updateStage(stage.id, { status: 'ended' });
 
 | メソッド | できること |
 |---|---|
-| `list({ query })` / `listMine()` / `get(id)` | グループ検索、所属一覧、詳細 |
-| `create({ name, description })` / `update(id, ...)` / `delete(id)` | グループを作成・編集・削除 |
+| `list({ query })` / `listMine()` / `get(id)` | 検索、所属一覧、詳細 |
+| `create({ name, description })` / `update(id, ...)` / `delete(id)` | 作成・編集・削除 |
 | `join(id)` / `leave(id)` / `transferOwner(id, userId)` | 参加、退出、オーナー移譲 |
 | `getPosts(id)` | グループ内の投稿一覧（投稿は `client.posts.create({ content, groupId })`） |
 | `invite(id, userId)` / `getInvitesMine()` / `respondInvite(id, accept)` | 招待、招待への返答 |
 | `getJoinRequests(id)` / `respondJoinRequest(id, requestId, accept)` | 参加申請の承認・却下 |
 | `getRoles(id)` / `createRole(...)` / `updateRole(...)` / `deleteRole(...)` | ロール管理 |
 | `getMembers(id)` / `updateMember(...)` / `banMember(...)` / `unbanMember(...)` | メンバー管理 |
-| `getIconUrl(group)` | グループアイコンの URL を取得 |
+| `getIconUrl(group)` | グループアイコンの URL |
 
 ### ステージ・通話 `client.calls`
+
+音声・映像は `client.realtime()` の `call:*` メッセージ（WebRTC シグナリング）でやり取りします。
 
 | メソッド | できること |
 |---|---|
 | `listStages({ query, offset })` | 参加できるステージを検索 |
-| `createStage({ name, description, visibility, allow_guest_join, scheduled_at })` | ステージを作成・予約 |
+| `createStage({ name, description, visibility, allow_guest_join, scheduled_at })` | ステージ作成・予約 |
 | `getStage(id)` | 参加情報と ICE 設定を取得 |
 | `updateStage(id, { status, speaker_ids, allow_guest_join })` | 状態、スピーカー、ゲスト参加を更新 |
-| `createGuestSession(id)` / `deleteGuestSession()` | ゲスト参加セッションを発行・終了 |
+| `createGuestSession(id)` / `deleteGuestSession()` | ゲスト参加セッションの発行・終了 |
 | `getDmCall(dmId)` | DM 通話の参加情報と ICE 設定を取得 |
 | `getIceConfig(info)` | `RTCPeerConnection` 用の ICE 設定を取り出す |
 
@@ -196,15 +162,15 @@ await client.calls.updateStage(stage.id, { status: 'ended' });
 | `list()` | 通知一覧 |
 | `getUnreadCount()` | 未読件数 |
 | `markAsRead(id)` / `markAllAsRead()` / `markAsClicked(id)` / `markAllAsClicked()` | 既読化、クリック記録 |
-| `create(...)` / `delete(id)` | 通知の作成・削除 |
+| `create(...)` / `delete(id)` | 作成・削除 |
 
 ### アップロード `client.uploads`
 
 | メソッド | できること |
 |---|---|
-| `upload({ file, fileName, contentType })` | 画像・ファイルをアップロード（`Buffer`、`Uint8Array`、`Blob`、base64 に対応） |
-| `getStorage()` | ストレージの使用状況 |
-| `delete(paths)` | ファイルを削除 |
+| `upload({ file, fileName, contentType })` | アップロード（`Buffer`、`Uint8Array`、`Blob`、base64 に対応） |
+| `getStorage()` | ストレージ使用状況 |
+| `delete(paths)` | ファイル削除 |
 | `getPreviewUrl(path)` | プレビュー URL を取得 |
 
 ### その他
@@ -240,47 +206,19 @@ await client.calls.updateStage(stage.id, { status: 'ended' });
 
 ### NyaitterAuth `client.nyaitterAuth`
 
-自分の Web サービスに、他の Nyaitter ユーザーをログイン・連携させます。
-
-```js
-const { auth_url } = await client.nyaitterAuth.initiate({
-  appId: 'my_app',
-  redirectUri: 'https://example.com/callback',
-  scopes: ['profile:read', 'posts:write', 'continuous_access'],
-  name: '私のWebサービス',
-});
-
-const { user, access_token } = await client.nyaitterAuth.exchangeToken({
-  appId: 'my_app',
-  code: callbackCode,
-});
-
-const userClient = new NyaitterClient({
-  baseUrl: 'https://nyaitter.example.com',
-  token: access_token,
-});
-await userClient.posts.create({ content: '連携アカウントから投稿！' });
-```
-
 | メソッド | できること |
 |---|---|
 | `initiate({ appId, redirectUri, scopes, name })` | 認可 URL を生成 |
-| `exchangeToken({ appId, code })` | コードを交換 |
+| `exchangeToken({ appId, code })` | コードをトークンに交換 |
 | `getUserInfo()` | トークンのユーザー情報を取得 |
 | `getAuthorizedApps()` / `updateAuthorizedApp(id, ...)` / `revokeAuthorizedApp(id)` | 連携アプリの一覧、権限変更、解除 |
 | `getRequestResponse(id)` / `approveResponse(body)` / `denyResponse(body)` | 認可リクエストの確認・承認・拒否 |
 
 ### リアルタイム `client.realtime()`
 
-```js
-const realtime = client.realtime({ autoReconnect: true, reconnectDelayMs: 3000 });
-await realtime.connect();
-await realtime.disconnect();
-```
-
 | メソッド | できること |
 |---|---|
-| `on(event, handler)` / `off(event, handler)` | イベントを購読・解除 |
+| `on(event, handler)` / `off(event, handler)` | イベントの購読・解除 |
 | `connect({ autoReconnect, reconnectDelayMs })` / `disconnect()` | 接続・切断 |
 | `send(message)` | 任意のメッセージを送信 |
 | `joinCall({ kind, id, muted, camera })` / `leaveCall()` | 通話・ステージに参加・退出 |
@@ -290,7 +228,7 @@ await realtime.disconnect();
 | `sendCallChat({ text })` / `sendCallTranscript({ text })` | 通話チャット・文字起こしを送信 |
 | `moderateCall({ target, action })` | ホストが参加者を操作（`mute` など） |
 
-受信できるイベント: `notification`、`dm`、`callJoined`、`callSignal`、`callRoster`、`callChat`、`callTranscript`、`callState`、`callScreen`、`callStage`、`callWatching`、`callModerated`、`callKicked`、`callEnded`、`callError`
+受信イベント: `notification`、`dm`、`callJoined`、`callSignal`、`callRoster`、`callChat`、`callTranscript`、`callState`、`callScreen`、`callStage`、`callWatching`、`callModerated`、`callKicked`、`callEnded`、`callError`
 
 ## エラー処理
 
