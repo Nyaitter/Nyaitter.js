@@ -16,6 +16,11 @@
  *   console.log('フォロー中タイムラインに新着:', postId);
  * });
  *
+ * realtime.on('spaceMessage', ({ spaceId, message }) => {
+ *   console.log(`スペース (${spaceId}):`, message.content);
+ * });
+ * realtime.subscribeSpace(spaceId);
+ *
  * await realtime.connect();
  * // 切断するときは realtime.disconnect()
  */
@@ -37,8 +42,52 @@ const CALL_EVENTS = {
   'call:stage': 'callStage',
   'call:error': 'callError',
   'call:chat': 'callChat',
+  'call:chat-delete': 'callChatDelete',
+  'call:chat-clear': 'callChatClear',
   'call:transcript': 'callTranscript',
 };
+
+/**
+ * サーバーの `space_*` メッセージ種別をクライアント側イベント名へ変換します。
+ * @type {Record<string, string>}
+ */
+const SPACE_EVENTS = {
+  space_message: 'spaceMessage',
+  space_message_deleted: 'spaceMessageDeleted',
+  space_deleted: 'spaceDeleted',
+  space_member_left: 'spaceMemberLeft',
+  space_signal: 'spaceSignal',
+  space_voice_roster: 'spaceVoiceRoster',
+};
+
+/**
+ * サーバーの `space_*` ペイロード（snake_case）をクライアント側の形へ変換します。
+ * @param {object} data
+ * @returns {object}
+ */
+function normalizeSpaceEvent(data) {
+  const base = { spaceId: data.space_id };
+  switch (data.type) {
+    case 'space_message':
+      return { ...base, channelId: data.channel_id, message: data.message, user: data.user ?? null };
+    case 'space_message_deleted':
+      return { ...base, channelId: data.channel_id, messageId: data.message_id };
+    case 'space_member_left':
+      return { ...base, userId: data.user_id };
+    case 'space_signal':
+      return { ...base, channelId: data.channel_id, fromUserId: data.from_user_id, data: data.data };
+    case 'space_voice_roster':
+      return {
+        ...base,
+        channelId: data.channel_id,
+        roster: data.roster,
+        joinedUserId: data.joined_user_id ?? null,
+        leftUserId: data.left_user_id ?? null,
+      };
+    default:
+      return base;
+  }
+}
 
 export class RealtimeClient {
   /**
@@ -52,6 +101,7 @@ export class RealtimeClient {
     this._reconnectTimer = null;
     this._shouldReconnect = false;
     this._callRoom = null;
+    this._spaceSubscriptions = new Set();
   }
 
   /**
@@ -61,6 +111,7 @@ export class RealtimeClient {
    * - `'notification'`  — 新着通知 `(notification: object) => void`
    * - `'notificationUnreadCount'` — 通知未読数の更新 `(count: number) => void`
    * - `'dm'`            — DM 新着メッセージ `({ dmId, message, sender }) => void`
+   * - `'dmEdited'`      — DM メッセージの編集 `({ dmId, message }) => void`
    * - `'dmUnreadCount'` — DM 未読数の更新 `(count: number) => void`
    * - `'timelinePost'`  — フォロー中タイムラインの新着 `({ postId, authorId }) => void`
    * - `'call'`          — 通話系イベント全般（サーバーの `call:*` 生ペイロード） `(payload: object) => void`
@@ -76,7 +127,18 @@ export class RealtimeClient {
    * - `'callStage'`     — ステージ状態の更新 `({ room, status }) => void`
    * - `'callError'`     — 通話操作のエラー `({ request_id, message }) => void`
    * - `'callChat'`      — 通話チャット `({ room, user_id, name, text, at }) => void`
+   * - `'callChatDelete'`— 通話チャットの削除 `({ room, id }) => void`
+   * - `'callChatClear'` — 通話チャットの全消去 `({ room }) => void`
    * - `'callTranscript'`— 文字起こし `({ room, user_id, name, text, at }) => void`
+   * - `'dmRead'`        — DM の既読通知 `({ dmId, readerId }) => void`
+   * - `'pollUpdated'`   — 投票の更新 `({ pollId, postId, poll }) => void`
+   * - `'space'`         — スペース系イベント全般（サーバーの `space_*` 生ペイロード） `(payload: object) => void`
+   * - `'spaceMessage'`  — スペースの新着メッセージ `({ spaceId, channelId, message, user }) => void`
+   * - `'spaceMessageDeleted'` — スペースのメッセージ削除 `({ spaceId, channelId, messageId }) => void`
+   * - `'spaceDeleted'`  — スペースの削除 `({ spaceId }) => void`
+   * - `'spaceMemberLeft'` — スペースからの退出 `({ spaceId, userId }) => void`
+   * - `'spaceSignal'`   — スペースボイスの WebRTC シグナル `({ spaceId, channelId, fromUserId, data }) => void`
+   * - `'spaceVoiceRoster'` — スペースボイスの参加者一覧 `({ spaceId, channelId, roster, joinedUserId, leftUserId }) => void`
    * - `'open'`          — 接続完了 `() => void`
    * - `'close'`         — 切断 `() => void`
    * - `'error'`         — エラー `(error: Event) => void`
@@ -213,6 +275,14 @@ export class RealtimeClient {
       return;
     }
 
+    // space_* は種別ごとのイベントと汎用 'space' の両方へ流す
+    if (typeof data?.type === 'string' && data.type.startsWith('space_')) {
+      const event = SPACE_EVENTS[data.type];
+      if (event) this._emit(event, normalizeSpaceEvent(data));
+      this._emit('space', data);
+      return;
+    }
+
     switch (data.type) {
       case 'notification_new':
         this._emit('notification', data.notification);
@@ -231,8 +301,20 @@ export class RealtimeClient {
         });
         break;
 
+      case 'dm_message_edited':
+        this._emit('dmEdited', { dmId: data.dm_id, message: data.message });
+        break;
+
       case 'dm_unread_count':
         this._emit('dmUnreadCount', data.unread_count);
+        break;
+
+      case 'dm_read':
+        this._emit('dmRead', { dmId: data.dm_id, readerId: data.reader_id });
+        break;
+
+      case 'poll_updated':
+        this._emit('pollUpdated', { pollId: data.poll_id, postId: data.post_id, poll: data.poll });
         break;
 
       case 'timeline_post':
@@ -306,7 +388,10 @@ export class RealtimeClient {
     this._ws.send(JSON.stringify(message));
   }
 
-  /** @internal */
+  /**
+   * @internal
+   * @param {{kind?: string|number, id?: string|number}} [options]
+   */
   _resolveCallRoom({ kind, id } = {}) {
     const resolvedKind = kind ?? this._callRoom?.kind;
     const resolvedId = id ?? this._callRoom?.id;
@@ -378,6 +463,7 @@ export class RealtimeClient {
    * @param {boolean} [params.muted]
    * @param {boolean} [params.camera]
    * @param {boolean} [params.transcriptionEnabled]
+   * @param {boolean} [params.transcription_enabled]
    * @param {string|number} [params.kind]
    * @param {string|number} [params.id]
    */
@@ -412,6 +498,7 @@ export class RealtimeClient {
    * @param {object} params
    * @param {boolean} params.active - 共有中かどうか
    * @param {string} [params.streamId] - 共有ストリーム ID（開始時は必須）
+   * @param {string} [params.stream_id]
    * @param {string|number} [params.kind]
    * @param {string|number} [params.id]
    */
@@ -434,6 +521,31 @@ export class RealtimeClient {
   }
 
   /**
+   * 通話チャットのメッセージを削除します（自分のメッセージ、またはホストは全員のメッセージ）。
+   *
+   * @param {object} params
+   * @param {string} params.messageId - 削除するチャットメッセージ ID
+   * @param {string|number} [params.kind]
+   * @param {string|number} [params.id]
+   */
+  deleteCallChatMessage({ messageId, kind, id } = {}) {
+    const room = this._resolveCallRoom({ kind, id });
+    this.send({ type: 'call:chat-delete', ...room, message_id: messageId });
+  }
+
+  /**
+   * 通話チャットを全消去します（ホストのみ）。
+   *
+   * @param {object} [params]
+   * @param {string|number} [params.kind]
+   * @param {string|number} [params.id]
+   */
+  clearCallChat({ kind, id } = {}) {
+    const room = this._resolveCallRoom({ kind, id });
+    this.send({ type: 'call:chat-clear', ...room });
+  }
+
+  /**
    * 文字起こしを送信します（スピーカー・ミュート解除中のみ）。
    *
    * @param {object} params
@@ -444,5 +556,107 @@ export class RealtimeClient {
   sendCallTranscript({ text, kind, id } = {}) {
     const room = this._resolveCallRoom({ kind, id });
     this.send({ type: 'call:transcript', ...room, text });
+  }
+
+  /**
+   * 現在購読中のスペース ID 一覧を返します。
+   * @returns {string[]}
+   */
+  get spaceSubscriptions() {
+    return [...this._spaceSubscriptions];
+  }
+
+  /**
+   * スペースのテキストメッセージをリアルタイム受信できるよう購読します。
+   * サーバーは接続ユーザーがスペースのメンバーであることを毎回確認します。
+   *
+   * @param {string|number} spaceId - スペース ID
+   */
+  subscribeSpace(spaceId) {
+    const id = String(spaceId);
+    this._spaceSubscriptions.add(id);
+    this.send({ type: 'space:subscribe', spaceId: id });
+  }
+
+  /**
+   * スペースの購読を解除します。
+   *
+   * @param {string|number} spaceId - スペース ID
+   */
+  unsubscribeSpace(spaceId) {
+    const id = String(spaceId);
+    this._spaceSubscriptions.delete(id);
+    this.send({ type: 'space:unsubscribe', spaceId: id });
+  }
+
+  /**
+   * スペースのボイスチャンネルに参加します。
+   * 参加者一覧は `'spaceVoiceRoster'` イベントで届きます。
+   *
+   * @param {object} params
+   * @param {string|number} params.spaceId - スペース ID
+   * @param {string|number} params.channelId - ボイスチャンネル ID
+   * @param {boolean} [params.muted] - 初期ミュート状態
+   * @param {boolean} [params.deafened] - 初期スピーカーオフ状態
+   */
+  joinSpaceVoice({ spaceId, channelId, muted, deafened } = {}) {
+    this.send({
+      type: 'space:join_voice',
+      spaceId: String(spaceId),
+      channelId: String(channelId),
+      muted: Boolean(muted),
+      deafened: Boolean(deafened),
+    });
+  }
+
+  /**
+   * スペースのボイスチャンネルから退出します。
+   *
+   * @param {object} params
+   * @param {string|number} params.spaceId - スペース ID
+   * @param {string|number} params.channelId - ボイスチャンネル ID
+   */
+  leaveSpaceVoice({ spaceId, channelId } = {}) {
+    this.send({ type: 'space:leave_voice', spaceId: String(spaceId), channelId: String(channelId) });
+  }
+
+  /**
+   * スペースボイスでの自分のミュート・スピーカー状態を通知します。
+   * 指定しなかった項目はサーバー側で変更されません。
+   *
+   * @param {object} params
+   * @param {string|number} params.spaceId - スペース ID
+   * @param {string|number} params.channelId - ボイスチャンネル ID
+   * @param {boolean} [params.muted]
+   * @param {boolean} [params.deafened]
+   */
+  setSpaceVoiceState({ spaceId, channelId, muted, deafened } = {}) {
+    this.send({
+      type: 'space:voice_state',
+      spaceId: String(spaceId),
+      channelId: String(channelId),
+      ...(muted === undefined ? {} : { muted: Boolean(muted) }),
+      ...(deafened === undefined ? {} : { deafened: Boolean(deafened) }),
+    });
+  }
+
+  /**
+   * 同じボイスチャンネルにいる特定の参加者へ WebRTC シグナル（SDP / ICE）を送信します。
+   * 相手には `'spaceSignal'` イベントで届きます。
+   *
+   * @param {object} params
+   * @param {string|number} params.spaceId - スペース ID
+   * @param {string|number} params.channelId - ボイスチャンネル ID
+   * @param {string|number} params.toUserId - 送信先のユーザー ID
+   * @param {object} params.data - `{ description }` または `{ candidate }`
+   */
+  sendSpaceSignal({ spaceId, channelId, toUserId, data } = {}) {
+    this.send({
+      type: 'space:signal',
+      spaceId: String(spaceId),
+      channelId: String(channelId),
+      toUserId: Number(toUserId),
+      data,
+    });
   }
 }

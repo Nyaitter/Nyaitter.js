@@ -44,7 +44,7 @@ export class ImpostersAPI {
    * @returns {Promise<{ imposter: object }>}
    */
   addMember(imposterId, { userId, role = 'operator' } = {}) {
-    return this._client._post(`/imposters/${imposterId}/members`, {
+    return this._client._post(`/imposters/${encodeURIComponent(imposterId)}/members`, {
       user_id: userId,
       role,
     });
@@ -60,7 +60,7 @@ export class ImpostersAPI {
    * @returns {Promise<{ imposter: object }>}
    */
   updateMemberRole(imposterId, memberId, { role } = {}) {
-    return this._client._patch(`/imposters/${imposterId}/members/${memberId}`, {
+    return this._client._patch(`/imposters/${encodeURIComponent(imposterId)}/members/${encodeURIComponent(memberId)}`, {
       role,
     });
   }
@@ -73,7 +73,7 @@ export class ImpostersAPI {
    * @returns {Promise<{ imposter: object }>}
    */
   removeMember(imposterId, memberId) {
-    return this._client._delete(`/imposters/${imposterId}/members/${memberId}`);
+    return this._client._delete(`/imposters/${encodeURIComponent(imposterId)}/members/${encodeURIComponent(memberId)}`);
   }
 
   /**
@@ -83,6 +83,6 @@ export class ImpostersAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   delete(imposterId) {
-    return this._client._delete(`/imposters/${imposterId}`);
+    return this._client._delete(`/imposters/${encodeURIComponent(imposterId)}`);
   }
 }

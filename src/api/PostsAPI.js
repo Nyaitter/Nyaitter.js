@@ -9,6 +9,34 @@ export class PostsAPI {
   }
 
   /**
+   * 最新投稿一覧を取得します。
+   * @param {{tab?: string, limit?: number, offset?: number, beforeId?: number, sinceId?: number, cursor?: string, order?: string}} [params]
+   */
+  list({ tab, limit, offset, beforeId, sinceId, cursor, order } = {}) {
+    return this._client._get('/posts', { tab, limit, offset, before_id: beforeId, since_id: sinceId, cursor, order });
+  }
+
+  /** 投稿のアクティビティを取得します。 */
+  getActivity(postId) {
+    return this._client._get(`/posts/${encodeURIComponent(postId)}/activity`);
+  }
+
+  /** 投稿にいいねしたユーザーを取得します。 */
+  getLikes(postId, { limit = 50 } = {}) {
+    return this._client._get(`/posts/${encodeURIComponent(postId)}/likes`, { limit });
+  }
+
+  /** 投稿を低評価します。 */
+  dislike(postId) {
+    return this._client._post(`/posts/${encodeURIComponent(postId)}/dislike`, {});
+  }
+
+  /** 管理者として投稿を削除します。 */
+  adminDelete(postId) {
+    return this._client._delete(`/posts/admin/${encodeURIComponent(postId)}`);
+  }
+
+  /**
    * タイムラインの投稿一覧を取得します。
    *
    * @param {object} [params]
@@ -96,44 +124,6 @@ export class PostsAPI {
       before_id: beforeId,
       ...(cursor !== undefined && cursor !== null ? { cursor } : {}),
     });
-  }
-
-  /**
-   * 指定したハッシュタグの投稿一覧を取得します。
-   *
-   * @param {string} tag - ハッシュタグ
-   * @param {object} [params]
-   * @param {number} [params.limit=20] - 取得件数
-   * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ posts: object[] }>}
-   */
-  getByTag(tag, { limit = 20, offset = 0 } = {}) {
-    const cleanTag = String(tag || '').replace(/^#/, '').trim();
-    return this._client._get(`/posts/tags/${encodeURIComponent(cleanTag)}`, { limit, offset });
-  }
-
-  /**
-   * ログイン中ユーザーがいいねした投稿一覧を取得します。
-   *
-   * @param {object} [params]
-   * @param {number} [params.limit=20] - 取得件数
-   * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ posts: object[] }>}
-   */
-  getLiked({ limit = 20, offset = 0 } = {}) {
-    return this._client._get('/posts/liked', { limit, offset });
-  }
-
-  /**
-   * ログイン中ユーザーがスターした投稿一覧を取得します。
-   *
-   * @param {object} [params]
-   * @param {number} [params.limit=20] - 取得件数
-   * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ posts: object[] }>}
-   */
-  getStarred({ limit = 20, offset = 0 } = {}) {
-    return this._client._get('/posts/starred', { limit, offset });
   }
 
   /**
@@ -245,26 +235,16 @@ export class PostsAPI {
   }
 
   /**
-   * 投稿のリアクション詳細を取得します。
-   *
-   * @param {number} postId - 投稿 ID
-   * @returns {Promise<{ reactions: object }>}
-   */
-  getReactions(postId) {
-    return this._client._get(`/posts/${postId}/reactions`);
-  }
-
-  /**
    * 投稿の引用ポスト一覧を取得します。
    *
    * @param {number} postId - 投稿 ID
    * @param {object} [params]
    * @param {number} [params.limit=20] - 取得件数
-   * @param {number} [params.offset=0] - 取得開始位置
+   * @param {number} [params.offset=0] - 互換用（Serverは無視します。ページング不可）
    * @returns {Promise<{ quotes: object[] }>}
    */
   getQuotes(postId, { limit = 20, offset = 0 } = {}) {
-    return this._client._get(`/posts/${postId}/quotes`, { limit, offset });
+    return this._client._get(`/posts/${postId}/quotes`, { limit });
   }
 
   /**
@@ -282,6 +262,7 @@ export class PostsAPI {
    * @param {boolean} [params.groupAnnouncement=false] - グループ内アナウンスフラグ
    * @param {'everyone'|'following'|'mentioned_only'} [params.replyControl='everyone'] - 返信可能範囲
    * @param {number} [params.postAsUserId] - インポスター等の代理投稿ユーザーID
+   * @param {string|null} [params.scheduledAt] - 投稿日時
    * @returns {Promise<{ success: boolean, queued: boolean, action_id?: string }>}
    *
    * @example
@@ -300,6 +281,7 @@ export class PostsAPI {
     groupAnnouncement = false,
     replyControl = 'everyone',
     postAsUserId,
+    scheduledAt,
   } = {}) {
     return this._client._post('/posts', {
       content,
@@ -313,6 +295,7 @@ export class PostsAPI {
       group_announcement: Boolean(groupAnnouncement),
       reply_control: replyControl,
       post_as_user_id: postAsUserId,
+      scheduled_at: scheduledAt,
     });
   }
 
@@ -325,14 +308,16 @@ export class PostsAPI {
    * @param {Array<object>} [params.attachments] - 添付ファイル
    * @param {boolean} [params.mask] - 閲覧注意マスク
    * @param {boolean} [params.lock] - 鍵
-   * @returns {Promise<{ success: boolean, post: object }>}
+   * @param {'everyone'|'following'|'mentioned_only'} [params.replyControl] - 返信可能範囲
+   * @returns {Promise<{ success: boolean, queued: boolean, action_id?: string }>}
    */
-  update(postId, { content, attachments, mask, lock } = {}) {
-    return this._client._patch(`/posts/${postId}`, {
+  update(postId, { content, attachments, mask, lock, replyControl } = {}) {
+    return this._client._put(`/posts/${encodeURIComponent(postId)}`, {
       content,
       attachments,
       mask,
       lock,
+      reply_control: replyControl,
     });
   }
 
@@ -433,17 +418,6 @@ export class PostsAPI {
    */
   pin(postId) {
     return this._client._post(`/posts/${postId}/pin`, {});
-  }
-
-  /**
-   * 投稿を既読として送信します。
-   *
-   * @param {number[]|number} postIds - 既読にする投稿 ID 配列
-   * @returns {Promise<{ success: boolean }>}
-   */
-  markAsRead(postIds) {
-    const ids = Array.isArray(postIds) ? postIds : [postIds];
-    return this._client._post('/posts/read', { post_ids: ids });
   }
 
   /**

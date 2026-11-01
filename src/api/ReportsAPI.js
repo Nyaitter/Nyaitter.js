@@ -1,11 +1,27 @@
 /**
  * 報告API
- * 不適切な投稿やユーザーの通報、およびモデレーション審査状況の取得・更新を行います。
+ * 不適切な投稿やユーザーの通報、および管理者向けモデレーション審査を行います。
  */
 export class ReportsAPI {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
     this._client = client;
+  }
+
+  /** 管理者専用。割当済み通報を取得します（`required` 認証だけでなくServer側admin権限が必要）。
+   * @param {{status?: string, limit?: number, offset?: number}} [params]
+   */
+  listAssigned({ status, limit = 50, offset = 0 } = {}) {
+    return this._client._get('/reports/assigned', { status, limit, offset });
+  }
+
+  /** 管理者専用。report assignment種別により `decision`/`actions` 等のbody要件が異なります。 */
+  resolve(reportId, body = {}) {
+    return this._client._post(`/reports/${encodeURIComponent(reportId)}/resolve`, body);
+  }
+
+  retractTrust(reportId, body = {}) {
+    return this._client._post(`/reports/${encodeURIComponent(reportId)}/trust-retract`, body);
   }
 
   /**
@@ -16,7 +32,7 @@ export class ReportsAPI {
    * @param {number|string} params.targetId - 報告対象の投稿 ID またはユーザー ID
    * @param {string} params.description - 通報理由・詳細説明
    * @param {number} [params.postAsUserId] - 代理通報ユーザー ID
-   * @returns {Promise<{ success: boolean, report: { id: number, status: string, created_at: string } }>}
+   * @returns {Promise<{ success: boolean, report: { id: number, status: string, assignment_type: string, reporter_id: number, target_kind: string, target_id: number, assigned_at: string|null, created_at: string } }>}
    *
    * @example
    * await client.reports.create({
@@ -54,7 +70,7 @@ export class ReportsAPI {
    * @returns {Promise<{ report: object }>}
    */
   get(reportId) {
-    return this._client._get(`/reports/${reportId}`);
+    return this._client._get(`/reports/${encodeURIComponent(reportId)}`);
   }
 
   /**
@@ -68,7 +84,7 @@ export class ReportsAPI {
    * @returns {Promise<{ success: boolean, report: object }>}
    */
   update(reportId, { status, note, action } = {}) {
-    return this._client._patch(`/reports/${reportId}`, {
+    return this._client._patch(`/reports/${encodeURIComponent(reportId)}`, {
       status,
       note,
       action,

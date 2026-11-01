@@ -34,7 +34,7 @@ export class RankingAPI {
    * data.forEach((entry) => console.log(`${entry.rank}位: ${entry.name}`));
    */
   get(type, { limit = 50 } = {}) {
-    return this._client._get(`/ranking/${type}`, { limit });
+    return this._client._get(`/ranking/${encodeURIComponent(type)}`, { limit });
   }
 
   /**

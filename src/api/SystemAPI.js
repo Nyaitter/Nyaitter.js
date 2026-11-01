@@ -12,6 +12,11 @@ export class SystemAPI {
     return this._client.requestResponse('/status');
   }
 
+  /** OpenAPI 仕様を取得します。 */
+  getOpenApiSpec() {
+    return this._client._get('/spec');
+  }
+
   getApiSpecResponse(options) {
     return this._getWithFallback('/spec/endpoints', '/api/spec/endpoints', options);
   }
@@ -36,7 +41,7 @@ export class SystemAPI {
   /**
    * サーバーの稼働状態・制限値・認証プロバイダー設定を取得します。
    *
-   * @returns {Promise<{ server: string, timestamp: string, database: string, identity: object, auth_methods: string[], client_limits: object }>}
+   * @returns {Promise<import('../models.js').ServerStatus>}
    *
    * @example
    * const status = await client.system.getStatus();

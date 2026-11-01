@@ -5,7 +5,7 @@
  *
  * @example
  * const client = new NyaitterClient({
- *   baseUrl: 'https://nyaitter.example.com',
+ *   baseUrl: 'https://nyaitter.example.com/server',
  *   token: 'bot_xxxxxxxxxxxxxxxx',
  * });
  *
@@ -15,10 +15,12 @@
 
 import { AuthAPI } from './api/AuthAPI.js';
 import { PostsAPI } from './api/PostsAPI.js';
+import { NotesAPI } from './api/NotesAPI.js';
 import { PollsAPI } from './api/PollsAPI.js';
 import { UsersAPI } from './api/UsersAPI.js';
 import { DmAPI } from './api/DmAPI.js';
 import { CallsAPI } from './api/CallsAPI.js';
+import { SpacesAPI } from './api/SpacesAPI.js';
 import { NotificationsAPI } from './api/NotificationsAPI.js';
 import { GroupsAPI } from './api/GroupsAPI.js';
 import { UploadsAPI } from './api/UploadsAPI.js';
@@ -34,6 +36,7 @@ import { OEmbedAPI } from './api/OEmbedAPI.js';
 import { UIAPI } from './api/UIAPI.js';
 import { SystemAPI } from './api/SystemAPI.js';
 import { NyaitterAuthAPI } from './api/NyaitterAuthAPI.js';
+import { ExtensionsAPI } from './api/ExtensionsAPI.js';
 import { RealtimeClient } from './RealtimeClient.js';
 
 export class NyaitterClient {
@@ -41,14 +44,16 @@ export class NyaitterClient {
    * @param {object} options
    * @param {string} options.baseUrl - Nyaitter サーバーの URL
    * @param {string} [options.token] - Bot トークンまたはアクセストークン
+   * @param {string} [options.extensionKey] - 拡張 API キー（`client.extensions` 用）
    * @param {typeof fetch} [options.fetch] - カスタム fetch 関数
    * @param {any} [options.WebSocket] - カスタム WebSocket クラス
    */
-  constructor({ baseUrl, token = null, fetch: customFetch = null, WebSocket: customWebSocket = null } = {}) {
+  constructor({ baseUrl, token = null, extensionKey = null, fetch: customFetch = null, WebSocket: customWebSocket = null } = {}) {
     if (!baseUrl) throw new Error('baseUrl は必須です');
 
     this._baseUrl = baseUrl.replace(/\/+$/, '');
     this._token = token;
+    this._extensionKey = extensionKey;
     this._fetch = customFetch || (globalThis.fetch ? globalThis.fetch.bind(globalThis) : null);
     this._WebSocket = customWebSocket || globalThis.WebSocket;
 
@@ -58,10 +63,12 @@ export class NyaitterClient {
 
     this.auth = new AuthAPI(this);
     this.posts = new PostsAPI(this);
+    this.notes = new NotesAPI(this);
     this.polls = new PollsAPI(this);
     this.users = new UsersAPI(this);
     this.dm = new DmAPI(this);
     this.calls = new CallsAPI(this);
+    this.spaces = new SpacesAPI(this);
     this.notifications = new NotificationsAPI(this);
     this.groups = new GroupsAPI(this);
     this.uploads = new UploadsAPI(this);
@@ -77,6 +84,7 @@ export class NyaitterClient {
     this.ui = new UIAPI(this);
     this.system = new SystemAPI(this);
     this.nyaitterAuth = new NyaitterAuthAPI(this);
+    this.extensions = new ExtensionsAPI(this);
   }
 
   /**
@@ -93,6 +101,22 @@ export class NyaitterClient {
    */
   getToken() {
     return this._token;
+  }
+
+  /**
+   * 拡張 API キーを設定します（`client.extensions` の既定キー）。
+   * @param {string|null} extensionKey
+   */
+  setExtensionKey(extensionKey) {
+    this._extensionKey = extensionKey;
+  }
+
+  /**
+   * 現在の拡張 API キーを取得します。
+   * @returns {string|null}
+   */
+  getExtensionKey() {
+    return this._extensionKey;
   }
 
   /**

@@ -8,6 +8,21 @@ export class UploadsAPI {
     this._client = client;
   }
 
+  /**
+   * 直接アップロード先を発行します。
+   * @param {object} params
+   * @param {string} params.fileName
+   * @param {string} [params.contentType]
+   * @param {number} [params.asUserId]
+   * @param {string} [params.replaceId]
+   * @returns {Promise<{id: string, url: string|null, key: string, replaced?: boolean}>}
+   */
+  prepare({ fileName, contentType, asUserId, replaceId } = {}) {
+    return this._client._post('/uploads/prepare', {
+      fileName, contentType, as_user_id: asUserId, replaceId,
+    });
+  }
+
   uploadPartResponse(uploadId, file, { contentType = 'application/octet-stream', asUserId = null } = {}) {
     return this._client.requestResponse(`/uploads/${encodeURIComponent(uploadId)}`, {
       method: 'PUT',
@@ -23,7 +38,7 @@ export class UploadsAPI {
    * 画像などのファイルを Nyaitter サーバーにアップロードします。
    *
    * @param {object} params
-   * @param {string|Buffer|Uint8Array|ArrayBuffer|Blob} params.file - ファイルデータ
+   * @param {string|Uint8Array|ArrayBuffer|Blob} params.file - ファイルデータ（Node.js の Buffer を含む）
    * @param {string} params.fileName - ファイル名
    * @param {string} [params.contentType='image/png'] - MIME タイプ
    * @param {number} [params.asUserId] - インポスター代理アップロード時のユーザー ID
@@ -39,7 +54,7 @@ export class UploadsAPI {
         base64String = Buffer.from(file).toString('base64');
       } else {
         let binary = '';
-        const bytes = new Uint8Array(file.buffer || file);
+        const bytes = file;
         for (let i = 0; i < bytes.byteLength; i++) {
           binary += String.fromCharCode(bytes[i]);
         }

@@ -51,6 +51,7 @@ export function getUserIconUrl(user, { baseUrl = '' } = {}) {
   return base ? `${base}/emoji/neko.svg` : '/emoji/neko.svg';
 }
 
+
 export class UsersAPI {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
@@ -71,26 +72,62 @@ export class UsersAPI {
    * ユーザー ID でプロフィールを取得します。
    *
    * @param {number} userId - ユーザー ID
-   * @returns {Promise<{ user: object }>}
+   * @returns {Promise<{ user: import('../models.js').User }>}
    */
   get(userId) {
-    return this._client._get(`/users/${userId}`);
+    return this._client._get(`/users/${encodeURIComponent(userId)}`);
   }
 
   /**
    * ログイン中のユーザー情報を取得します。
    *
-   * @returns {Promise<{ user: object, isBot: boolean, tokenType: string }>}
+   * @returns {Promise<{ user: import('../models.js').User, isBot: boolean, tokenType: string }>}
    */
   getMe() {
     return this._client._get('/auth/me');
+  }
+
+  getScheduled(userId, { limit = 30, offset = 0 } = {}) { return this._client._get(`/users/${encodeURIComponent(userId)}/scheduled`, { limit, offset }); }
+  /** 管理者専用。対象ユーザーの管理ステータスを取得します。 */
+  getUserStatus(userId) { return this._client._get(`/users/${encodeURIComponent(userId)}/status`); }
+  /** 管理者専用。対象ユーザーの管理ステータスを更新します。 */
+  updateUserStatus(userId, body = {}) { return this._client._put(`/users/${encodeURIComponent(userId)}/status`, body); }
+  /** 管理者専用。対象ユーザーの管理属性を更新します。 */
+  updateUser(userId, body = {}) { return this._client._put(`/users/${encodeURIComponent(userId)}`, body); }
+  reassignNyaitterId() { return this._client._post('/users/me/nyaitter-id/reassign', {}); }
+  prepareAccountDeletion() { return this._client._post('/users/me/account/delete/prepare', {}); }
+  deleteAccount(confirmationToken) { return this._client._delete('/users/me/account', { confirmation_token: confirmationToken }); }
+
+  /** @returns {Promise<import('../models.js').UserStatus>} */
+  getStatus() {
+    return this._client._get('/users/me/status');
+  }
+
+  /**
+   * 管理者が利用制限を指定・解除します。
+   * @param {number|string} userId
+   * @param {{banned: boolean, reason: string}} params - 理由は10文字以上
+   * @returns {Promise<{success: boolean}>}
+   */
+  moderateTrust(userId, { banned, reason } = {}) {
+    return this._client._post(`/users/${encodeURIComponent(userId)}/trust-moderation`, { banned, reason });
+  }
+
+  /**
+   * 管理者が削除済みノートの実績を取り消します。
+   * @param {number|string} userId
+   * @param {{noteId: number, reason: string}} params - 理由は10文字以上
+   * @returns {Promise<{success: boolean}>}
+   */
+  retractNoteOutcome(userId, { noteId, reason } = {}) {
+    return this._client._post(`/users/${encodeURIComponent(userId)}/note-outcome-retract`, { noteId, reason });
   }
 
   /**
    * ユーザー名でユーザーを検索・取得します。
    *
    * @param {string} handle - ユーザー名
-   * @returns {Promise<{ user: object|null }>}
+   * @returns {Promise<{ user: import('../models.js').User|null }>}
    */
   async getByHandle(handle) {
     const cleanHandle = String(handle || '').replace(/^[@#]/, '').trim();
@@ -127,7 +164,7 @@ export class UsersAPI {
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {string|null} [params.cursor=null] - ページネーションカーソル
-   * @returns {Promise<{ users: object[], has_more?: boolean, next_cursor?: string|null }>}
+   * @returns {Promise<{ users: import('../models.js').User[], has_more?: boolean, next_cursor?: string|null }>}
    */
   search({ query, limit = 20, offset = 0, cursor = null } = {}) {
     return this._client._get('/users/search', {
@@ -142,19 +179,22 @@ export class UsersAPI {
    * おすすめユーザー一覧を取得します。
    *
    * @param {object} [params]
-   * @param {number} [params.limit=20] - 取得件数
-   * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ users: object[] }>}
+   * @param {number} [params.limit=20] - 互換用に受理しますが、現行Serverは無視します。
+   * @param {number} [params.offset=0] - 互換用に受理しますが、現行Serverは無視します。
+   * Serverは件数・offsetを受け付けず固定件数を返します（optionsは旧互換のため受理しますが送信しません）。
+   * @returns {Promise<{ users: import('../models.js').User[] }>}
    */
   getRecommended({ limit = 20, offset = 0 } = {}) {
-    return this._client._get('/users/recommended', { limit, offset });
+    void limit;
+    void offset;
+    return this._client._get('/users/recommended');
   }
 
   /**
    * 複数のユーザー ID からユーザー情報を一括取得します。
    *
    * @param {number[]|string} userIds - ユーザー ID の配列またはカンマ区切り文字列
-   * @returns {Promise<{ users: object[] }>}
+   * @returns {Promise<{ users: import('../models.js').User[] }>}
    */
   getBatch(userIds) {
     const ids = Array.isArray(userIds) ? userIds.join(',') : userIds;
@@ -175,7 +215,7 @@ export class UsersAPI {
    * @returns {Promise<{ post_count: number, media_count: number, follower_count: number, following_count: number }>}
    */
   getCounts(userId) {
-    return this._client._get(`/users/${userId}/counts`);
+    return this._client._get(`/users/${encodeURIComponent(userId)}/counts`);
   }
 
   /**
@@ -190,7 +230,7 @@ export class UsersAPI {
    * @returns {Promise<{ media_items: object[], next_cursor?: string|null }>}
    */
   getMedia(userId, { limit = 15, offset = 0, type, cursor } = {}) {
-    return this._client._get(`/users/${userId}/media`, {
+    return this._client._get(`/users/${encodeURIComponent(userId)}/media`, {
       limit,
       offset,
       ...(type ? { type } : {}),
@@ -205,7 +245,7 @@ export class UsersAPI {
    * @returns {Promise<{ lock: boolean }>}
    */
   isLocked(userId) {
-    return this._client._get(`/users/${userId}/is-lock`);
+    return this._client._get(`/users/${encodeURIComponent(userId)}/is-lock`);
   }
 
   /**
@@ -219,20 +259,7 @@ export class UsersAPI {
    * @returns {Promise<{ posts: object[], has_more: boolean }>}
    */
   getPosts(userId, { limit = 20, offset = 0, mode = 'all' } = {}) {
-    return this._client._get(`/users/${userId}/posts`, { limit, offset, mode });
-  }
-
-  /**
-   * ユーザーのリプライ一覧を取得します。
-   *
-   * @param {number} userId - ユーザー ID
-   * @param {object} [params]
-   * @param {number} [params.limit=20] - 取得件数
-   * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ replies: object[], has_more: boolean }>}
-   */
-  getReplies(userId, { limit = 20, offset = 0 } = {}) {
-    return this._client._get(`/users/${userId}/replies`, { limit, offset });
+    return this._client._get(`/users/${encodeURIComponent(userId)}/posts`, { limit, offset, mode });
   }
 
   /**
@@ -245,7 +272,7 @@ export class UsersAPI {
    * @returns {Promise<{ posts: object[], has_more: boolean }>}
    */
   getLikes(userId, { limit = 30, offset = 0 } = {}) {
-    return this._client._get(`/users/${userId}/likes`, { limit, offset });
+    return this._client._get(`/users/${encodeURIComponent(userId)}/likes`, { limit, offset });
   }
 
   /**
@@ -258,7 +285,7 @@ export class UsersAPI {
    * @returns {Promise<{ posts: object[], has_more: boolean }>}
    */
   getStars(userId, { limit = 30, offset = 0 } = {}) {
-    return this._client._get(`/users/${userId}/stars`, { limit, offset });
+    return this._client._get(`/users/${encodeURIComponent(userId)}/stars`, { limit, offset });
   }
 
   /**
@@ -269,10 +296,10 @@ export class UsersAPI {
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {string|null} [params.cursor=null] - ページネーションカーソル
-   * @returns {Promise<{ followers: object[], has_more: boolean, next_cursor?: string|null }>}
+   * @returns {Promise<{ followers: import('../models.js').User[], has_more: boolean, next_cursor?: string|null }>}
    */
   getFollowers(userId, { limit = 20, offset = 0, cursor = null } = {}) {
-    return this._client._get(`/users/${userId}/followers`, {
+    return this._client._get(`/users/${encodeURIComponent(userId)}/followers`, {
       limit,
       offset: cursor ? undefined : offset,
       cursor: cursor || undefined,
@@ -287,10 +314,10 @@ export class UsersAPI {
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {string|null} [params.cursor=null] - ページネーションカーソル
-   * @returns {Promise<{ following: object[], has_more: boolean, next_cursor?: string|null }>}
+   * @returns {Promise<{ following: import('../models.js').User[], has_more: boolean, next_cursor?: string|null }>}
    */
   getFollowing(userId, { limit = 20, offset = 0, cursor = null } = {}) {
-    return this._client._get(`/users/${userId}/following`, {
+    return this._client._get(`/users/${encodeURIComponent(userId)}/following`, {
       limit,
       offset: cursor ? undefined : offset,
       cursor: cursor || undefined,
@@ -298,75 +325,15 @@ export class UsersAPI {
   }
 
   /**
-   * ユーザーの固定投稿一覧を取得します。
+   * ユーザーの固定投稿 ID を取得します。
+   * 名前は複数形ですが、現行Serverの `GET /users/:id/pin` は固定投稿を1件だけ持ち、
+   * 戻り値は単数の `{ pin_id }` です（投稿の配列ではありません）。
    *
    * @param {number} userId - ユーザー ID
-   * @returns {Promise<{ pinned_posts: object[] }>}
+   * @returns {Promise<{ pin_id: number|null }>}
    */
   getPinnedPosts(userId) {
-    return this._client._get(`/users/${userId}/pinned-posts`);
-  }
-
-  /**
-   * 投稿をプロフィールに固定します。
-   *
-   * @param {number} userId - ユーザー ID
-   * @param {number} postId - 投稿 ID
-   * @returns {Promise<{ success: boolean }>}
-   */
-  pinPost(userId, postId) {
-    return this._client._post(`/users/${userId}/pinned-posts/${postId}`, {});
-  }
-
-  /**
-   * プロフィールの固定投稿を解除します。
-   *
-   * @param {number} userId - ユーザー ID
-   * @param {number} postId - 投稿 ID
-   * @returns {Promise<{ success: boolean }>}
-   */
-  unpinPost(userId, postId) {
-    return this._client._delete(`/users/${userId}/pinned-posts/${postId}`);
-  }
-
-  /**
-   * ユーザーのブロック一覧を取得します。
-   *
-   * @param {number} userId - ユーザー ID
-   * @returns {Promise<{ blocks: object[] }>}
-   */
-  getBlocks(userId) {
-    return this._client._get(`/users/${userId}/blocks`);
-  }
-
-  /**
-   * ユーザーのミュート一覧を取得します。
-   *
-   * @param {number} userId - ユーザー ID
-   * @returns {Promise<{ mutes: object[] }>}
-   */
-  getMutes(userId) {
-    return this._client._get(`/users/${userId}/mutes`);
-  }
-
-  /**
-   * ユーザーをミュートします。
-   *
-   * @param {number} userId - ミュートするユーザー ID
-   * @returns {Promise<{ success: boolean }>}
-   */
-  mute(userId) {
-    return this._client._post(`/users/${userId}/mute`, {});
-  }
-
-  /**
-   * ユーザーのミュートを解除します。
-   *
-   * @param {number} userId - ミュート解除するユーザー ID
-   * @returns {Promise<{ success: boolean }>}
-   */
-  unmute(userId) {
-    return this._client._delete(`/users/${userId}/mute`);
+    return this._client._get(`/users/${encodeURIComponent(userId)}/pin`);
   }
 
   /**
@@ -376,7 +343,7 @@ export class UsersAPI {
    * @returns {Promise<{ success: boolean, following: boolean, updated_follows: number[] }>}
    */
   follow(userId) {
-    return this._client._post(`/users/${userId}/follow`, {});
+    return this._client._post(`/users/${encodeURIComponent(userId)}/follow`, {});
   }
 
   /**
@@ -396,7 +363,7 @@ export class UsersAPI {
    * @returns {Promise<{ success: boolean, blocked: boolean, block: number[], user_id: number }>}
    */
   toggleBlock(userId) {
-    return this._client._post(`/users/${userId}/block`, {});
+    return this._client._post(`/users/${encodeURIComponent(userId)}/block`, {});
   }
 
   /**
@@ -424,18 +391,18 @@ export class UsersAPI {
    *
    * @param {object} params
    * @param {string} [params.name] - 表示名
-   * @param {string} [params.me] - 自己紹介文
-   * @param {string} [params.bio] - 自己紹介文
+   * @param {string} [params.me] - 自己紹介文（bioの互換alias。両方指定時はServer側でbioが優先）
+   * @param {string} [params.bio] - 自己紹介文（meの互換alias。両方指定時はServer側でbioが優先）
    * @param {string} [params.headerImage] - ヘッダー画像 URL / データ
    * @param {string} [params.iconData] - アイコン画像データ
-   * @param {object} [params.settings] - 設定オブジェクト
-   * @returns {Promise<{ user: object }>}
+   * @param {import('../models.js').UserSettings} [params.settings] - 表示設定を含む設定。表示ランクの各項目は null で解除
+   * @returns {Promise<{ user: import('../models.js').User }>}
    */
   updateProfile({ name, me, bio, headerImage, iconData, settings } = {}) {
-    return this._client._patch('/users/me', {
+    return this._client._put('/users/me', {
       name,
-      me: me !== undefined ? me : bio,
-      bio: bio !== undefined ? bio : me,
+      me,
+      bio,
       header_image: headerImage,
       icon_data: iconData,
       settings,
@@ -443,7 +410,7 @@ export class UsersAPI {
   }
 
   /**
-   * ログイン履歴・ログを取得します。
+   * 管理者専用。ログイン履歴・ログを取得します（通常の認証権限では利用できません）。
    *
    * @param {object} [params]
    * @param {number} [params.limit=50] - 取得件数

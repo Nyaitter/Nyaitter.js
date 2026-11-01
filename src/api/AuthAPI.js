@@ -1,12 +1,40 @@
 /**
  * 認証 API
- * ログイン・ログアウト・2要素認証・セッション管理・Scratch連携・外部認証などを行います。
+ * 現行Serverのプロバイダー認証、ログイン承認、セッション管理などを行います。
  */
+
 export class AuthAPI {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
     this._client = client;
   }
+
+  getProviders() { return this._client._get('/auth/providers'); }
+  verifyProvider(provider, body = {}) { return this._client._post(`/auth/${encodeURIComponent(provider)}/verify`, body); }
+  pollLoginApproval(id, approvalToken) { return this._client._post(`/auth/login-approvals/${encodeURIComponent(id)}/poll`, { approval_token: approvalToken }); }
+  getLinkedProviders() { return this._client._get('/auth/linked-providers'); }
+  initiateProvider(provider, body = {}) { return this._client._post(`/auth/${encodeURIComponent(provider)}/initiate`, body); }
+  initiateProviderLink(provider, body = {}) { return this._client._post(`/auth/link/${encodeURIComponent(provider)}/initiate`, body); }
+  verifyProviderLink(provider, body = {}) { return this._client._post(`/auth/link/${encodeURIComponent(provider)}/verify`, body); }
+  unlinkProvider(provider, providerUserId) { return this._client._delete(`/auth/link/${encodeURIComponent(provider)}`, { provider_user_id: providerUserId }); }
+  getLoginApproval(id) { return this._client._get(`/auth/login-approvals/${encodeURIComponent(id)}`); }
+  decideLoginApproval(id, decision) { return this._client._post(`/auth/login-approvals/${encodeURIComponent(id)}/decision`, { decision }); }
+  /** @param {{approvalId?: string, approvalToken?: string}} [params] */
+  startAccountRecovery({ approvalId, approvalToken } = {}) { return this._client._post('/auth/account-recovery/start', { approval_id: approvalId, approval_token: approvalToken }); }
+  pollAccountRecovery(id, recoveryToken) { return this._client._post(`/auth/account-recovery/${encodeURIComponent(id)}/poll`, { recovery_token: recoveryToken }); }
+  getAccountRecovery(id) { return this._client._get(`/auth/account-recovery/${encodeURIComponent(id)}`); }
+  decideAccountRecovery(id, decision) { return this._client._post(`/auth/account-recovery/${encodeURIComponent(id)}/decision`, { decision }); }
+  getBlockedIps() { return this._client._get('/auth/blocked-ips'); }
+  deleteBlockedIp(hash) { return this._client._delete(`/auth/blocked-ips/${encodeURIComponent(hash)}`); }
+  trustCurrentIp() { return this._client._post('/auth/login-security/trust-current-ip', {}); }
+  revokeSessionIp(id) { return this._client._post(`/auth/sessions/${encodeURIComponent(id)}/revoke-ip`, {}); }
+  switchImposter(id) { return this._client._post(`/auth/imposters/${encodeURIComponent(id)}/switch`, {}); }
+  verifyTurnstile(token) { return this._client._post('/auth/turnstile/verify', { token }); }
+  devLogin(username) { return this._client._post('/auth/dev-login', { username }); }
+  testProtected() { return this._client._get('/auth/test-protected'); }
+  createBotToken(name) { return this._client._post('/auth/bot-tokens', { name }); }
+  getBotTokens() { return this._client._get('/auth/bot-tokens'); }
+  deleteBotToken(id) { return this._client._delete(`/auth/bot-tokens/${encodeURIComponent(id)}`); }
 
   getProvidersResponse() {
     return this._client.requestResponse('/auth/providers');
@@ -58,26 +86,9 @@ export class AuthAPI {
   }
 
   /**
-   * ログインしてセッショントークンを取得します。
-   *
-   * @param {object} params
-   * @param {string} params.username - ユーザー名または Scratch ID
-   * @param {string} params.password - パスワード
-   * @param {string} [params.token2fa] - 2要素認証コード
-   * @returns {Promise<{ success: boolean, token?: string, user?: object, require_2fa?: boolean }>}
-   */
-  login({ username, password, token2fa } = {}) {
-    return this._client._post('/auth/login', {
-      username,
-      password,
-      token_2fa: token2fa,
-    });
-  }
-
-  /**
    * ログアウトします。
    *
-   * @returns {Promise<{ success: boolean }>}
+   * @returns {Promise<{ message: string }>}
    */
   logout() {
     return this._client._post('/auth/logout', {});
@@ -90,50 +101,6 @@ export class AuthAPI {
    */
   getMe() {
     return this._client._get('/auth/me');
-  }
-
-  /**
-   * 新規アカウントを登録します。
-   *
-   * @param {object} params
-   * @param {string} params.scratchId - Scratch ユーザー名
-   * @param {string} params.password - パスワード
-   * @param {string} [params.username] - 表示名
-   * @param {string} [params.email] - メールアドレス
-   * @returns {Promise<{ success: boolean, user: object, token?: string }>}
-   */
-  register({ scratchId, password, username, email } = {}) {
-    return this._client._post('/auth/register', {
-      scratch_id: scratchId,
-      password,
-      username,
-      email,
-    });
-  }
-
-  /**
-   * Scratch 認証用の確認コードを取得します。
-   *
-   * @param {string} scratchId - Scratch ユーザー名
-   * @returns {Promise<{ success: boolean, code: string }>}
-   */
-  checkScratch(scratchId) {
-    return this._client._post('/auth/check-scratch', { scratch_id: scratchId });
-  }
-
-  /**
-   * Scratch プロフィール確認コードを検証してアカウントを連携します。
-   *
-   * @param {object} params
-   * @param {string} params.scratchId - Scratch ユーザー名
-   * @param {string} params.code - 確認コード
-   * @returns {Promise<{ success: boolean, verified: boolean }>}
-   */
-  linkScratch({ scratchId, code } = {}) {
-    return this._client._post('/auth/link-scratch', {
-      scratch_id: scratchId,
-      code,
-    });
   }
 
   /**
@@ -150,72 +117,21 @@ export class AuthAPI {
    *
    * @param {object} params
    * @param {number} params.accountId - 切り替え先のアカウント ID
-   * @param {string} [params.password] - パスワード
-   * @returns {Promise<{ success: boolean, token?: string, user: object }>}
+   * @param {number} [params.userId] - 切り替え先のユーザー ID
+   * @returns {Promise<{ success: boolean, user: object }>}
    */
-  switchAccount({ accountId, password } = {}) {
-    return this._client._post('/auth/accounts/switch', {
-      account_id: accountId,
-      password,
-    });
+  switchAccount({ accountId, userId = accountId } = {}) {
+    return this._client._post('/auth/accounts/switch', { user_id: userId });
   }
 
   /**
-   * 既存のアカウントをサブアカウントとして連携します。
-   *
-   * @param {object} params
-   * @param {number|string} params.accountId - 連携するアカウント ID またはユーザー名
-   * @param {string} params.password - パスワード
-   * @returns {Promise<{ success: boolean, accounts: object[] }>}
-   */
-  linkAccount({ accountId, password } = {}) {
-    return this._client._post('/auth/accounts/link', {
-      account_id: accountId,
-      password,
-    });
-  }
-
-  /**
-   * サブアカウントの連携を解除します。
+   * 記憶済みアカウントを解除します（provider連携の解除ではありません）。
    *
    * @param {number} accountId - 解除するアカウント ID
    * @returns {Promise<{ success: boolean }>}
    */
   unlinkAccount(accountId) {
-    return this._client._delete('/auth/accounts/unlink', {
-      account_id: accountId,
-    });
-  }
-
-  /**
-   * 2要素認証のセットアップを開始します。
-   *
-   * @returns {Promise<{ secret: string, qr_code_uri: string }>}
-   */
-  setup2FA() {
-    return this._client._post('/auth/2fa/setup', {});
-  }
-
-  /**
-   * 2要素認証を有効化します。
-   *
-   * @param {object} params
-   * @param {string} params.code - 認証アプリの 6 桁コード
-   * @param {string} params.secret - セットアップ時に取得したシークレット
-   * @returns {Promise<{ success: boolean }>}
-   */
-  verify2FA({ code, secret } = {}) {
-    return this._client._post('/auth/2fa/verify', { code, secret });
-  }
-
-  /**
-   * 2要素認証を無効化します。
-   *
-   * @param {string} code - 認証アプリの 6 桁コード
-   * @returns {Promise<{ success: boolean }>}
-   */
-  disable2FA(code) {
-    return this._client._post('/auth/2fa/disable', { code });
+    return this._client._delete(`/auth/accounts/${encodeURIComponent(accountId)}`);
   }
 
   /**
@@ -234,63 +150,7 @@ export class AuthAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   revokeSession(sessionId) {
-    return this._client._post('/auth/sessions/revoke', { session_id: sessionId });
+    return this._client._delete(`/auth/sessions/${encodeURIComponent(sessionId)}`);
   }
 
-  /**
-   * 外部ログイン認証を開始します。
-   *
-   * @param {object} params
-   * @param {string} params.provider - 認証プロバイダー名
-   * @param {string} [params.redirectUri] - リダイレクト URL
-   * @returns {Promise<{ auth_url: string, token: string }>}
-   */
-  startExternalAuth({ provider, redirectUri } = {}) {
-    return this._client._post('/auth/external/start', {
-      provider,
-      redirect_uri: redirectUri,
-    });
-  }
-
-  /**
-   * 外部認証の確認を行います。
-   *
-   * @param {object} params
-   * @param {string} params.token - 外部認証トークン
-   * @param {string} [params.password] - パスワード
-   * @returns {Promise<{ success: boolean }>}
-   */
-  confirmExternalAuth({ token, password } = {}) {
-    return this._client._post('/auth/external/confirm', { token, password });
-  }
-
-  /**
-   * 外部認証を完了しログインします。
-   *
-   * @param {string} token - 外部認証トークン
-   * @returns {Promise<{ success: boolean, token?: string, user?: object }>}
-   */
-  completeExternalAuth(token) {
-    return this._client._post('/auth/external/complete', { token });
-  }
-
-  /**
-   * アカウント削除を申請します。
-   *
-   * @param {string} password - アカウントのパスワード
-   * @returns {Promise<{ success: boolean, scheduled_deletion_at: string }>}
-   */
-  requestAccountDeletion(password) {
-    return this._client._post('/auth/account-deletion/request', { password });
-  }
-
-  /**
-   * アカウント削除申請を取り消します。
-   *
-   * @param {string} password - アカウントのパスワード
-   * @returns {Promise<{ success: boolean }>}
-   */
-  cancelAccountDeletion(password) {
-    return this._client._post('/auth/account-deletion/cancel', { password });
-  }
 }

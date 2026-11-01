@@ -63,21 +63,20 @@ export class GroupsAPI {
    * const { groups } = await client.groups.list({ query: 'プログラミング' });
    */
   list({ query, limit = 20, offset = 0 } = {}) {
-    return this._client._get('/groups', { q: query, limit, offset });
+    return this._client._get('/groups', { query, limit, offset });
   }
 
   /**
    * 自分が所属しているグループ一覧を取得します。
    *
    * @param {object} [params]
-   * @param {number} [params.postAsUserId] - インポスター等の代理ユーザー ID
-   * @param {number} [params.limit=100] - 取得件数
+   * @param {number} [params.postAsUserId] - 互換用（Serverは無視し、認証中ユーザーの一覧を返します）
+   * @param {number} [params.limit=50] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ groups: object[], home_tab_limit: number }>}
+   * @returns {Promise<{ groups: object[], limit: number, offset: number }>}
    */
-  listMine({ postAsUserId, limit = 100, offset = 0 } = {}) {
+  listMine({ postAsUserId, limit = 50, offset = 0 } = {}) {
     return this._client._get('/groups/mine', {
-      post_as_user_id: postAsUserId,
       limit,
       offset,
     });
@@ -100,20 +99,21 @@ export class GroupsAPI {
    * @returns {Promise<{ success: boolean, group?: object }>}
    */
   respondInvite(inviteId, decision) {
-    return this._client._post(`/groups/invites/${inviteId}/respond`, { decision });
+    return this._client._post(`/groups/invites/${encodeURIComponent(inviteId)}/respond`, { decision });
   }
 
   /**
    * グループの詳細情報を取得します。
    *
    * @param {string} groupId - グループ ID
+   * @param {{postAsUserId?: number}} [params]
    * @returns {Promise<{ group: object }>}
    *
    * @example
    * const { group } = await client.groups.get('group-uuid');
    */
-  get(groupId) {
-    return this._client._get(`/groups/${groupId}`);
+  get(groupId, { postAsUserId } = {}) {
+    return this._client._get(`/groups/${encodeURIComponent(groupId)}`, { post_as_user_id: postAsUserId });
   }
 
   /**
@@ -125,6 +125,7 @@ export class GroupsAPI {
    * @param {'open'|'open_invite'|'approval'|'closed'} [params.visibility='open'] - 公開レベル
    * @param {string} [params.iconData] - アイコン画像データ
    * @param {string} [params.headerImage] - ヘッダー画像 URL / データ
+   * @param {string} [params.category]
    * @returns {Promise<{ group: object }>}
    *
    * @example
@@ -134,13 +135,14 @@ export class GroupsAPI {
    *   visibility: 'open',
    * });
    */
-  create({ name, description = '', visibility = 'open', iconData, headerImage } = {}) {
+  create({ name, description = '', visibility = 'open', iconData, headerImage, category } = {}) {
     return this._client._post('/groups', {
       name,
       description,
       visibility,
       icon_data: iconData,
       header_image: headerImage,
+      category,
     });
   }
 
@@ -157,7 +159,7 @@ export class GroupsAPI {
    * @returns {Promise<{ group: object }>}
    */
   update(groupId, { name, description, visibility, iconData, headerImage } = {}) {
-    return this._client._patch(`/groups/${groupId}`, {
+    return this._client._patch(`/groups/${encodeURIComponent(groupId)}`, {
       name,
       description,
       visibility,
@@ -174,7 +176,7 @@ export class GroupsAPI {
    * @returns {Promise<{ group: object }>}
    */
   transferOwner(groupId, userId) {
-    return this._client._post(`/groups/${groupId}/transfer-owner`, {
+    return this._client._post(`/groups/${encodeURIComponent(groupId)}/transfer-owner`, {
       user_id: userId,
     });
   }
@@ -186,17 +188,17 @@ export class GroupsAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   delete(groupId) {
-    return this._client._delete(`/groups/${groupId}`);
+    return this._client._delete(`/groups/${encodeURIComponent(groupId)}`);
   }
 
   /**
    * グループに参加します。
    *
    * @param {string} groupId - グループ ID
-   * @returns {Promise<{ success: boolean, status: 'joined'|'requested', group?: object, request?: object }>}
+   * @returns {Promise<{ membership: object, joined: true } | { join_request: object, pending: true }>}
    */
   join(groupId) {
-    return this._client._post(`/groups/${groupId}/join`, {});
+    return this._client._post(`/groups/${encodeURIComponent(groupId)}/join`, {});
   }
 
   /**
@@ -206,7 +208,7 @@ export class GroupsAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   leave(groupId) {
-    return this._client._post(`/groups/${groupId}/leave`, {});
+    return this._client._post(`/groups/${encodeURIComponent(groupId)}/leave`, {});
   }
 
   /**
@@ -217,7 +219,7 @@ export class GroupsAPI {
    * @returns {Promise<{ success: boolean, invite: object }>}
    */
   invite(groupId, userId) {
-    return this._client._post(`/groups/${groupId}/invites`, {
+    return this._client._post(`/groups/${encodeURIComponent(groupId)}/invites`, {
       user_id: userId,
     });
   }
@@ -226,10 +228,11 @@ export class GroupsAPI {
    * 保留中の参加申請一覧を取得します。
    *
    * @param {string} groupId - グループ ID
+   * @param {{status?: string}} [params]
    * @returns {Promise<{ requests: object[] }>}
    */
-  getJoinRequests(groupId) {
-    return this._client._get(`/groups/${groupId}/join-requests`);
+  getJoinRequests(groupId, { status } = {}) {
+    return this._client._get(`/groups/${encodeURIComponent(groupId)}/join-requests`, { status });
   }
 
   /**
@@ -237,11 +240,11 @@ export class GroupsAPI {
    *
    * @param {string} groupId - グループ ID
    * @param {string} requestId - 参加申請 ID
-   * @param {'accept'|'decline'} decision - 判定
-   * @returns {Promise<{ success: boolean, request: object }>}
+   * @param {'approve'|'decline'} decision - 判定
+   * @returns {Promise<{ join_request: object }>}
    */
   respondJoinRequest(groupId, requestId, decision) {
-    return this._client._post(`/groups/${groupId}/join-requests/${requestId}/respond`, {
+    return this._client._post(`/groups/${encodeURIComponent(groupId)}/join-requests/${encodeURIComponent(requestId)}/respond`, {
       decision,
     });
   }
@@ -253,7 +256,7 @@ export class GroupsAPI {
    * @returns {Promise<{ roles: object[] }>}
    */
   getRoles(groupId) {
-    return this._client._get(`/groups/${groupId}/roles`);
+    return this._client._get(`/groups/${encodeURIComponent(groupId)}/roles`);
   }
 
   /**
@@ -267,7 +270,7 @@ export class GroupsAPI {
    * @returns {Promise<{ role: object }>}
    */
   createRole(groupId, { name, permissions, sortOrder = 0 } = {}) {
-    return this._client._post(`/groups/${groupId}/roles`, {
+    return this._client._post(`/groups/${encodeURIComponent(groupId)}/roles`, {
       name,
       permissions,
       sort_order: sortOrder,
@@ -286,7 +289,7 @@ export class GroupsAPI {
    * @returns {Promise<{ role: object }>}
    */
   updateRole(groupId, roleId, { name, permissions, sortOrder } = {}) {
-    return this._client._patch(`/groups/${groupId}/roles/${roleId}`, {
+    return this._client._patch(`/groups/${encodeURIComponent(groupId)}/roles/${encodeURIComponent(roleId)}`, {
       name,
       permissions,
       sort_order: sortOrder,
@@ -301,7 +304,7 @@ export class GroupsAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   deleteRole(groupId, roleId) {
-    return this._client._delete(`/groups/${groupId}/roles/${roleId}`);
+    return this._client._delete(`/groups/${encodeURIComponent(groupId)}/roles/${encodeURIComponent(roleId)}`);
   }
 
   /**
@@ -309,15 +312,14 @@ export class GroupsAPI {
    *
    * @param {string} groupId - グループ ID
    * @param {object} [params]
-   * @param {'active'|'banned'|'all'} [params.status='active'] - 取得するステータス
-   * @param {number} [params.limit=50] - 取得件数
+   * @param {'active'|'pending'|'invited'|'banned'} [params.status='active'] - 取得するステータス
+   * @param {number} [params.limit=200] - 互換用（Serverは無視し、固定値200を使用します）
    * @param {number} [params.offset=0] - 取得開始位置
    * @returns {Promise<{ members: object[] }>}
    */
-  getMembers(groupId, { status = 'active', limit = 50, offset = 0 } = {}) {
-    return this._client._get(`/groups/${groupId}/members`, {
+  getMembers(groupId, { status = 'active', limit = 200, offset = 0 } = {}) {
+    return this._client._get(`/groups/${encodeURIComponent(groupId)}/members`, {
       status,
-      limit,
       offset,
     });
   }
@@ -331,7 +333,7 @@ export class GroupsAPI {
    * @returns {Promise<{ member: object }>}
    */
   updateMember(groupId, userId, roleId) {
-    return this._client._patch(`/groups/${groupId}/members/${userId}`, {
+    return this._client._patch(`/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(userId)}`, {
       role_id: roleId,
     });
   }
@@ -344,7 +346,7 @@ export class GroupsAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   banMember(groupId, userId) {
-    return this._client._post(`/groups/${groupId}/members/${userId}/ban`, {});
+    return this._client._post(`/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(userId)}/ban`, {});
   }
 
   /**
@@ -355,7 +357,7 @@ export class GroupsAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   unbanMember(groupId, userId) {
-    return this._client._post(`/groups/${groupId}/members/${userId}/unban`, {});
+    return this._client._post(`/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(userId)}/unban`, {});
   }
 
   /**
@@ -367,13 +369,21 @@ export class GroupsAPI {
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {number} [params.beforeId] - この ID 以前の投稿を取得
    * @param {string} [params.cursor] - キーセットカーソル
+   * @param {number} [params.authorId]
+   * @param {string} [params.subType]
+   * @param {string} [params.order]
+   * @param {string} [params.mode]
    * @returns {Promise<{ posts: object[], has_next: boolean, next_cursor: any }>}
    */
-  getPosts(groupId, { limit = 30, offset = 0, beforeId, cursor } = {}) {
-    return this._client._get(`/groups/${groupId}/posts`, {
+  getPosts(groupId, { limit = 30, offset = 0, beforeId, cursor, authorId, subType, order, mode } = {}) {
+    return this._client._get(`/groups/${encodeURIComponent(groupId)}/posts`, {
       limit,
       offset,
       before_id: beforeId,
+      author_id: authorId,
+      sub_type: subType,
+      order,
+      mode,
       ...(cursor !== undefined && cursor !== null ? { cursor } : {}),
     });
   }

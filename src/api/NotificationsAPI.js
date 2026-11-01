@@ -46,7 +46,7 @@ export class NotificationsAPI {
    *
    * @param {object} params
    * @param {number} params.recipientId - 送信先ユーザー ID
-   * @param {'mention'|'repost'|'dm_invite'|'dm_removed'|'dm_host_transfer'|'admin_notice'} params.type - 通知タイプ
+   * @param {string} params.type - 通知タイプ。一般ユーザーにはサーバー側の種別・対象制限があります。
    * @param {object} [params.target] - 通知対象
    * @returns {Promise<{ success: boolean, notification: object|null }>}
    *
@@ -72,17 +72,17 @@ export class NotificationsAPI {
    * @returns {Promise<{ success: boolean, notification_unread_count: number }>}
    */
   markAsRead(notificationId) {
-    return this._client._put(`/notifications/${notificationId}/read`, {});
+    return this._client._put(`/notifications/${encodeURIComponent(notificationId)}/read`, {});
   }
 
   /**
    * 通知をクリック済みにマークします。
    *
    * @param {number} notificationId - 通知 ID
-   * @returns {Promise<{ success: boolean, read: boolean, clicked: boolean }>}
+   * @returns {Promise<{ success: boolean, read: boolean, clicked: boolean, notification_unread_count: number }>}
    */
   markAsClicked(notificationId) {
-    return this._client._put(`/notifications/${notificationId}/clicked`, {});
+    return this._client._put(`/notifications/${encodeURIComponent(notificationId)}/clicked`, {});
   }
 
   /**
@@ -113,7 +113,6 @@ export class NotificationsAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   delete(notificationId) {
-    return this._client._delete(`/notifications/${notificationId}`);
+    return this._client._delete(`/notifications/${encodeURIComponent(notificationId)}`);
   }
 }
-

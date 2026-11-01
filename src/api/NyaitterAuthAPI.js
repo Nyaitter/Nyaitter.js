@@ -17,6 +17,12 @@ export class NyaitterAuthAPI {
     this._client = client;
   }
 
+  getRequest(requestId) { return this._client._get(`/nyaitter-auth/requests/${encodeURIComponent(requestId)}`); }
+  approve(body) { return this._client._post('/nyaitter-auth/approve', body); }
+  deny(body) { return this._client._post('/nyaitter-auth/deny', body); }
+  autoPass(requestId) { return this._client._post('/nyaitter-auth/auto-pass', { request_id: requestId }); }
+  checkGrant(query = {}) { return this._client._get('/nyaitter-auth/check-grant', query); }
+
   getRequestResponse(requestId, options) {
     return this._client.requestResponse(`/nyaitter-auth/requests/${encodeURIComponent(requestId)}`, options);
   }
@@ -124,7 +130,7 @@ export class NyaitterAuthAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   updateAuthorizedApp(appAuthId, scopes) {
-    return this._client._patch(`/nyaitter-auth/authorized-apps/${appAuthId}`, { scopes });
+    return this._client._patch(`/nyaitter-auth/authorized-apps/${encodeURIComponent(appAuthId)}`, { scopes });
   }
 
   /**
@@ -134,6 +140,6 @@ export class NyaitterAuthAPI {
    * @returns {Promise<{ success: boolean }>}
    */
   revokeAuthorizedApp(appAuthId) {
-    return this._client._delete(`/nyaitter-auth/authorized-apps/${appAuthId}`);
+    return this._client._delete(`/nyaitter-auth/authorized-apps/${encodeURIComponent(appAuthId)}`);
   }
 }

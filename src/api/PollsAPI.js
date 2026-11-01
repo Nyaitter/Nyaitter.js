@@ -19,7 +19,7 @@ export class PollsAPI {
    * console.log('選択肢:', poll.options);
    */
   get(pollId) {
-    return this._client._get(`/polls/${pollId}`);
+    return this._client._get(`/polls/${encodeURIComponent(pollId)}`);
   }
 
   /**
@@ -42,7 +42,7 @@ export class PollsAPI {
       : optionIds !== undefined && optionIds !== null
         ? [optionIds]
         : [];
-    return this._client._post(`/polls/${pollId}/vote`, {
+    return this._client._post(`/polls/${encodeURIComponent(pollId)}/vote`, {
       option_ids: rawIds,
       other_text: otherText,
     });

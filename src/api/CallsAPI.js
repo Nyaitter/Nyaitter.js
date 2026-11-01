@@ -35,10 +35,15 @@ export class CallsAPI {
    * @param {string} [params.description] - 説明（最大2000文字）
    * @param {'public'|'group'|'private'} [params.visibility='public'] - 公開範囲
    * @param {string} [params.group_id] - `visibility` が `'group'` のときの対象グループ ID
+   * @param {string} [params.groupId]
    * @param {string} [params.scheduled_at] - 予約開始日時（ISO 8601、未来のみ）
+   * @param {string} [params.scheduledAt]
    * @param {number[]} [params.invite_ids] - 招待するユーザー ID の配列
+   * @param {number[]} [params.inviteIds]
    * @param {number[]} [params.speaker_ids] - スピーカーにするユーザー ID の配列
+   * @param {number[]} [params.speakerIds]
    * @param {boolean} [params.allow_guest_join] - ゲスト参加を許可するか
+   * @param {boolean} [params.allowGuestJoin]
    * @returns {Promise<{ stage: object }>}
    *
    * @example
@@ -63,11 +68,11 @@ export class CallsAPI {
       name,
       description,
       visibility,
-      group_id: group_id ?? groupId,
-      scheduled_at: scheduled_at ?? scheduledAt,
-      invite_ids: invite_ids ?? inviteIds,
-      speaker_ids: speaker_ids ?? speakerIds,
-      allow_guest_join: allow_guest_join ?? allowGuestJoin,
+      group_id: group_id !== undefined ? group_id : groupId,
+      scheduled_at: scheduled_at !== undefined ? scheduled_at : scheduledAt,
+      invite_ids: invite_ids !== undefined ? invite_ids : inviteIds,
+      speaker_ids: speaker_ids !== undefined ? speaker_ids : speakerIds,
+      allow_guest_join: allow_guest_join !== undefined ? allow_guest_join : allowGuestJoin,
     });
   }
 
@@ -82,7 +87,7 @@ export class CallsAPI {
    * const info = await client.calls.getStage(stage.id);
    */
   getStage(id) {
-    return this._client._get(`/calls/stages/${id}`);
+    return this._client._get(`/calls/stages/${encodeURIComponent(id)}`);
   }
 
   /**
@@ -92,16 +97,19 @@ export class CallsAPI {
    * @param {object} [params]
    * @param {'live'|'ended'} [params.status] - ステージの状態
    * @param {number[]} [params.speaker_ids] - スピーカーにするユーザー ID の配列
+   * @param {number[]} [params.speakerIds]
    * @param {number[]} [params.invite_ids] - 追加で招待するユーザー ID の配列
+   * @param {number[]} [params.inviteIds]
    * @param {boolean} [params.allow_guest_join] - ゲスト参加を許可するか
+   * @param {boolean} [params.allowGuestJoin]
    * @returns {Promise<{ stage: object }>}
    */
   updateStage(id, { status, speaker_ids, speakerIds, invite_ids, inviteIds, allow_guest_join, allowGuestJoin } = {}) {
-    return this._client._patch(`/calls/stages/${id}`, {
+    return this._client._patch(`/calls/stages/${encodeURIComponent(id)}`, {
       status,
-      speaker_ids: speaker_ids ?? speakerIds,
-      invite_ids: invite_ids ?? inviteIds,
-      allow_guest_join: allow_guest_join ?? allowGuestJoin,
+      speaker_ids: speaker_ids !== undefined ? speaker_ids : speakerIds,
+      invite_ids: invite_ids !== undefined ? invite_ids : inviteIds,
+      allow_guest_join: allow_guest_join !== undefined ? allow_guest_join : allowGuestJoin,
     });
   }
 
@@ -113,7 +121,7 @@ export class CallsAPI {
    * @returns {Promise<{ guest_id: string }>}
    */
   createGuestSession(id) {
-    return this._client._post(`/calls/stages/${id}/guest-session`);
+    return this._client._post(`/calls/stages/${encodeURIComponent(id)}/guest-session`);
   }
 
   /**
@@ -136,7 +144,7 @@ export class CallsAPI {
    * const call = await client.calls.getDmCall('dm_group_id');
    */
   getDmCall(dmId) {
-    return this._client._get(`/calls/dm/${dmId}`);
+    return this._client._get(`/calls/dm/${encodeURIComponent(dmId)}`);
   }
 
   /**
