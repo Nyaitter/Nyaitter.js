@@ -1,6 +1,6 @@
 {
   "name": "nyaitter.js",
-  "version": "0.1.7",
+  "version": "0.2.0",
   "description": "Nyaitter の API を JavaScript から呼ぶクライアントライブラリ",
   "license": "MIT",
   "repository": {
@@ -15,10 +15,17 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "browser": "./dist/nyaitter.js",
+  "types": "./dist/types/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
+      "import": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/types-cjs/index.d.cts",
+        "default": "./dist/index.cjs"
+      },
       "default": "./dist/index.js"
     }
   },
@@ -35,14 +42,16 @@
   ],
   "author": "Nyaitter",
   "scripts": {
-    "build": "npm run build:esm && npm run build:cjs && npm run build:browser",
+    "build": "npm run build:esm && npm run build:cjs && npm run build:browser && npm run build:types",
+    "build:types": "tsc --allowJs --declaration --emitDeclarationOnly --outDir dist/types --module nodenext --moduleResolution nodenext --target es2022 src/index.js && node scripts/build-cjs-types.js",
     "build:esm": "esbuild src/index.js --bundle --format=esm --outfile=dist/index.js",
     "build:cjs": "esbuild src/index.js --bundle --format=cjs --outfile=dist/index.cjs",
     "build:browser": "esbuild src/index.js --bundle --format=iife --global-name=Nyaitter --outfile=dist/nyaitter.js",
     "test": "node --test"
   },
   "devDependencies": {
-    "esbuild": "^0.25.0"
+    "esbuild": "^0.25.0",
+    "typescript": "^7.0.2"
   },
   "engines": {
     "node": ">=18"

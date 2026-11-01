@@ -23,8 +23,10 @@ __export(index_exports, {
   AuthAPI: () => AuthAPI,
   CallsAPI: () => CallsAPI,
   DmAPI: () => DmAPI,
+  ExtensionsAPI: () => ExtensionsAPI,
   GroupsAPI: () => GroupsAPI,
   ImpostersAPI: () => ImpostersAPI,
+  NotesAPI: () => NotesAPI,
   NotificationsAPI: () => NotificationsAPI,
   NyaitterAuthAPI: () => NyaitterAuthAPI,
   NyaitterClient: () => NyaitterClient,
@@ -37,6 +39,7 @@ __export(index_exports, {
   RealtimeClient: () => RealtimeClient,
   ReportsAPI: () => ReportsAPI,
   RulesAPI: () => RulesAPI,
+  SpacesAPI: () => SpacesAPI,
   SystemAPI: () => SystemAPI,
   UIAPI: () => UIAPI,
   UploadsAPI: () => UploadsAPI,
@@ -53,6 +56,82 @@ var AuthAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
     this._client = client;
+  }
+  getProviders() {
+    return this._client._get("/auth/providers");
+  }
+  verifyProvider(provider, body = {}) {
+    return this._client._post(`/auth/${encodeURIComponent(provider)}/verify`, body);
+  }
+  pollLoginApproval(id, approvalToken) {
+    return this._client._post(`/auth/login-approvals/${encodeURIComponent(id)}/poll`, { approval_token: approvalToken });
+  }
+  getLinkedProviders() {
+    return this._client._get("/auth/linked-providers");
+  }
+  initiateProvider(provider, body = {}) {
+    return this._client._post(`/auth/${encodeURIComponent(provider)}/initiate`, body);
+  }
+  initiateProviderLink(provider, body = {}) {
+    return this._client._post(`/auth/link/${encodeURIComponent(provider)}/initiate`, body);
+  }
+  verifyProviderLink(provider, body = {}) {
+    return this._client._post(`/auth/link/${encodeURIComponent(provider)}/verify`, body);
+  }
+  unlinkProvider(provider, providerUserId) {
+    return this._client._delete(`/auth/link/${encodeURIComponent(provider)}`, { provider_user_id: providerUserId });
+  }
+  getLoginApproval(id) {
+    return this._client._get(`/auth/login-approvals/${encodeURIComponent(id)}`);
+  }
+  decideLoginApproval(id, decision) {
+    return this._client._post(`/auth/login-approvals/${encodeURIComponent(id)}/decision`, { decision });
+  }
+  /** @param {{approvalId?: string, approvalToken?: string}} [params] */
+  startAccountRecovery({ approvalId, approvalToken } = {}) {
+    return this._client._post("/auth/account-recovery/start", { approval_id: approvalId, approval_token: approvalToken });
+  }
+  pollAccountRecovery(id, recoveryToken) {
+    return this._client._post(`/auth/account-recovery/${encodeURIComponent(id)}/poll`, { recovery_token: recoveryToken });
+  }
+  getAccountRecovery(id) {
+    return this._client._get(`/auth/account-recovery/${encodeURIComponent(id)}`);
+  }
+  decideAccountRecovery(id, decision) {
+    return this._client._post(`/auth/account-recovery/${encodeURIComponent(id)}/decision`, { decision });
+  }
+  getBlockedIps() {
+    return this._client._get("/auth/blocked-ips");
+  }
+  deleteBlockedIp(hash) {
+    return this._client._delete(`/auth/blocked-ips/${encodeURIComponent(hash)}`);
+  }
+  trustCurrentIp() {
+    return this._client._post("/auth/login-security/trust-current-ip", {});
+  }
+  revokeSessionIp(id) {
+    return this._client._post(`/auth/sessions/${encodeURIComponent(id)}/revoke-ip`, {});
+  }
+  switchImposter(id) {
+    return this._client._post(`/auth/imposters/${encodeURIComponent(id)}/switch`, {});
+  }
+  verifyTurnstile(token) {
+    return this._client._post("/auth/turnstile/verify", { token });
+  }
+  devLogin(username) {
+    return this._client._post("/auth/dev-login", { username });
+  }
+  testProtected() {
+    return this._client._get("/auth/test-protected");
+  }
+  createBotToken(name) {
+    return this._client._post("/auth/bot-tokens", { name });
+  }
+  getBotTokens() {
+    return this._client._get("/auth/bot-tokens");
+  }
+  deleteBotToken(id) {
+    return this._client._delete(`/auth/bot-tokens/${encodeURIComponent(id)}`);
   }
   getProvidersResponse() {
     return this._client.requestResponse("/auth/providers");
@@ -94,25 +173,9 @@ var AuthAPI = class {
     });
   }
   /**
-   * ログインしてセッショントークンを取得します。
-   *
-   * @param {object} params
-   * @param {string} params.username - ユーザー名または Scratch ID
-   * @param {string} params.password - パスワード
-   * @param {string} [params.token2fa] - 2要素認証コード
-   * @returns {Promise<{ success: boolean, token?: string, user?: object, require_2fa?: boolean }>}
-   */
-  login({ username, password, token2fa } = {}) {
-    return this._client._post("/auth/login", {
-      username,
-      password,
-      token_2fa: token2fa
-    });
-  }
-  /**
    * ログアウトします。
    *
-   * @returns {Promise<{ success: boolean }>}
+   * @returns {Promise<{ message: string }>}
    */
   logout() {
     return this._client._post("/auth/logout", {});
@@ -124,47 +187,6 @@ var AuthAPI = class {
    */
   getMe() {
     return this._client._get("/auth/me");
-  }
-  /**
-   * 新規アカウントを登録します。
-   *
-   * @param {object} params
-   * @param {string} params.scratchId - Scratch ユーザー名
-   * @param {string} params.password - パスワード
-   * @param {string} [params.username] - 表示名
-   * @param {string} [params.email] - メールアドレス
-   * @returns {Promise<{ success: boolean, user: object, token?: string }>}
-   */
-  register({ scratchId, password, username, email } = {}) {
-    return this._client._post("/auth/register", {
-      scratch_id: scratchId,
-      password,
-      username,
-      email
-    });
-  }
-  /**
-   * Scratch 認証用の確認コードを取得します。
-   *
-   * @param {string} scratchId - Scratch ユーザー名
-   * @returns {Promise<{ success: boolean, code: string }>}
-   */
-  checkScratch(scratchId) {
-    return this._client._post("/auth/check-scratch", { scratch_id: scratchId });
-  }
-  /**
-   * Scratch プロフィール確認コードを検証してアカウントを連携します。
-   *
-   * @param {object} params
-   * @param {string} params.scratchId - Scratch ユーザー名
-   * @param {string} params.code - 確認コード
-   * @returns {Promise<{ success: boolean, verified: boolean }>}
-   */
-  linkScratch({ scratchId, code } = {}) {
-    return this._client._post("/auth/link-scratch", {
-      scratch_id: scratchId,
-      code
-    });
   }
   /**
    * 連携されているサブアカウント一覧を取得します。
@@ -179,67 +201,20 @@ var AuthAPI = class {
    *
    * @param {object} params
    * @param {number} params.accountId - 切り替え先のアカウント ID
-   * @param {string} [params.password] - パスワード
-   * @returns {Promise<{ success: boolean, token?: string, user: object }>}
+   * @param {number} [params.userId] - 切り替え先のユーザー ID
+   * @returns {Promise<{ success: boolean, user: object }>}
    */
-  switchAccount({ accountId, password } = {}) {
-    return this._client._post("/auth/accounts/switch", {
-      account_id: accountId,
-      password
-    });
+  switchAccount({ accountId, userId = accountId } = {}) {
+    return this._client._post("/auth/accounts/switch", { user_id: userId });
   }
   /**
-   * 既存のアカウントをサブアカウントとして連携します。
-   *
-   * @param {object} params
-   * @param {number|string} params.accountId - 連携するアカウント ID またはユーザー名
-   * @param {string} params.password - パスワード
-   * @returns {Promise<{ success: boolean, accounts: object[] }>}
-   */
-  linkAccount({ accountId, password } = {}) {
-    return this._client._post("/auth/accounts/link", {
-      account_id: accountId,
-      password
-    });
-  }
-  /**
-   * サブアカウントの連携を解除します。
+   * 記憶済みアカウントを解除します（provider連携の解除ではありません）。
    *
    * @param {number} accountId - 解除するアカウント ID
    * @returns {Promise<{ success: boolean }>}
    */
   unlinkAccount(accountId) {
-    return this._client._delete("/auth/accounts/unlink", {
-      account_id: accountId
-    });
-  }
-  /**
-   * 2要素認証のセットアップを開始します。
-   *
-   * @returns {Promise<{ secret: string, qr_code_uri: string }>}
-   */
-  setup2FA() {
-    return this._client._post("/auth/2fa/setup", {});
-  }
-  /**
-   * 2要素認証を有効化します。
-   *
-   * @param {object} params
-   * @param {string} params.code - 認証アプリの 6 桁コード
-   * @param {string} params.secret - セットアップ時に取得したシークレット
-   * @returns {Promise<{ success: boolean }>}
-   */
-  verify2FA({ code, secret } = {}) {
-    return this._client._post("/auth/2fa/verify", { code, secret });
-  }
-  /**
-   * 2要素認証を無効化します。
-   *
-   * @param {string} code - 認証アプリの 6 桁コード
-   * @returns {Promise<{ success: boolean }>}
-   */
-  disable2FA(code) {
-    return this._client._post("/auth/2fa/disable", { code });
+    return this._client._delete(`/auth/accounts/${encodeURIComponent(accountId)}`);
   }
   /**
    * アクティブなログインセッション一覧を取得します。
@@ -256,59 +231,7 @@ var AuthAPI = class {
    * @returns {Promise<{ success: boolean }>}
    */
   revokeSession(sessionId) {
-    return this._client._post("/auth/sessions/revoke", { session_id: sessionId });
-  }
-  /**
-   * 外部ログイン認証を開始します。
-   *
-   * @param {object} params
-   * @param {string} params.provider - 認証プロバイダー名
-   * @param {string} [params.redirectUri] - リダイレクト URL
-   * @returns {Promise<{ auth_url: string, token: string }>}
-   */
-  startExternalAuth({ provider, redirectUri } = {}) {
-    return this._client._post("/auth/external/start", {
-      provider,
-      redirect_uri: redirectUri
-    });
-  }
-  /**
-   * 外部認証の確認を行います。
-   *
-   * @param {object} params
-   * @param {string} params.token - 外部認証トークン
-   * @param {string} [params.password] - パスワード
-   * @returns {Promise<{ success: boolean }>}
-   */
-  confirmExternalAuth({ token, password } = {}) {
-    return this._client._post("/auth/external/confirm", { token, password });
-  }
-  /**
-   * 外部認証を完了しログインします。
-   *
-   * @param {string} token - 外部認証トークン
-   * @returns {Promise<{ success: boolean, token?: string, user?: object }>}
-   */
-  completeExternalAuth(token) {
-    return this._client._post("/auth/external/complete", { token });
-  }
-  /**
-   * アカウント削除を申請します。
-   *
-   * @param {string} password - アカウントのパスワード
-   * @returns {Promise<{ success: boolean, scheduled_deletion_at: string }>}
-   */
-  requestAccountDeletion(password) {
-    return this._client._post("/auth/account-deletion/request", { password });
-  }
-  /**
-   * アカウント削除申請を取り消します。
-   *
-   * @param {string} password - アカウントのパスワード
-   * @returns {Promise<{ success: boolean }>}
-   */
-  cancelAccountDeletion(password) {
-    return this._client._post("/auth/account-deletion/cancel", { password });
+    return this._client._delete(`/auth/sessions/${encodeURIComponent(sessionId)}`);
   }
 };
 
@@ -317,6 +240,29 @@ var PostsAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
     this._client = client;
+  }
+  /**
+   * 最新投稿一覧を取得します。
+   * @param {{tab?: string, limit?: number, offset?: number, beforeId?: number, sinceId?: number, cursor?: string, order?: string}} [params]
+   */
+  list({ tab, limit, offset, beforeId, sinceId, cursor, order } = {}) {
+    return this._client._get("/posts", { tab, limit, offset, before_id: beforeId, since_id: sinceId, cursor, order });
+  }
+  /** 投稿のアクティビティを取得します。 */
+  getActivity(postId) {
+    return this._client._get(`/posts/${encodeURIComponent(postId)}/activity`);
+  }
+  /** 投稿にいいねしたユーザーを取得します。 */
+  getLikes(postId, { limit = 50 } = {}) {
+    return this._client._get(`/posts/${encodeURIComponent(postId)}/likes`, { limit });
+  }
+  /** 投稿を低評価します。 */
+  dislike(postId) {
+    return this._client._post(`/posts/${encodeURIComponent(postId)}/dislike`, {});
+  }
+  /** 管理者として投稿を削除します。 */
+  adminDelete(postId) {
+    return this._client._delete(`/posts/admin/${encodeURIComponent(postId)}`);
   }
   /**
    * タイムラインの投稿一覧を取得します。
@@ -384,7 +330,7 @@ var PostsAPI = class {
    * 投稿を検索します。
    *
    * @param {object} params
-   * @param {string} params.query - 検索キーワード
+   * @param {string} params.query - キーワード、from:#1234、at:YYYY-MM-DD、since:/until:、has:media/links、is:reply/quote/repost を併用可能（日付は UTC）
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {number} [params.beforeId] - このID以前の投稿を取得
@@ -402,41 +348,6 @@ var PostsAPI = class {
       before_id: beforeId,
       ...cursor !== void 0 && cursor !== null ? { cursor } : {}
     });
-  }
-  /**
-   * 指定したハッシュタグの投稿一覧を取得します。
-   *
-   * @param {string} tag - ハッシュタグ
-   * @param {object} [params]
-   * @param {number} [params.limit=20] - 取得件数
-   * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ posts: object[] }>}
-   */
-  getByTag(tag, { limit = 20, offset = 0 } = {}) {
-    const cleanTag = String(tag || "").replace(/^#/, "").trim();
-    return this._client._get(`/posts/tags/${encodeURIComponent(cleanTag)}`, { limit, offset });
-  }
-  /**
-   * ログイン中ユーザーがいいねした投稿一覧を取得します。
-   *
-   * @param {object} [params]
-   * @param {number} [params.limit=20] - 取得件数
-   * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ posts: object[] }>}
-   */
-  getLiked({ limit = 20, offset = 0 } = {}) {
-    return this._client._get("/posts/liked", { limit, offset });
-  }
-  /**
-   * ログイン中ユーザーがスターした投稿一覧を取得します。
-   *
-   * @param {object} [params]
-   * @param {number} [params.limit=20] - 取得件数
-   * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ posts: object[] }>}
-   */
-  getStarred({ limit = 20, offset = 0 } = {}) {
-    return this._client._get("/posts/starred", { limit, offset });
   }
   /**
    * タイムライン・おすすめ・検索・プロフィール等の投稿ページを汎用取得します。
@@ -542,25 +453,16 @@ var PostsAPI = class {
     return this._client._get(`/posts/${postId}/thread`, { limit, offset });
   }
   /**
-   * 投稿のリアクション詳細を取得します。
-   *
-   * @param {number} postId - 投稿 ID
-   * @returns {Promise<{ reactions: object }>}
-   */
-  getReactions(postId) {
-    return this._client._get(`/posts/${postId}/reactions`);
-  }
-  /**
    * 投稿の引用ポスト一覧を取得します。
    *
    * @param {number} postId - 投稿 ID
    * @param {object} [params]
    * @param {number} [params.limit=20] - 取得件数
-   * @param {number} [params.offset=0] - 取得開始位置
+   * @param {number} [params.offset=0] - 互換用（Serverは無視します。ページング不可）
    * @returns {Promise<{ quotes: object[] }>}
    */
   getQuotes(postId, { limit = 20, offset = 0 } = {}) {
-    return this._client._get(`/posts/${postId}/quotes`, { limit, offset });
+    return this._client._get(`/posts/${postId}/quotes`, { limit });
   }
   /**
    * 新しい投稿を作成します。
@@ -577,6 +479,7 @@ var PostsAPI = class {
    * @param {boolean} [params.groupAnnouncement=false] - グループ内アナウンスフラグ
    * @param {'everyone'|'following'|'mentioned_only'} [params.replyControl='everyone'] - 返信可能範囲
    * @param {number} [params.postAsUserId] - インポスター等の代理投稿ユーザーID
+   * @param {string|null} [params.scheduledAt] - 投稿日時
    * @returns {Promise<{ success: boolean, queued: boolean, action_id?: string }>}
    *
    * @example
@@ -594,7 +497,8 @@ var PostsAPI = class {
     groupId,
     groupAnnouncement = false,
     replyControl = "everyone",
-    postAsUserId
+    postAsUserId,
+    scheduledAt
   } = {}) {
     return this._client._post("/posts", {
       content,
@@ -607,7 +511,8 @@ var PostsAPI = class {
       group_id: groupId,
       group_announcement: Boolean(groupAnnouncement),
       reply_control: replyControl,
-      post_as_user_id: postAsUserId
+      post_as_user_id: postAsUserId,
+      scheduled_at: scheduledAt
     });
   }
   /**
@@ -619,14 +524,16 @@ var PostsAPI = class {
    * @param {Array<object>} [params.attachments] - 添付ファイル
    * @param {boolean} [params.mask] - 閲覧注意マスク
    * @param {boolean} [params.lock] - 鍵
-   * @returns {Promise<{ success: boolean, post: object }>}
+   * @param {'everyone'|'following'|'mentioned_only'} [params.replyControl] - 返信可能範囲
+   * @returns {Promise<{ success: boolean, queued: boolean, action_id?: string }>}
    */
-  update(postId, { content, attachments, mask, lock } = {}) {
-    return this._client._patch(`/posts/${postId}`, {
+  update(postId, { content, attachments, mask, lock, replyControl } = {}) {
+    return this._client._put(`/posts/${encodeURIComponent(postId)}`, {
       content,
       attachments,
       mask,
-      lock
+      lock,
+      reply_control: replyControl
     });
   }
   /**
@@ -719,16 +626,6 @@ var PostsAPI = class {
     return this._client._post(`/posts/${postId}/pin`, {});
   }
   /**
-   * 投稿を既読として送信します。
-   *
-   * @param {number[]|number} postIds - 既読にする投稿 ID 配列
-   * @returns {Promise<{ success: boolean }>}
-   */
-  markAsRead(postIds) {
-    const ids = Array.isArray(postIds) ? postIds : [postIds];
-    return this._client._post("/posts/read", { post_ids: ids });
-  }
-  /**
    * 複数の投稿 ID を一括で詳細データに変換します。
    *
    * @param {number[]} postIds - 取得する投稿 ID 配列
@@ -745,6 +642,76 @@ var PostsAPI = class {
    */
   getMetrics(postIds) {
     return this._client._post("/posts/metrics", { post_ids: postIds });
+  }
+};
+
+// src/api/NotesAPI.js
+var NotesAPI = class {
+  /** @param {import('../NyaitterClient.js').NyaitterClient} client */
+  constructor(client) {
+    this._client = client;
+  }
+  /**
+   * @param {number|string} postId
+   * @param {object} params
+   * @param {string} params.content - 1〜1000文字
+   * @param {(string|{url: string, title?: string})[]} [params.sources] - HTTPS の出典
+   * @param {string[]} [params.reasons] - create 側の理由コード（最大3件）
+   * @returns {Promise<{note: import('../models.js').CommunityNote}>}
+   */
+  create(postId, { content, sources, reasons } = {}) {
+    return this._client._post(`/posts/${encodeURIComponent(postId)}/notes`, { content, sources, reasons });
+  }
+  /**
+   * @param {number|string} postId
+   * @returns {Promise<{notes: import('../models.js').CommunityNote[], eligible: boolean}>}
+   */
+  list(postId) {
+    return this._client._get(`/posts/${encodeURIComponent(postId)}/notes`);
+  }
+  /**
+   * 複数の投稿のノートを一括で取得します（タイムライン表示時の N+1 回避用）。
+   * 閲覧できない・存在しない投稿は結果に含まれず、`missing_post_ids` に入ります。
+   *
+   * @param {(number|string)[]} postIds - 投稿 ID（最大50件、重複は除かれます）
+   * @returns {Promise<{notes_by_post: Record<string, {notes: import('../models.js').CommunityNote[], eligible: boolean}>, missing_post_ids: number[]}>}
+   */
+  listForPosts(postIds) {
+    const ids = [...new Set((Array.isArray(postIds) ? postIds : []).map((id) => Number(id)).filter((id) => Number.isSafeInteger(id) && id > 0))];
+    return this._client._post("/notes/bulk", { post_ids: ids });
+  }
+  /**
+   * @param {object} [params]
+   * @param {'create'|'positive'|'negative'} [params.side]
+   * @returns {Promise<{tags: import('../models.js').NoteReasonTag[]}>}
+   */
+  getReasonTags({ side } = {}) {
+    return this._client._get("/notes/reason-tags", { side });
+  }
+  /**
+   * @param {number|string} noteId
+   * @param {object} params
+   * @param {boolean} params.helpful
+   * @param {string[]} [params.reasons] - positive / negative 側の理由コード（最大3件）
+   * @returns {Promise<import('../models.js').NoteRatingSummary & {reasons: string[]}>}
+   */
+  rate(noteId, { helpful, reasons } = {}) {
+    return this._client._post(`/notes/${encodeURIComponent(noteId)}/ratings`, { helpful, reasons });
+  }
+  /**
+   * @param {number|string} noteId
+   * @returns {Promise<{success: boolean}>}
+   */
+  delete(noteId) {
+    return this._client._delete(`/notes/${encodeURIComponent(noteId)}`);
+  }
+  /**
+   * 管理者がノートを再判定します。
+   * @param {number|string} noteId
+   * @returns {Promise<{note: import('../models.js').CommunityNote}>}
+   */
+  reEvaluate(noteId) {
+    return this._client._post(`/notes/${encodeURIComponent(noteId)}/re-evaluate`, {});
   }
 };
 
@@ -765,7 +732,7 @@ var PollsAPI = class {
    * console.log('選択肢:', poll.options);
    */
   get(pollId) {
-    return this._client._get(`/polls/${pollId}`);
+    return this._client._get(`/polls/${encodeURIComponent(pollId)}`);
   }
   /**
    * 投票を実行します。
@@ -783,7 +750,7 @@ var PollsAPI = class {
    */
   vote(pollId, { optionIds, otherText } = {}) {
     const rawIds = Array.isArray(optionIds) ? optionIds : optionIds !== void 0 && optionIds !== null ? [optionIds] : [];
-    return this._client._post(`/polls/${pollId}/vote`, {
+    return this._client._post(`/polls/${encodeURIComponent(pollId)}/vote`, {
       option_ids: rawIds,
       other_text: otherText
     });
@@ -841,24 +808,70 @@ var UsersAPI = class {
    * ユーザー ID でプロフィールを取得します。
    *
    * @param {number} userId - ユーザー ID
-   * @returns {Promise<{ user: object }>}
+   * @returns {Promise<{ user: import('../models.js').User }>}
    */
   get(userId) {
-    return this._client._get(`/users/${userId}`);
+    return this._client._get(`/users/${encodeURIComponent(userId)}`);
   }
   /**
    * ログイン中のユーザー情報を取得します。
    *
-   * @returns {Promise<{ user: object, isBot: boolean, tokenType: string }>}
+   * @returns {Promise<{ user: import('../models.js').User, isBot: boolean, tokenType: string }>}
    */
   getMe() {
     return this._client._get("/auth/me");
+  }
+  getScheduled(userId, { limit = 30, offset = 0 } = {}) {
+    return this._client._get(`/users/${encodeURIComponent(userId)}/scheduled`, { limit, offset });
+  }
+  /** 管理者専用。対象ユーザーの管理ステータスを取得します。 */
+  getUserStatus(userId) {
+    return this._client._get(`/users/${encodeURIComponent(userId)}/status`);
+  }
+  /** 管理者専用。対象ユーザーの管理ステータスを更新します。 */
+  updateUserStatus(userId, body = {}) {
+    return this._client._put(`/users/${encodeURIComponent(userId)}/status`, body);
+  }
+  /** 管理者専用。対象ユーザーの管理属性を更新します。 */
+  updateUser(userId, body = {}) {
+    return this._client._put(`/users/${encodeURIComponent(userId)}`, body);
+  }
+  reassignNyaitterId() {
+    return this._client._post("/users/me/nyaitter-id/reassign", {});
+  }
+  prepareAccountDeletion() {
+    return this._client._post("/users/me/account/delete/prepare", {});
+  }
+  deleteAccount(confirmationToken) {
+    return this._client._delete("/users/me/account", { confirmation_token: confirmationToken });
+  }
+  /** @returns {Promise<import('../models.js').UserStatus>} */
+  getStatus() {
+    return this._client._get("/users/me/status");
+  }
+  /**
+   * 管理者が利用制限を指定・解除します。
+   * @param {number|string} userId
+   * @param {{banned: boolean, reason: string}} params - 理由は10文字以上
+   * @returns {Promise<{success: boolean}>}
+   */
+  moderateTrust(userId, { banned, reason } = {}) {
+    return this._client._post(`/users/${encodeURIComponent(userId)}/trust-moderation`, { banned, reason });
+  }
+  /**
+   * 管理者が削除済みノートの実績を取り消します。
+   * @param {number|string} userId
+   * @param {{noteId: number, reason: string}} params - 理由は10文字以上
+   * @returns {Promise<{success: boolean}>}
+   */
+  retractNoteOutcome(userId, { noteId, reason } = {}) {
+    return this._client._post(`/users/${encodeURIComponent(userId)}/note-outcome-retract`, { noteId, reason });
   }
   /**
    * ユーザー名でユーザーを検索・取得します。
    *
    * @param {string} handle - ユーザー名
-   * @returns {Promise<{ user: object|null }>}
+   * @returns {Promise<{ user: import('../models.js').User|null }>}
    */
   async getByHandle(handle) {
     const cleanHandle = String(handle || "").replace(/^[@#]/, "").trim();
@@ -888,7 +901,7 @@ var UsersAPI = class {
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {string|null} [params.cursor=null] - ページネーションカーソル
-   * @returns {Promise<{ users: object[], has_more?: boolean, next_cursor?: string|null }>}
+   * @returns {Promise<{ users: import('../models.js').User[], has_more?: boolean, next_cursor?: string|null }>}
    */
   search({ query, limit = 20, offset = 0, cursor = null } = {}) {
     return this._client._get("/users/search", {
@@ -902,18 +915,21 @@ var UsersAPI = class {
    * おすすめユーザー一覧を取得します。
    *
    * @param {object} [params]
-   * @param {number} [params.limit=20] - 取得件数
-   * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ users: object[] }>}
+   * @param {number} [params.limit=20] - 互換用に受理しますが、現行Serverは無視します。
+   * @param {number} [params.offset=0] - 互換用に受理しますが、現行Serverは無視します。
+   * Serverは件数・offsetを受け付けず固定件数を返します（optionsは旧互換のため受理しますが送信しません）。
+   * @returns {Promise<{ users: import('../models.js').User[] }>}
    */
   getRecommended({ limit = 20, offset = 0 } = {}) {
-    return this._client._get("/users/recommended", { limit, offset });
+    void limit;
+    void offset;
+    return this._client._get("/users/recommended");
   }
   /**
    * 複数のユーザー ID からユーザー情報を一括取得します。
    *
    * @param {number[]|string} userIds - ユーザー ID の配列またはカンマ区切り文字列
-   * @returns {Promise<{ users: object[] }>}
+   * @returns {Promise<{ users: import('../models.js').User[] }>}
    */
   getBatch(userIds) {
     const ids = Array.isArray(userIds) ? userIds.join(",") : userIds;
@@ -932,7 +948,7 @@ var UsersAPI = class {
    * @returns {Promise<{ post_count: number, media_count: number, follower_count: number, following_count: number }>}
    */
   getCounts(userId) {
-    return this._client._get(`/users/${userId}/counts`);
+    return this._client._get(`/users/${encodeURIComponent(userId)}/counts`);
   }
   /**
    * ユーザーが投稿したメディア一覧を取得します。
@@ -946,7 +962,7 @@ var UsersAPI = class {
    * @returns {Promise<{ media_items: object[], next_cursor?: string|null }>}
    */
   getMedia(userId, { limit = 15, offset = 0, type, cursor } = {}) {
-    return this._client._get(`/users/${userId}/media`, {
+    return this._client._get(`/users/${encodeURIComponent(userId)}/media`, {
       limit,
       offset,
       ...type ? { type } : {},
@@ -960,7 +976,7 @@ var UsersAPI = class {
    * @returns {Promise<{ lock: boolean }>}
    */
   isLocked(userId) {
-    return this._client._get(`/users/${userId}/is-lock`);
+    return this._client._get(`/users/${encodeURIComponent(userId)}/is-lock`);
   }
   /**
    * ユーザーの投稿一覧を取得します。
@@ -973,19 +989,7 @@ var UsersAPI = class {
    * @returns {Promise<{ posts: object[], has_more: boolean }>}
    */
   getPosts(userId, { limit = 20, offset = 0, mode = "all" } = {}) {
-    return this._client._get(`/users/${userId}/posts`, { limit, offset, mode });
-  }
-  /**
-   * ユーザーのリプライ一覧を取得します。
-   *
-   * @param {number} userId - ユーザー ID
-   * @param {object} [params]
-   * @param {number} [params.limit=20] - 取得件数
-   * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ replies: object[], has_more: boolean }>}
-   */
-  getReplies(userId, { limit = 20, offset = 0 } = {}) {
-    return this._client._get(`/users/${userId}/replies`, { limit, offset });
+    return this._client._get(`/users/${encodeURIComponent(userId)}/posts`, { limit, offset, mode });
   }
   /**
    * ユーザーがいいねした投稿一覧を取得します。
@@ -997,7 +1001,7 @@ var UsersAPI = class {
    * @returns {Promise<{ posts: object[], has_more: boolean }>}
    */
   getLikes(userId, { limit = 30, offset = 0 } = {}) {
-    return this._client._get(`/users/${userId}/likes`, { limit, offset });
+    return this._client._get(`/users/${encodeURIComponent(userId)}/likes`, { limit, offset });
   }
   /**
    * ユーザーがスターした投稿一覧を取得します。
@@ -1009,7 +1013,7 @@ var UsersAPI = class {
    * @returns {Promise<{ posts: object[], has_more: boolean }>}
    */
   getStars(userId, { limit = 30, offset = 0 } = {}) {
-    return this._client._get(`/users/${userId}/stars`, { limit, offset });
+    return this._client._get(`/users/${encodeURIComponent(userId)}/stars`, { limit, offset });
   }
   /**
    * ユーザーのフォロワー一覧を取得します。
@@ -1019,10 +1023,10 @@ var UsersAPI = class {
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {string|null} [params.cursor=null] - ページネーションカーソル
-   * @returns {Promise<{ followers: object[], has_more: boolean, next_cursor?: string|null }>}
+   * @returns {Promise<{ followers: import('../models.js').User[], has_more: boolean, next_cursor?: string|null }>}
    */
   getFollowers(userId, { limit = 20, offset = 0, cursor = null } = {}) {
-    return this._client._get(`/users/${userId}/followers`, {
+    return this._client._get(`/users/${encodeURIComponent(userId)}/followers`, {
       limit,
       offset: cursor ? void 0 : offset,
       cursor: cursor || void 0
@@ -1036,79 +1040,25 @@ var UsersAPI = class {
    * @param {number} [params.limit=20] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {string|null} [params.cursor=null] - ページネーションカーソル
-   * @returns {Promise<{ following: object[], has_more: boolean, next_cursor?: string|null }>}
+   * @returns {Promise<{ following: import('../models.js').User[], has_more: boolean, next_cursor?: string|null }>}
    */
   getFollowing(userId, { limit = 20, offset = 0, cursor = null } = {}) {
-    return this._client._get(`/users/${userId}/following`, {
+    return this._client._get(`/users/${encodeURIComponent(userId)}/following`, {
       limit,
       offset: cursor ? void 0 : offset,
       cursor: cursor || void 0
     });
   }
   /**
-   * ユーザーの固定投稿一覧を取得します。
+   * ユーザーの固定投稿 ID を取得します。
+   * 名前は複数形ですが、現行Serverの `GET /users/:id/pin` は固定投稿を1件だけ持ち、
+   * 戻り値は単数の `{ pin_id }` です（投稿の配列ではありません）。
    *
    * @param {number} userId - ユーザー ID
-   * @returns {Promise<{ pinned_posts: object[] }>}
+   * @returns {Promise<{ pin_id: number|null }>}
    */
   getPinnedPosts(userId) {
-    return this._client._get(`/users/${userId}/pinned-posts`);
-  }
-  /**
-   * 投稿をプロフィールに固定します。
-   *
-   * @param {number} userId - ユーザー ID
-   * @param {number} postId - 投稿 ID
-   * @returns {Promise<{ success: boolean }>}
-   */
-  pinPost(userId, postId) {
-    return this._client._post(`/users/${userId}/pinned-posts/${postId}`, {});
-  }
-  /**
-   * プロフィールの固定投稿を解除します。
-   *
-   * @param {number} userId - ユーザー ID
-   * @param {number} postId - 投稿 ID
-   * @returns {Promise<{ success: boolean }>}
-   */
-  unpinPost(userId, postId) {
-    return this._client._delete(`/users/${userId}/pinned-posts/${postId}`);
-  }
-  /**
-   * ユーザーのブロック一覧を取得します。
-   *
-   * @param {number} userId - ユーザー ID
-   * @returns {Promise<{ blocks: object[] }>}
-   */
-  getBlocks(userId) {
-    return this._client._get(`/users/${userId}/blocks`);
-  }
-  /**
-   * ユーザーのミュート一覧を取得します。
-   *
-   * @param {number} userId - ユーザー ID
-   * @returns {Promise<{ mutes: object[] }>}
-   */
-  getMutes(userId) {
-    return this._client._get(`/users/${userId}/mutes`);
-  }
-  /**
-   * ユーザーをミュートします。
-   *
-   * @param {number} userId - ミュートするユーザー ID
-   * @returns {Promise<{ success: boolean }>}
-   */
-  mute(userId) {
-    return this._client._post(`/users/${userId}/mute`, {});
-  }
-  /**
-   * ユーザーのミュートを解除します。
-   *
-   * @param {number} userId - ミュート解除するユーザー ID
-   * @returns {Promise<{ success: boolean }>}
-   */
-  unmute(userId) {
-    return this._client._delete(`/users/${userId}/mute`);
+    return this._client._get(`/users/${encodeURIComponent(userId)}/pin`);
   }
   /**
    * ユーザーをフォローします。
@@ -1117,7 +1067,7 @@ var UsersAPI = class {
    * @returns {Promise<{ success: boolean, following: boolean, updated_follows: number[] }>}
    */
   follow(userId) {
-    return this._client._post(`/users/${userId}/follow`, {});
+    return this._client._post(`/users/${encodeURIComponent(userId)}/follow`, {});
   }
   /**
    * ユーザーのフォローを解除します。
@@ -1135,7 +1085,7 @@ var UsersAPI = class {
    * @returns {Promise<{ success: boolean, blocked: boolean, block: number[], user_id: number }>}
    */
   toggleBlock(userId) {
-    return this._client._post(`/users/${userId}/block`, {});
+    return this._client._post(`/users/${encodeURIComponent(userId)}/block`, {});
   }
   /**
    * ユーザーをブロックします。
@@ -1160,25 +1110,25 @@ var UsersAPI = class {
    *
    * @param {object} params
    * @param {string} [params.name] - 表示名
-   * @param {string} [params.me] - 自己紹介文
-   * @param {string} [params.bio] - 自己紹介文
+   * @param {string} [params.me] - 自己紹介文（bioの互換alias。両方指定時はServer側でbioが優先）
+   * @param {string} [params.bio] - 自己紹介文（meの互換alias。両方指定時はServer側でbioが優先）
    * @param {string} [params.headerImage] - ヘッダー画像 URL / データ
    * @param {string} [params.iconData] - アイコン画像データ
-   * @param {object} [params.settings] - 設定オブジェクト
-   * @returns {Promise<{ user: object }>}
+   * @param {import('../models.js').UserSettings} [params.settings] - 表示設定を含む設定。表示ランクの各項目は null で解除
+   * @returns {Promise<{ user: import('../models.js').User }>}
    */
   updateProfile({ name, me, bio, headerImage, iconData, settings } = {}) {
-    return this._client._patch("/users/me", {
+    return this._client._put("/users/me", {
       name,
-      me: me !== void 0 ? me : bio,
-      bio: bio !== void 0 ? bio : me,
+      me,
+      bio,
       header_image: headerImage,
       icon_data: iconData,
       settings
     });
   }
   /**
-   * ログイン履歴・ログを取得します。
+   * 管理者専用。ログイン履歴・ログを取得します（通常の認証権限では利用できません）。
    *
    * @param {object} [params]
    * @param {number} [params.limit=50] - 取得件数
@@ -1200,14 +1150,14 @@ var DmAPI = class {
    * DM の一覧を取得します。
    *
    * @param {object} [params]
-   * @param {number} [params.limit=20] - 取得件数
+   * @param {number} [params.limit=50] - 取得件数（Server の既定値）
    * @param {number} [params.offset=0] - 取得開始位置
    * @returns {Promise<{ dm: object[], members: object[], unread_total: number }>}
    *
    * @example
    * const { dm, unread_total } = await client.dm.list();
    */
-  list({ limit = 20, offset = 0 } = {}) {
+  list({ limit = 50, offset = 0 } = {}) {
     return this._client._get("/dm", { limit, offset });
   }
   /**
@@ -1232,6 +1182,26 @@ var DmAPI = class {
   getUnreadCounts() {
     return this._client._get("/dm/unread-counts");
   }
+  /** 指定ユーザーの DM 公開鍵を取得します。 */
+  getKeys(userIds) {
+    return this._client._get("/dm/keys", { user_ids: Array.isArray(userIds) ? userIds.join(",") : userIds });
+  }
+  /** 自分の DM 公開鍵を登録します。 */
+  setKey(publicKey) {
+    return this._client._post("/dm/keys", { public_key: publicKey });
+  }
+  /** DM を削除します。 */
+  delete(dmId) {
+    return this._client._delete(`/dm/${encodeURIComponent(dmId)}`);
+  }
+  /** DM の招待を受諾します。 */
+  accept(dmId) {
+    return this._client._post(`/dm/${encodeURIComponent(dmId)}/accept`, {});
+  }
+  /** DM の招待を拒否します。 */
+  decline(dmId) {
+    return this._client._post(`/dm/${encodeURIComponent(dmId)}/decline`, {});
+  }
   /**
    * 指定ユーザーとの既存の 1対1 DM グループを検索します。
    *
@@ -1247,12 +1217,15 @@ var DmAPI = class {
    *
    * @param {string} dmId - DM グループ ID
    * @param {object} [params]
-   * @param {number} [params.limit=50] - 取得するメッセージ数
-   * @param {number} [params.offset=0] - 取得開始位置
+   * @param {number} [params.limit] - 互換のため受け取るだけです。現行Serverの GET /dm/:dmId は limit/offset を無視して全メッセージを返すため、送信しません。
+   * @param {number} [params.offset] - 同上（送信しません）
+   * @param {boolean} [params.markRead] - 取得時に既読にする
    * @returns {Promise<{ dm: object[], members: object[], unread_total: number }>}
    */
-  get(dmId, { limit = 50, offset = 0 } = {}) {
-    return this._client._get(`/dm/${dmId}`, { limit, offset });
+  get(dmId, { limit, offset, markRead } = {}) {
+    void limit;
+    void offset;
+    return this._client._get(`/dm/${encodeURIComponent(dmId)}`, { mark_read: markRead === void 0 || markRead === null ? markRead : markRead ? "1" : "0" });
   }
   /**
    * `get()` のエイリアスです。
@@ -1281,10 +1254,15 @@ var DmAPI = class {
    * @param {string} dmId - DM グループ ID
    * @param {object} params
    * @param {string} [params.title] - グループ名
+   * @param {number[]} [params.members]
+   * @param {number[]} [params.member]
+   * @param {number} [params.hostId]
+   * @param {object[]} [params.post]
+   * @param {string} [params.stateVersion] - 取得した DM の state_version。post を更新するときは必須です。競合時は再取得してください。
    * @returns {Promise<{ dm: object }>}
    */
-  updateRoom(dmId, { title } = {}) {
-    return this._client._patch(`/dm/${dmId}`, { title });
+  updateRoom(dmId, { title, members, member, hostId, post, stateVersion } = {}) {
+    return this._client._put(`/dm/${encodeURIComponent(dmId)}`, { title, member: member !== void 0 ? member : members, host_id: hostId, post, ...stateVersion === void 0 ? {} : { state_version: stateVersion } });
   }
   /**
    * DM グループから脱退します。
@@ -1293,7 +1271,7 @@ var DmAPI = class {
    * @returns {Promise<{ success: boolean }>}
    */
   leave(dmId) {
-    return this._client._delete(`/dm/${dmId}/leave`);
+    return this._client._post(`/dm/${encodeURIComponent(dmId)}/leave`, {});
   }
   /**
    * DM グループにメッセージを送信します。
@@ -1303,14 +1281,13 @@ var DmAPI = class {
    * @param {string} [params.content] - メッセージ本文
    * @param {Array<object>} [params.attachments] - 添付ファイル
    * @param {object} [params.e2e] - E2E 暗号化ペイロード
+   * @param {string} [params.reply_to] - 同じ会話内の返信先メッセージ ID
+   * @param {string} [params.requestId] - 再送時に再利用する UUID（サーバーの対応が必要）
+   * @param {{content?: string, attachments?: Array<object>, e2e?: object, reply_to?: string}} [params.message]
    * @returns {Promise<{ dm: object, message: object }>}
    */
-  sendMessage(dmId, { content, attachments, e2e } = {}) {
-    return this._client._post(`/dm/${dmId}/messages`, {
-      content,
-      attachments,
-      e2e
-    });
+  sendMessage(dmId, { message, requestId, ...fields } = {}) {
+    return this._client._post(`/dm/${encodeURIComponent(dmId)}/messages`, { message: message !== void 0 ? message : fields, ...requestId === void 0 ? {} : { request_id: requestId } });
   }
   /**
    * 送信済みメッセージを編集します。
@@ -1322,73 +1299,30 @@ var DmAPI = class {
    * @returns {Promise<{ success: boolean, message: object }>}
    */
   editMessage(dmId, messageId, { content } = {}) {
-    return this._client._patch(`/dm/${dmId}/messages/${messageId}`, { content });
+    return this._client._patch(`/dm/${encodeURIComponent(dmId)}/messages/${encodeURIComponent(messageId)}`, { content });
   }
   /**
-   * 送信済みメッセージを削除します。
+   * 自分の送信済みメッセージを削除します。
    *
    * @param {string} dmId - DM グループ ID
    * @param {string|number} messageId - 削除するメッセージ ID
    * @returns {Promise<{ success: boolean }>}
    */
   deleteMessage(dmId, messageId) {
-    return this._client._delete(`/dm/${dmId}/messages/${messageId}`);
+    return this._client._delete(`/dm/${encodeURIComponent(dmId)}/messages/${encodeURIComponent(messageId)}`);
   }
   /**
    * DM グループのメッセージを既読にします。
    *
    * @param {string} dmId - DM グループ ID
    * @param {object} [params]
-   * @param {string|number} [params.messageId] - 既読にする最後のメッセージ ID
+   * @param {string|number} [params.messageId] - 互換用（サーバーは指定を無視します）
    * @returns {Promise<{ success: boolean }>}
    */
   markAsRead(dmId, { messageId } = {}) {
-    return this._client._post(`/dm/${dmId}/read`, {
+    return this._client._post(`/dm/${encodeURIComponent(dmId)}/read`, {
       message_id: messageId
     });
-  }
-  /**
-   * DM グループに新しいメンバーを追加します。
-   *
-   * @param {string} dmId - DM グループ ID
-   * @param {number|{ userId: number }} params - 追加するユーザー ID
-   * @returns {Promise<{ dm: object, member: object }>}
-   */
-  addMember(dmId, params) {
-    const userId = typeof params === "object" && params !== null ? params.userId : params;
-    return this._client._post(`/dm/${dmId}/members`, { user_id: userId });
-  }
-  /**
-   * DM グループからメンバーを退出させます。
-   *
-   * @param {string} dmId - DM グループ ID
-   * @param {number} userId - 削除するユーザー ID
-   * @returns {Promise<{ success: boolean }>}
-   */
-  removeMember(dmId, userId) {
-    return this._client._delete(`/dm/${dmId}/members/${userId}`);
-  }
-  /**
-   * メッセージに絵文字リアクションを付けます。
-   *
-   * @param {string} dmId - DM グループ ID
-   * @param {string|number} messageId - メッセージ ID
-   * @param {string} reaction - 絵文字またはリアクション文字列
-   * @returns {Promise<{ success: boolean, reactions: object }>}
-   */
-  addReaction(dmId, messageId, reaction) {
-    return this._client._post(`/dm/${dmId}/messages/${messageId}/reactions`, { reaction });
-  }
-  /**
-   * メッセージの絵文字リアクションを取り消します。
-   *
-   * @param {string} dmId - DM グループ ID
-   * @param {string|number} messageId - メッセージ ID
-   * @param {string} reaction - 絵文字またはリアクション文字列
-   * @returns {Promise<{ success: boolean, reactions: object }>}
-   */
-  removeReaction(dmId, messageId, reaction) {
-    return this._client._delete(`/dm/${dmId}/messages/${messageId}/reactions`, { reaction });
   }
 };
 
@@ -1420,10 +1354,15 @@ var CallsAPI = class {
    * @param {string} [params.description] - 説明（最大2000文字）
    * @param {'public'|'group'|'private'} [params.visibility='public'] - 公開範囲
    * @param {string} [params.group_id] - `visibility` が `'group'` のときの対象グループ ID
+   * @param {string} [params.groupId]
    * @param {string} [params.scheduled_at] - 予約開始日時（ISO 8601、未来のみ）
+   * @param {string} [params.scheduledAt]
    * @param {number[]} [params.invite_ids] - 招待するユーザー ID の配列
+   * @param {number[]} [params.inviteIds]
    * @param {number[]} [params.speaker_ids] - スピーカーにするユーザー ID の配列
+   * @param {number[]} [params.speakerIds]
    * @param {boolean} [params.allow_guest_join] - ゲスト参加を許可するか
+   * @param {boolean} [params.allowGuestJoin]
    * @returns {Promise<{ stage: object }>}
    *
    * @example
@@ -1448,11 +1387,11 @@ var CallsAPI = class {
       name,
       description,
       visibility,
-      group_id: group_id ?? groupId,
-      scheduled_at: scheduled_at ?? scheduledAt,
-      invite_ids: invite_ids ?? inviteIds,
-      speaker_ids: speaker_ids ?? speakerIds,
-      allow_guest_join: allow_guest_join ?? allowGuestJoin
+      group_id: group_id !== void 0 ? group_id : groupId,
+      scheduled_at: scheduled_at !== void 0 ? scheduled_at : scheduledAt,
+      invite_ids: invite_ids !== void 0 ? invite_ids : inviteIds,
+      speaker_ids: speaker_ids !== void 0 ? speaker_ids : speakerIds,
+      allow_guest_join: allow_guest_join !== void 0 ? allow_guest_join : allowGuestJoin
     });
   }
   /**
@@ -1466,7 +1405,7 @@ var CallsAPI = class {
    * const info = await client.calls.getStage(stage.id);
    */
   getStage(id) {
-    return this._client._get(`/calls/stages/${id}`);
+    return this._client._get(`/calls/stages/${encodeURIComponent(id)}`);
   }
   /**
    * ステージの状態・スピーカー・招待・ゲスト参加設定を更新します（ホストのみ）。
@@ -1475,16 +1414,19 @@ var CallsAPI = class {
    * @param {object} [params]
    * @param {'live'|'ended'} [params.status] - ステージの状態
    * @param {number[]} [params.speaker_ids] - スピーカーにするユーザー ID の配列
+   * @param {number[]} [params.speakerIds]
    * @param {number[]} [params.invite_ids] - 追加で招待するユーザー ID の配列
+   * @param {number[]} [params.inviteIds]
    * @param {boolean} [params.allow_guest_join] - ゲスト参加を許可するか
+   * @param {boolean} [params.allowGuestJoin]
    * @returns {Promise<{ stage: object }>}
    */
   updateStage(id, { status, speaker_ids, speakerIds, invite_ids, inviteIds, allow_guest_join, allowGuestJoin } = {}) {
-    return this._client._patch(`/calls/stages/${id}`, {
+    return this._client._patch(`/calls/stages/${encodeURIComponent(id)}`, {
       status,
-      speaker_ids: speaker_ids ?? speakerIds,
-      invite_ids: invite_ids ?? inviteIds,
-      allow_guest_join: allow_guest_join ?? allowGuestJoin
+      speaker_ids: speaker_ids !== void 0 ? speaker_ids : speakerIds,
+      invite_ids: invite_ids !== void 0 ? invite_ids : inviteIds,
+      allow_guest_join: allow_guest_join !== void 0 ? allow_guest_join : allowGuestJoin
     });
   }
   /**
@@ -1495,7 +1437,7 @@ var CallsAPI = class {
    * @returns {Promise<{ guest_id: string }>}
    */
   createGuestSession(id) {
-    return this._client._post(`/calls/stages/${id}/guest-session`);
+    return this._client._post(`/calls/stages/${encodeURIComponent(id)}/guest-session`);
   }
   /**
    * 発行済みのゲスト参加セッションを終了します。
@@ -1516,7 +1458,7 @@ var CallsAPI = class {
    * const call = await client.calls.getDmCall('dm_group_id');
    */
   getDmCall(dmId) {
-    return this._client._get(`/calls/dm/${dmId}`);
+    return this._client._get(`/calls/dm/${encodeURIComponent(dmId)}`);
   }
   /**
    * 参加情報レスポンスから WebRTC 用の ICE 設定を取り出します。
@@ -1536,6 +1478,109 @@ var CallsAPI = class {
       bundlePolicy: info.bundle_policy || "max-bundle",
       rtcpMuxPolicy: info.rtcp_mux_policy || "require"
     };
+  }
+};
+
+// src/api/SpacesAPI.js
+var SpacesAPI = class {
+  /** @param {import('../NyaitterClient.js').NyaitterClient} client */
+  constructor(client) {
+    this._client = client;
+  }
+  /** 音声通話用の接続設定を取得します。 */
+  getIceServers() {
+    return this._client._get("/spaces/ice-servers");
+  }
+  /** @param {{query?: string, limit?: number, offset?: number}} [options] */
+  list({ query, limit = 20, offset = 0 } = {}) {
+    return this._client._get("/spaces", { query, limit, offset });
+  }
+  /** @param {{limit?: number, offset?: number}} [options] */
+  getMine({ limit = 50, offset = 0 } = {}) {
+    return this._client._get("/spaces/mine", { limit, offset });
+  }
+  /** @param {{name: string, visibility: 'public'|'private'|'group', description?: string, groupId?: number|string, iconData?: string, headerImage?: string}} options - group visibility の場合は有効な groupId も必要です */
+  create({ name, description, visibility, groupId, iconData, headerImage } = {}) {
+    return this._client._post("/spaces", { name, description, visibility, group_id: groupId, iconData, headerImage });
+  }
+  /** @param {number|string} spaceId */
+  get(spaceId) {
+    return this._client._get(`/spaces/${encodeURIComponent(spaceId)}`);
+  }
+  /**
+   * @param {number|string} spaceId
+   * @param {{name?: string, description?: string, visibility?: 'public'|'private'|'group', groupId?: number|string, iconData?: string, headerImage?: string}} [options]
+   */
+  update(spaceId, { name, description, visibility, groupId, iconData, headerImage } = {}) {
+    return this._client._patch(`/spaces/${encodeURIComponent(spaceId)}`, { name, description, visibility, group_id: groupId, iconData, headerImage });
+  }
+  /** @param {number|string} spaceId */
+  delete(spaceId) {
+    return this._client._delete(`/spaces/${encodeURIComponent(spaceId)}`);
+  }
+  /** @param {number|string} spaceId */
+  join(spaceId) {
+    return this._client._post(`/spaces/${encodeURIComponent(spaceId)}/join`, {});
+  }
+  /** @param {number|string} spaceId */
+  leave(spaceId) {
+    return this._client._post(`/spaces/${encodeURIComponent(spaceId)}/leave`, {});
+  }
+  /**
+   * @param {number|string} spaceId
+   * @param {{limit?: number, offset?: number}} [options]
+   */
+  getMembers(spaceId, { limit = 100, offset = 0 } = {}) {
+    return this._client._get(`/spaces/${encodeURIComponent(spaceId)}/members`, { limit, offset });
+  }
+  /** @param {number|string} spaceId */
+  getChannels(spaceId) {
+    return this._client._get(`/spaces/${encodeURIComponent(spaceId)}/channels`);
+  }
+  /**
+   * @param {number|string} spaceId
+   * @param {{name?: string, kind?: 'text'|'voice'}} [options]
+   */
+  createChannel(spaceId, { name, kind } = {}) {
+    return this._client._post(`/spaces/${encodeURIComponent(spaceId)}/channels`, { name, kind });
+  }
+  /**
+   * @param {number|string} spaceId
+   * @param {number|string} channelId
+   * @param {{name?: string, kind?: 'text'|'voice'}} [options]
+   */
+  updateChannel(spaceId, channelId, { name, kind } = {}) {
+    return this._client._patch(`/spaces/${encodeURIComponent(spaceId)}/channels/${encodeURIComponent(channelId)}`, { name, kind });
+  }
+  /**
+   * @param {number|string} spaceId
+   * @param {number|string} channelId
+   */
+  deleteChannel(spaceId, channelId) {
+    return this._client._delete(`/spaces/${encodeURIComponent(spaceId)}/channels/${encodeURIComponent(channelId)}`);
+  }
+  /**
+   * @param {number|string} spaceId
+   * @param {number|string} channelId
+   * @param {{limit?: number, beforeId?: number|string}} [options]
+   */
+  getMessages(spaceId, channelId, { limit = 50, beforeId } = {}) {
+    return this._client._get(`/spaces/${encodeURIComponent(spaceId)}/channels/${encodeURIComponent(channelId)}/messages`, { limit, before_id: beforeId });
+  }
+  /**
+   * @param {number|string} spaceId
+   * @param {number|string} channelId
+   * @param {{content?: string}} [options]
+   */
+  sendMessage(spaceId, channelId, { content } = {}) {
+    return this._client._post(`/spaces/${encodeURIComponent(spaceId)}/channels/${encodeURIComponent(channelId)}/messages`, { content });
+  }
+  /**
+   * @param {number|string} spaceId
+   * @param {number|string} messageId
+   */
+  deleteMessage(spaceId, messageId) {
+    return this._client._delete(`/spaces/${encodeURIComponent(spaceId)}/messages/${encodeURIComponent(messageId)}`);
   }
 };
 
@@ -1581,7 +1626,7 @@ var NotificationsAPI = class {
    *
    * @param {object} params
    * @param {number} params.recipientId - 送信先ユーザー ID
-   * @param {'mention'|'repost'|'dm_invite'|'dm_removed'|'dm_host_transfer'|'admin_notice'} params.type - 通知タイプ
+   * @param {string} params.type - 通知タイプ。一般ユーザーにはサーバー側の種別・対象制限があります。
    * @param {object} [params.target] - 通知対象
    * @returns {Promise<{ success: boolean, notification: object|null }>}
    *
@@ -1606,16 +1651,16 @@ var NotificationsAPI = class {
    * @returns {Promise<{ success: boolean, notification_unread_count: number }>}
    */
   markAsRead(notificationId) {
-    return this._client._put(`/notifications/${notificationId}/read`, {});
+    return this._client._put(`/notifications/${encodeURIComponent(notificationId)}/read`, {});
   }
   /**
    * 通知をクリック済みにマークします。
    *
    * @param {number} notificationId - 通知 ID
-   * @returns {Promise<{ success: boolean, read: boolean, clicked: boolean }>}
+   * @returns {Promise<{ success: boolean, read: boolean, clicked: boolean, notification_unread_count: number }>}
    */
   markAsClicked(notificationId) {
-    return this._client._put(`/notifications/${notificationId}/clicked`, {});
+    return this._client._put(`/notifications/${encodeURIComponent(notificationId)}/clicked`, {});
   }
   /**
    * すべての通知を既読にします。
@@ -1643,7 +1688,7 @@ var NotificationsAPI = class {
    * @returns {Promise<{ success: boolean }>}
    */
   delete(notificationId) {
-    return this._client._delete(`/notifications/${notificationId}`);
+    return this._client._delete(`/notifications/${encodeURIComponent(notificationId)}`);
   }
 };
 
@@ -1692,20 +1737,19 @@ var GroupsAPI = class {
    * const { groups } = await client.groups.list({ query: 'プログラミング' });
    */
   list({ query, limit = 20, offset = 0 } = {}) {
-    return this._client._get("/groups", { q: query, limit, offset });
+    return this._client._get("/groups", { query, limit, offset });
   }
   /**
    * 自分が所属しているグループ一覧を取得します。
    *
    * @param {object} [params]
-   * @param {number} [params.postAsUserId] - インポスター等の代理ユーザー ID
-   * @param {number} [params.limit=100] - 取得件数
+   * @param {number} [params.postAsUserId] - 互換用（Serverは無視し、認証中ユーザーの一覧を返します）
+   * @param {number} [params.limit=50] - 取得件数
    * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ groups: object[], home_tab_limit: number }>}
+   * @returns {Promise<{ groups: object[], limit: number, offset: number }>}
    */
-  listMine({ postAsUserId, limit = 100, offset = 0 } = {}) {
+  listMine({ postAsUserId, limit = 50, offset = 0 } = {}) {
     return this._client._get("/groups/mine", {
-      post_as_user_id: postAsUserId,
       limit,
       offset
     });
@@ -1726,19 +1770,20 @@ var GroupsAPI = class {
    * @returns {Promise<{ success: boolean, group?: object }>}
    */
   respondInvite(inviteId, decision) {
-    return this._client._post(`/groups/invites/${inviteId}/respond`, { decision });
+    return this._client._post(`/groups/invites/${encodeURIComponent(inviteId)}/respond`, { decision });
   }
   /**
    * グループの詳細情報を取得します。
    *
    * @param {string} groupId - グループ ID
+   * @param {{postAsUserId?: number}} [params]
    * @returns {Promise<{ group: object }>}
    *
    * @example
    * const { group } = await client.groups.get('group-uuid');
    */
-  get(groupId) {
-    return this._client._get(`/groups/${groupId}`);
+  get(groupId, { postAsUserId } = {}) {
+    return this._client._get(`/groups/${encodeURIComponent(groupId)}`, { post_as_user_id: postAsUserId });
   }
   /**
    * 新しいグループを作成します。
@@ -1749,6 +1794,7 @@ var GroupsAPI = class {
    * @param {'open'|'open_invite'|'approval'|'closed'} [params.visibility='open'] - 公開レベル
    * @param {string} [params.iconData] - アイコン画像データ
    * @param {string} [params.headerImage] - ヘッダー画像 URL / データ
+   * @param {string} [params.category]
    * @returns {Promise<{ group: object }>}
    *
    * @example
@@ -1758,13 +1804,14 @@ var GroupsAPI = class {
    *   visibility: 'open',
    * });
    */
-  create({ name, description = "", visibility = "open", iconData, headerImage } = {}) {
+  create({ name, description = "", visibility = "open", iconData, headerImage, category } = {}) {
     return this._client._post("/groups", {
       name,
       description,
       visibility,
       icon_data: iconData,
-      header_image: headerImage
+      header_image: headerImage,
+      category
     });
   }
   /**
@@ -1780,7 +1827,7 @@ var GroupsAPI = class {
    * @returns {Promise<{ group: object }>}
    */
   update(groupId, { name, description, visibility, iconData, headerImage } = {}) {
-    return this._client._patch(`/groups/${groupId}`, {
+    return this._client._patch(`/groups/${encodeURIComponent(groupId)}`, {
       name,
       description,
       visibility,
@@ -1796,7 +1843,7 @@ var GroupsAPI = class {
    * @returns {Promise<{ group: object }>}
    */
   transferOwner(groupId, userId) {
-    return this._client._post(`/groups/${groupId}/transfer-owner`, {
+    return this._client._post(`/groups/${encodeURIComponent(groupId)}/transfer-owner`, {
       user_id: userId
     });
   }
@@ -1807,16 +1854,16 @@ var GroupsAPI = class {
    * @returns {Promise<{ success: boolean }>}
    */
   delete(groupId) {
-    return this._client._delete(`/groups/${groupId}`);
+    return this._client._delete(`/groups/${encodeURIComponent(groupId)}`);
   }
   /**
    * グループに参加します。
    *
    * @param {string} groupId - グループ ID
-   * @returns {Promise<{ success: boolean, status: 'joined'|'requested', group?: object, request?: object }>}
+   * @returns {Promise<{ membership: object, joined: true } | { join_request: object, pending: true }>}
    */
   join(groupId) {
-    return this._client._post(`/groups/${groupId}/join`, {});
+    return this._client._post(`/groups/${encodeURIComponent(groupId)}/join`, {});
   }
   /**
    * グループから退出します。
@@ -1825,7 +1872,7 @@ var GroupsAPI = class {
    * @returns {Promise<{ success: boolean }>}
    */
   leave(groupId) {
-    return this._client._post(`/groups/${groupId}/leave`, {});
+    return this._client._post(`/groups/${encodeURIComponent(groupId)}/leave`, {});
   }
   /**
    * ユーザーをグループに招待します。
@@ -1835,7 +1882,7 @@ var GroupsAPI = class {
    * @returns {Promise<{ success: boolean, invite: object }>}
    */
   invite(groupId, userId) {
-    return this._client._post(`/groups/${groupId}/invites`, {
+    return this._client._post(`/groups/${encodeURIComponent(groupId)}/invites`, {
       user_id: userId
     });
   }
@@ -1843,21 +1890,22 @@ var GroupsAPI = class {
    * 保留中の参加申請一覧を取得します。
    *
    * @param {string} groupId - グループ ID
+   * @param {{status?: string}} [params]
    * @returns {Promise<{ requests: object[] }>}
    */
-  getJoinRequests(groupId) {
-    return this._client._get(`/groups/${groupId}/join-requests`);
+  getJoinRequests(groupId, { status } = {}) {
+    return this._client._get(`/groups/${encodeURIComponent(groupId)}/join-requests`, { status });
   }
   /**
    * 参加申請に応答します。
    *
    * @param {string} groupId - グループ ID
    * @param {string} requestId - 参加申請 ID
-   * @param {'accept'|'decline'} decision - 判定
-   * @returns {Promise<{ success: boolean, request: object }>}
+   * @param {'approve'|'decline'} decision - 判定
+   * @returns {Promise<{ join_request: object }>}
    */
   respondJoinRequest(groupId, requestId, decision) {
-    return this._client._post(`/groups/${groupId}/join-requests/${requestId}/respond`, {
+    return this._client._post(`/groups/${encodeURIComponent(groupId)}/join-requests/${encodeURIComponent(requestId)}/respond`, {
       decision
     });
   }
@@ -1868,7 +1916,7 @@ var GroupsAPI = class {
    * @returns {Promise<{ roles: object[] }>}
    */
   getRoles(groupId) {
-    return this._client._get(`/groups/${groupId}/roles`);
+    return this._client._get(`/groups/${encodeURIComponent(groupId)}/roles`);
   }
   /**
    * グループに新しいカスタムロールを作成します。
@@ -1881,7 +1929,7 @@ var GroupsAPI = class {
    * @returns {Promise<{ role: object }>}
    */
   createRole(groupId, { name, permissions, sortOrder = 0 } = {}) {
-    return this._client._post(`/groups/${groupId}/roles`, {
+    return this._client._post(`/groups/${encodeURIComponent(groupId)}/roles`, {
       name,
       permissions,
       sort_order: sortOrder
@@ -1899,7 +1947,7 @@ var GroupsAPI = class {
    * @returns {Promise<{ role: object }>}
    */
   updateRole(groupId, roleId, { name, permissions, sortOrder } = {}) {
-    return this._client._patch(`/groups/${groupId}/roles/${roleId}`, {
+    return this._client._patch(`/groups/${encodeURIComponent(groupId)}/roles/${encodeURIComponent(roleId)}`, {
       name,
       permissions,
       sort_order: sortOrder
@@ -1913,22 +1961,21 @@ var GroupsAPI = class {
    * @returns {Promise<{ success: boolean }>}
    */
   deleteRole(groupId, roleId) {
-    return this._client._delete(`/groups/${groupId}/roles/${roleId}`);
+    return this._client._delete(`/groups/${encodeURIComponent(groupId)}/roles/${encodeURIComponent(roleId)}`);
   }
   /**
    * グループメンバー一覧を取得します。
    *
    * @param {string} groupId - グループ ID
    * @param {object} [params]
-   * @param {'active'|'banned'|'all'} [params.status='active'] - 取得するステータス
-   * @param {number} [params.limit=50] - 取得件数
+   * @param {'active'|'pending'|'invited'|'banned'} [params.status='active'] - 取得するステータス
+   * @param {number} [params.limit=200] - 互換用（Serverは無視し、固定値200を使用します）
    * @param {number} [params.offset=0] - 取得開始位置
    * @returns {Promise<{ members: object[] }>}
    */
-  getMembers(groupId, { status = "active", limit = 50, offset = 0 } = {}) {
-    return this._client._get(`/groups/${groupId}/members`, {
+  getMembers(groupId, { status = "active", limit = 200, offset = 0 } = {}) {
+    return this._client._get(`/groups/${encodeURIComponent(groupId)}/members`, {
       status,
-      limit,
       offset
     });
   }
@@ -1941,7 +1988,7 @@ var GroupsAPI = class {
    * @returns {Promise<{ member: object }>}
    */
   updateMember(groupId, userId, roleId) {
-    return this._client._patch(`/groups/${groupId}/members/${userId}`, {
+    return this._client._patch(`/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(userId)}`, {
       role_id: roleId
     });
   }
@@ -1953,7 +2000,7 @@ var GroupsAPI = class {
    * @returns {Promise<{ success: boolean }>}
    */
   banMember(groupId, userId) {
-    return this._client._post(`/groups/${groupId}/members/${userId}/ban`, {});
+    return this._client._post(`/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(userId)}/ban`, {});
   }
   /**
    * メンバーの BAN を解除します。
@@ -1963,7 +2010,7 @@ var GroupsAPI = class {
    * @returns {Promise<{ success: boolean }>}
    */
   unbanMember(groupId, userId) {
-    return this._client._post(`/groups/${groupId}/members/${userId}/unban`, {});
+    return this._client._post(`/groups/${encodeURIComponent(groupId)}/members/${encodeURIComponent(userId)}/unban`, {});
   }
   /**
    * グループ内の投稿一覧を取得します。
@@ -1974,13 +2021,21 @@ var GroupsAPI = class {
    * @param {number} [params.offset=0] - 取得開始位置
    * @param {number} [params.beforeId] - この ID 以前の投稿を取得
    * @param {string} [params.cursor] - キーセットカーソル
+   * @param {number} [params.authorId]
+   * @param {string} [params.subType]
+   * @param {string} [params.order]
+   * @param {string} [params.mode]
    * @returns {Promise<{ posts: object[], has_next: boolean, next_cursor: any }>}
    */
-  getPosts(groupId, { limit = 30, offset = 0, beforeId, cursor } = {}) {
-    return this._client._get(`/groups/${groupId}/posts`, {
+  getPosts(groupId, { limit = 30, offset = 0, beforeId, cursor, authorId, subType, order, mode } = {}) {
+    return this._client._get(`/groups/${encodeURIComponent(groupId)}/posts`, {
       limit,
       offset,
       before_id: beforeId,
+      author_id: authorId,
+      sub_type: subType,
+      order,
+      mode,
       ...cursor !== void 0 && cursor !== null ? { cursor } : {}
     });
   }
@@ -1991,6 +2046,23 @@ var UploadsAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
     this._client = client;
+  }
+  /**
+   * 直接アップロード先を発行します。
+   * @param {object} params
+   * @param {string} params.fileName
+   * @param {string} [params.contentType]
+   * @param {number} [params.asUserId]
+   * @param {string} [params.replaceId]
+   * @returns {Promise<{id: string, url: string|null, key: string, replaced?: boolean}>}
+   */
+  prepare({ fileName, contentType, asUserId, replaceId } = {}) {
+    return this._client._post("/uploads/prepare", {
+      fileName,
+      contentType,
+      as_user_id: asUserId,
+      replaceId
+    });
   }
   uploadPartResponse(uploadId, file, { contentType = "application/octet-stream", asUserId = null } = {}) {
     return this._client.requestResponse(`/uploads/${encodeURIComponent(uploadId)}`, {
@@ -2006,7 +2078,7 @@ var UploadsAPI = class {
    * 画像などのファイルを Nyaitter サーバーにアップロードします。
    *
    * @param {object} params
-   * @param {string|Buffer|Uint8Array|ArrayBuffer|Blob} params.file - ファイルデータ
+   * @param {string|Uint8Array|ArrayBuffer|Blob} params.file - ファイルデータ（Node.js の Buffer を含む）
    * @param {string} params.fileName - ファイル名
    * @param {string} [params.contentType='image/png'] - MIME タイプ
    * @param {number} [params.asUserId] - インポスター代理アップロード時のユーザー ID
@@ -2021,7 +2093,7 @@ var UploadsAPI = class {
         base64String = Buffer.from(file).toString("base64");
       } else {
         let binary = "";
-        const bytes = new Uint8Array(file.buffer || file);
+        const bytes = file;
         for (let i = 0; i < bytes.byteLength; i++) {
           binary += String.fromCharCode(bytes[i]);
         }
@@ -2130,7 +2202,7 @@ var RankingAPI = class {
    * data.forEach((entry) => console.log(`${entry.rank}位: ${entry.name}`));
    */
   get(type, { limit = 50 } = {}) {
-    return this._client._get(`/ranking/${type}`, { limit });
+    return this._client._get(`/ranking/${encodeURIComponent(type)}`, { limit });
   }
   /**
    * フォロワー数ランキング上位を取得します。
@@ -2180,6 +2252,19 @@ var ReportsAPI = class {
   constructor(client) {
     this._client = client;
   }
+  /** 管理者専用。割当済み通報を取得します（`required` 認証だけでなくServer側admin権限が必要）。
+   * @param {{status?: string, limit?: number, offset?: number}} [params]
+   */
+  listAssigned({ status, limit = 50, offset = 0 } = {}) {
+    return this._client._get("/reports/assigned", { status, limit, offset });
+  }
+  /** 管理者専用。report assignment種別により `decision`/`actions` 等のbody要件が異なります。 */
+  resolve(reportId, body = {}) {
+    return this._client._post(`/reports/${encodeURIComponent(reportId)}/resolve`, body);
+  }
+  retractTrust(reportId, body = {}) {
+    return this._client._post(`/reports/${encodeURIComponent(reportId)}/trust-retract`, body);
+  }
   /**
    * 不適切な投稿またはユーザーを通報・報告します。
    *
@@ -2188,7 +2273,7 @@ var ReportsAPI = class {
    * @param {number|string} params.targetId - 報告対象の投稿 ID またはユーザー ID
    * @param {string} params.description - 通報理由・詳細説明
    * @param {number} [params.postAsUserId] - 代理通報ユーザー ID
-   * @returns {Promise<{ success: boolean, report: { id: number, status: string, created_at: string } }>}
+   * @returns {Promise<{ success: boolean, report: { id: number, status: string, assignment_type: string, reporter_id: number, target_kind: string, target_id: number, assigned_at: string|null, created_at: string } }>}
    *
    * @example
    * await client.reports.create({
@@ -2224,7 +2309,7 @@ var ReportsAPI = class {
    * @returns {Promise<{ report: object }>}
    */
   get(reportId) {
-    return this._client._get(`/reports/${reportId}`);
+    return this._client._get(`/reports/${encodeURIComponent(reportId)}`);
   }
   /**
    * 通報の審査ステータスを更新します。
@@ -2237,7 +2322,7 @@ var ReportsAPI = class {
    * @returns {Promise<{ success: boolean, report: object }>}
    */
   update(reportId, { status, note, action } = {}) {
-    return this._client._patch(`/reports/${reportId}`, {
+    return this._client._patch(`/reports/${encodeURIComponent(reportId)}`, {
       status,
       note,
       action
@@ -2291,7 +2376,7 @@ var VerificationAPI = class {
   /**
    * 自分の認証バッジ申請の現在の審査ステータスを取得します。
    *
-   * @returns {Promise<{ application: { id: number, status: string, assigned_at: string|null, created_at: string }|null }>}
+   * @returns {Promise<{ application: { id: number, status: string, assigned_at: string|null, created_at: string|null }|null }>}
    *
    * @example
    * const { application } = await client.verification.getStatus();
@@ -2305,49 +2390,13 @@ var VerificationAPI = class {
   /**
    * 認証バッジを申請します。
    *
-   * @returns {Promise<{ application: { id: number, status: string, assigned_at: string|null, created_at: string } }>}
+   * @returns {Promise<{ application: { id: number, status: string, assigned_at: string|null, created_at: string|null }|null }>}
    *
    * @example
    * await client.verification.apply();
    */
   apply() {
     return this._client._post("/verification-applications", {});
-  }
-  /**
-   * 認証バッジ申請一覧を取得します。
-   *
-   * @param {object} [params]
-   * @param {string} [params.status] - ステータス絞り込み
-   * @param {number} [params.limit=50] - 取得件数
-   * @param {number} [params.offset=0] - 取得開始位置
-   * @returns {Promise<{ applications: object[] }>}
-   */
-  list({ status, limit = 50, offset = 0 } = {}) {
-    return this._client._get("/verification-applications", { status, limit, offset });
-  }
-  /**
-   * 認証バッジ申請の詳細を取得します。
-   *
-   * @param {number} applicationId - 申請 ID
-   * @returns {Promise<{ application: object }>}
-   */
-  get(applicationId) {
-    return this._client._get(`/verification-applications/${applicationId}`);
-  }
-  /**
-   * 認証バッジ申請の審査結果を更新します。
-   *
-   * @param {number} applicationId - 申請 ID
-   * @param {object} params
-   * @param {'approved'|'rejected'} params.status - 審査結果
-   * @param {string} [params.reason] - 理由
-   * @returns {Promise<{ success: boolean, application: object }>}
-   */
-  update(applicationId, { status, reason } = {}) {
-    return this._client._patch(`/verification-applications/${applicationId}`, {
-      status,
-      reason
-    });
   }
 };
 
@@ -2391,7 +2440,7 @@ var ImpostersAPI = class {
    * @returns {Promise<{ imposter: object }>}
    */
   addMember(imposterId, { userId, role = "operator" } = {}) {
-    return this._client._post(`/imposters/${imposterId}/members`, {
+    return this._client._post(`/imposters/${encodeURIComponent(imposterId)}/members`, {
       user_id: userId,
       role
     });
@@ -2406,7 +2455,7 @@ var ImpostersAPI = class {
    * @returns {Promise<{ imposter: object }>}
    */
   updateMemberRole(imposterId, memberId, { role } = {}) {
-    return this._client._patch(`/imposters/${imposterId}/members/${memberId}`, {
+    return this._client._patch(`/imposters/${encodeURIComponent(imposterId)}/members/${encodeURIComponent(memberId)}`, {
       role
     });
   }
@@ -2418,7 +2467,7 @@ var ImpostersAPI = class {
    * @returns {Promise<{ imposter: object }>}
    */
   removeMember(imposterId, memberId) {
-    return this._client._delete(`/imposters/${imposterId}/members/${memberId}`);
+    return this._client._delete(`/imposters/${encodeURIComponent(imposterId)}/members/${encodeURIComponent(memberId)}`);
   }
   /**
    * インポスターを削除します。
@@ -2427,7 +2476,7 @@ var ImpostersAPI = class {
    * @returns {Promise<{ success: boolean }>}
    */
   delete(imposterId) {
-    return this._client._delete(`/imposters/${imposterId}`);
+    return this._client._delete(`/imposters/${encodeURIComponent(imposterId)}`);
   }
 };
 
@@ -2565,6 +2614,10 @@ var SystemAPI = class {
   getStatusResponse() {
     return this._client.requestResponse("/status");
   }
+  /** OpenAPI 仕様を取得します。 */
+  getOpenApiSpec() {
+    return this._client._get("/spec");
+  }
   getApiSpecResponse(options) {
     return this._getWithFallback("/spec/endpoints", "/api/spec/endpoints", options);
   }
@@ -2584,7 +2637,7 @@ var SystemAPI = class {
   /**
    * サーバーの稼働状態・制限値・認証プロバイダー設定を取得します。
    *
-   * @returns {Promise<{ server: string, timestamp: string, database: string, identity: object, auth_methods: string[], client_limits: object }>}
+   * @returns {Promise<import('../models.js').ServerStatus>}
    *
    * @example
    * const status = await client.system.getStatus();
@@ -2650,6 +2703,21 @@ var NyaitterAuthAPI = class {
   /** @param {import('../NyaitterClient.js').NyaitterClient} client */
   constructor(client) {
     this._client = client;
+  }
+  getRequest(requestId) {
+    return this._client._get(`/nyaitter-auth/requests/${encodeURIComponent(requestId)}`);
+  }
+  approve(body) {
+    return this._client._post("/nyaitter-auth/approve", body);
+  }
+  deny(body) {
+    return this._client._post("/nyaitter-auth/deny", body);
+  }
+  autoPass(requestId) {
+    return this._client._post("/nyaitter-auth/auto-pass", { request_id: requestId });
+  }
+  checkGrant(query = {}) {
+    return this._client._get("/nyaitter-auth/check-grant", query);
   }
   getRequestResponse(requestId, options) {
     return this._client.requestResponse(`/nyaitter-auth/requests/${encodeURIComponent(requestId)}`, options);
@@ -2751,7 +2819,7 @@ var NyaitterAuthAPI = class {
    * @returns {Promise<{ success: boolean }>}
    */
   updateAuthorizedApp(appAuthId, scopes) {
-    return this._client._patch(`/nyaitter-auth/authorized-apps/${appAuthId}`, { scopes });
+    return this._client._patch(`/nyaitter-auth/authorized-apps/${encodeURIComponent(appAuthId)}`, { scopes });
   }
   /**
    * 連携済みアプリを解除します。
@@ -2760,7 +2828,72 @@ var NyaitterAuthAPI = class {
    * @returns {Promise<{ success: boolean }>}
    */
   revokeAuthorizedApp(appAuthId) {
-    return this._client._delete(`/nyaitter-auth/authorized-apps/${appAuthId}`);
+    return this._client._delete(`/nyaitter-auth/authorized-apps/${encodeURIComponent(appAuthId)}`);
+  }
+};
+
+// src/api/ExtensionsAPI.js
+var ExtensionsAPI = class {
+  /** @param {import('../NyaitterClient.js').NyaitterClient} client */
+  constructor(client) {
+    this._client = client;
+  }
+  /**
+   * @internal
+   * @param {string} [extensionKey]
+   * @returns {Record<string, string>}
+   */
+  _headers(extensionKey) {
+    const key = extensionKey ?? this._client.getExtensionKey();
+    if (!key) {
+      throw new Error("\u62E1\u5F35\u30AD\u30FC\u304C\u5FC5\u8981\u3067\u3059\u3002\u30E1\u30BD\u30C3\u30C9\u306E\u5F15\u6570\u304B\u3001\u30AF\u30E9\u30A4\u30A2\u30F3\u30C8\u306E extensionKey \u30AA\u30D7\u30B7\u30E7\u30F3\u3067\u6307\u5B9A\u3057\u3066\u304F\u3060\u3055\u3044\u3002");
+    }
+    return { "x-nyaitter-extension-key": key };
+  }
+  /**
+   * 拡張キーに許可された戻り先へ、NyaitterAuth の認可リクエストを作成します。
+   *
+   * @param {object} params
+   * @param {string} [params.extensionKey] - 拡張キー（クライアントに設定済みの場合は省略可）
+   * @param {string} params.redirectUri - 戻り先 URL（拡張キーに許可されたオリジンであること）
+   * @param {string} [params.state] - 認可リクエストに引き継ぐ任意の状態値
+   * @param {(string|{scope: string, required?: boolean})[]} [params.scopes] - 要求スコープ
+   * @returns {Promise<object>} サーバーの認可リクエスト応答（auth_url 等）
+   */
+  initiate({ extensionKey, redirectUri, state, scopes } = {}) {
+    return this._client.request("POST", "/internal/extensions/nyaitter-auth/initiate", {
+      headers: this._headers(extensionKey),
+      body: { redirect_uri: redirectUri, state, scopes }
+    });
+  }
+  /**
+   * 認可コードをアクセストークンへ交換します（拡張キー側のアプリとして）。
+   *
+   * @param {object} params
+   * @param {string} [params.extensionKey] - 拡張キー（クライアントに設定済みの場合は省略可）
+   * @param {string} params.code - 認可コード
+   * @returns {Promise<object>} トークン交換の応答
+   */
+  exchangeToken({ extensionKey, code } = {}) {
+    return this._client.request("POST", "/internal/extensions/nyaitter-auth/token", {
+      headers: this._headers(extensionKey),
+      body: { code }
+    });
+  }
+  /**
+   * アクセストークンのユーザー情報を取得します。
+   * トークンはこの拡張キーに対して発行されたものである必要があります。
+   *
+   * @param {object} params
+   * @param {string} [params.extensionKey] - 拡張キー（クライアントに設定済みの場合は省略可）
+   * @param {string} params.accessToken - NyaitterAuth アクセストークン
+   * @returns {Promise<{success: boolean, app_id: string, granted_scopes: string[], user: object}>}
+   */
+  getUserInfo({ extensionKey, accessToken } = {}) {
+    return this._client.request("POST", "/internal/extensions/nyaitter-auth/userinfo", {
+      headers: { ...this._headers(extensionKey), Authorization: `Bearer ${accessToken}` },
+      body: {}
+    });
   }
 };
 
@@ -2778,8 +2911,41 @@ var CALL_EVENTS = {
   "call:stage": "callStage",
   "call:error": "callError",
   "call:chat": "callChat",
+  "call:chat-delete": "callChatDelete",
+  "call:chat-clear": "callChatClear",
   "call:transcript": "callTranscript"
 };
+var SPACE_EVENTS = {
+  space_message: "spaceMessage",
+  space_message_deleted: "spaceMessageDeleted",
+  space_deleted: "spaceDeleted",
+  space_member_left: "spaceMemberLeft",
+  space_signal: "spaceSignal",
+  space_voice_roster: "spaceVoiceRoster"
+};
+function normalizeSpaceEvent(data) {
+  const base = { spaceId: data.space_id };
+  switch (data.type) {
+    case "space_message":
+      return { ...base, channelId: data.channel_id, message: data.message, user: data.user ?? null };
+    case "space_message_deleted":
+      return { ...base, channelId: data.channel_id, messageId: data.message_id };
+    case "space_member_left":
+      return { ...base, userId: data.user_id };
+    case "space_signal":
+      return { ...base, channelId: data.channel_id, fromUserId: data.from_user_id, data: data.data };
+    case "space_voice_roster":
+      return {
+        ...base,
+        channelId: data.channel_id,
+        roster: data.roster,
+        joinedUserId: data.joined_user_id ?? null,
+        leftUserId: data.left_user_id ?? null
+      };
+    default:
+      return base;
+  }
+}
 var RealtimeClient = class {
   /**
    * @param {import('./NyaitterClient.js').NyaitterClient} client
@@ -2792,6 +2958,7 @@ var RealtimeClient = class {
     this._reconnectTimer = null;
     this._shouldReconnect = false;
     this._callRoom = null;
+    this._spaceSubscriptions = /* @__PURE__ */ new Set();
   }
   /**
    * イベントリスナーを登録します。
@@ -2800,6 +2967,7 @@ var RealtimeClient = class {
    * - `'notification'`  — 新着通知 `(notification: object) => void`
    * - `'notificationUnreadCount'` — 通知未読数の更新 `(count: number) => void`
    * - `'dm'`            — DM 新着メッセージ `({ dmId, message, sender }) => void`
+   * - `'dmEdited'`      — DM メッセージの編集 `({ dmId, message }) => void`
    * - `'dmUnreadCount'` — DM 未読数の更新 `(count: number) => void`
    * - `'timelinePost'`  — フォロー中タイムラインの新着 `({ postId, authorId }) => void`
    * - `'call'`          — 通話系イベント全般（サーバーの `call:*` 生ペイロード） `(payload: object) => void`
@@ -2815,7 +2983,18 @@ var RealtimeClient = class {
    * - `'callStage'`     — ステージ状態の更新 `({ room, status }) => void`
    * - `'callError'`     — 通話操作のエラー `({ request_id, message }) => void`
    * - `'callChat'`      — 通話チャット `({ room, user_id, name, text, at }) => void`
+   * - `'callChatDelete'`— 通話チャットの削除 `({ room, id }) => void`
+   * - `'callChatClear'` — 通話チャットの全消去 `({ room }) => void`
    * - `'callTranscript'`— 文字起こし `({ room, user_id, name, text, at }) => void`
+   * - `'dmRead'`        — DM の既読通知 `({ dmId, readerId }) => void`
+   * - `'pollUpdated'`   — 投票の更新 `({ pollId, postId, poll }) => void`
+   * - `'space'`         — スペース系イベント全般（サーバーの `space_*` 生ペイロード） `(payload: object) => void`
+   * - `'spaceMessage'`  — スペースの新着メッセージ `({ spaceId, channelId, message, user }) => void`
+   * - `'spaceMessageDeleted'` — スペースのメッセージ削除 `({ spaceId, channelId, messageId }) => void`
+   * - `'spaceDeleted'`  — スペースの削除 `({ spaceId }) => void`
+   * - `'spaceMemberLeft'` — スペースからの退出 `({ spaceId, userId }) => void`
+   * - `'spaceSignal'`   — スペースボイスの WebRTC シグナル `({ spaceId, channelId, fromUserId, data }) => void`
+   * - `'spaceVoiceRoster'` — スペースボイスの参加者一覧 `({ spaceId, channelId, roster, joinedUserId, leftUserId }) => void`
    * - `'open'`          — 接続完了 `() => void`
    * - `'close'`         — 切断 `() => void`
    * - `'error'`         — エラー `(error: Event) => void`
@@ -2931,6 +3110,12 @@ var RealtimeClient = class {
       this._emit("call", data);
       return;
     }
+    if (typeof data?.type === "string" && data.type.startsWith("space_")) {
+      const event = SPACE_EVENTS[data.type];
+      if (event) this._emit(event, normalizeSpaceEvent(data));
+      this._emit("space", data);
+      return;
+    }
     switch (data.type) {
       case "notification_new":
         this._emit("notification", data.notification);
@@ -2946,8 +3131,17 @@ var RealtimeClient = class {
           sender: data.sender ?? null
         });
         break;
+      case "dm_message_edited":
+        this._emit("dmEdited", { dmId: data.dm_id, message: data.message });
+        break;
       case "dm_unread_count":
         this._emit("dmUnreadCount", data.unread_count);
+        break;
+      case "dm_read":
+        this._emit("dmRead", { dmId: data.dm_id, readerId: data.reader_id });
+        break;
+      case "poll_updated":
+        this._emit("pollUpdated", { pollId: data.poll_id, postId: data.post_id, poll: data.poll });
         break;
       case "timeline_post":
         this._emit("timelinePost", {
@@ -3012,7 +3206,10 @@ var RealtimeClient = class {
     if (!this.connected) throw new Error("WebSocket \u304C\u63A5\u7D9A\u3055\u308C\u3066\u3044\u307E\u305B\u3093\u3002");
     this._ws.send(JSON.stringify(message));
   }
-  /** @internal */
+  /**
+   * @internal
+   * @param {{kind?: string|number, id?: string|number}} [options]
+   */
   _resolveCallRoom({ kind, id } = {}) {
     const resolvedKind = kind ?? this._callRoom?.kind;
     const resolvedId = id ?? this._callRoom?.id;
@@ -3079,6 +3276,7 @@ var RealtimeClient = class {
    * @param {boolean} [params.muted]
    * @param {boolean} [params.camera]
    * @param {boolean} [params.transcriptionEnabled]
+   * @param {boolean} [params.transcription_enabled]
    * @param {string|number} [params.kind]
    * @param {string|number} [params.id]
    */
@@ -3111,6 +3309,7 @@ var RealtimeClient = class {
    * @param {object} params
    * @param {boolean} params.active - 共有中かどうか
    * @param {string} [params.streamId] - 共有ストリーム ID（開始時は必須）
+   * @param {string} [params.stream_id]
    * @param {string|number} [params.kind]
    * @param {string|number} [params.id]
    */
@@ -3131,6 +3330,29 @@ var RealtimeClient = class {
     this.send({ type: "call:chat", ...room, text });
   }
   /**
+   * 通話チャットのメッセージを削除します（自分のメッセージ、またはホストは全員のメッセージ）。
+   *
+   * @param {object} params
+   * @param {string} params.messageId - 削除するチャットメッセージ ID
+   * @param {string|number} [params.kind]
+   * @param {string|number} [params.id]
+   */
+  deleteCallChatMessage({ messageId, kind, id } = {}) {
+    const room = this._resolveCallRoom({ kind, id });
+    this.send({ type: "call:chat-delete", ...room, message_id: messageId });
+  }
+  /**
+   * 通話チャットを全消去します（ホストのみ）。
+   *
+   * @param {object} [params]
+   * @param {string|number} [params.kind]
+   * @param {string|number} [params.id]
+   */
+  clearCallChat({ kind, id } = {}) {
+    const room = this._resolveCallRoom({ kind, id });
+    this.send({ type: "call:chat-clear", ...room });
+  }
+  /**
    * 文字起こしを送信します（スピーカー・ミュート解除中のみ）。
    *
    * @param {object} params
@@ -3142,6 +3364,101 @@ var RealtimeClient = class {
     const room = this._resolveCallRoom({ kind, id });
     this.send({ type: "call:transcript", ...room, text });
   }
+  /**
+   * 現在購読中のスペース ID 一覧を返します。
+   * @returns {string[]}
+   */
+  get spaceSubscriptions() {
+    return [...this._spaceSubscriptions];
+  }
+  /**
+   * スペースのテキストメッセージをリアルタイム受信できるよう購読します。
+   * サーバーは接続ユーザーがスペースのメンバーであることを毎回確認します。
+   *
+   * @param {string|number} spaceId - スペース ID
+   */
+  subscribeSpace(spaceId) {
+    const id = String(spaceId);
+    this._spaceSubscriptions.add(id);
+    this.send({ type: "space:subscribe", spaceId: id });
+  }
+  /**
+   * スペースの購読を解除します。
+   *
+   * @param {string|number} spaceId - スペース ID
+   */
+  unsubscribeSpace(spaceId) {
+    const id = String(spaceId);
+    this._spaceSubscriptions.delete(id);
+    this.send({ type: "space:unsubscribe", spaceId: id });
+  }
+  /**
+   * スペースのボイスチャンネルに参加します。
+   * 参加者一覧は `'spaceVoiceRoster'` イベントで届きます。
+   *
+   * @param {object} params
+   * @param {string|number} params.spaceId - スペース ID
+   * @param {string|number} params.channelId - ボイスチャンネル ID
+   * @param {boolean} [params.muted] - 初期ミュート状態
+   * @param {boolean} [params.deafened] - 初期スピーカーオフ状態
+   */
+  joinSpaceVoice({ spaceId, channelId, muted, deafened } = {}) {
+    this.send({
+      type: "space:join_voice",
+      spaceId: String(spaceId),
+      channelId: String(channelId),
+      muted: Boolean(muted),
+      deafened: Boolean(deafened)
+    });
+  }
+  /**
+   * スペースのボイスチャンネルから退出します。
+   *
+   * @param {object} params
+   * @param {string|number} params.spaceId - スペース ID
+   * @param {string|number} params.channelId - ボイスチャンネル ID
+   */
+  leaveSpaceVoice({ spaceId, channelId } = {}) {
+    this.send({ type: "space:leave_voice", spaceId: String(spaceId), channelId: String(channelId) });
+  }
+  /**
+   * スペースボイスでの自分のミュート・スピーカー状態を通知します。
+   * 指定しなかった項目はサーバー側で変更されません。
+   *
+   * @param {object} params
+   * @param {string|number} params.spaceId - スペース ID
+   * @param {string|number} params.channelId - ボイスチャンネル ID
+   * @param {boolean} [params.muted]
+   * @param {boolean} [params.deafened]
+   */
+  setSpaceVoiceState({ spaceId, channelId, muted, deafened } = {}) {
+    this.send({
+      type: "space:voice_state",
+      spaceId: String(spaceId),
+      channelId: String(channelId),
+      ...muted === void 0 ? {} : { muted: Boolean(muted) },
+      ...deafened === void 0 ? {} : { deafened: Boolean(deafened) }
+    });
+  }
+  /**
+   * 同じボイスチャンネルにいる特定の参加者へ WebRTC シグナル（SDP / ICE）を送信します。
+   * 相手には `'spaceSignal'` イベントで届きます。
+   *
+   * @param {object} params
+   * @param {string|number} params.spaceId - スペース ID
+   * @param {string|number} params.channelId - ボイスチャンネル ID
+   * @param {string|number} params.toUserId - 送信先のユーザー ID
+   * @param {object} params.data - `{ description }` または `{ candidate }`
+   */
+  sendSpaceSignal({ spaceId, channelId, toUserId, data } = {}) {
+    this.send({
+      type: "space:signal",
+      spaceId: String(spaceId),
+      channelId: String(channelId),
+      toUserId: Number(toUserId),
+      data
+    });
+  }
 };
 
 // src/NyaitterClient.js
@@ -3150,13 +3467,15 @@ var NyaitterClient = class {
    * @param {object} options
    * @param {string} options.baseUrl - Nyaitter サーバーの URL
    * @param {string} [options.token] - Bot トークンまたはアクセストークン
+   * @param {string} [options.extensionKey] - 拡張 API キー（`client.extensions` 用）
    * @param {typeof fetch} [options.fetch] - カスタム fetch 関数
    * @param {any} [options.WebSocket] - カスタム WebSocket クラス
    */
-  constructor({ baseUrl, token = null, fetch: customFetch = null, WebSocket: customWebSocket = null } = {}) {
+  constructor({ baseUrl, token = null, extensionKey = null, fetch: customFetch = null, WebSocket: customWebSocket = null } = {}) {
     if (!baseUrl) throw new Error("baseUrl \u306F\u5FC5\u9808\u3067\u3059");
     this._baseUrl = baseUrl.replace(/\/+$/, "");
     this._token = token;
+    this._extensionKey = extensionKey;
     this._fetch = customFetch || (globalThis.fetch ? globalThis.fetch.bind(globalThis) : null);
     this._WebSocket = customWebSocket || globalThis.WebSocket;
     if (typeof this._fetch !== "function") {
@@ -3164,10 +3483,12 @@ var NyaitterClient = class {
     }
     this.auth = new AuthAPI(this);
     this.posts = new PostsAPI(this);
+    this.notes = new NotesAPI(this);
     this.polls = new PollsAPI(this);
     this.users = new UsersAPI(this);
     this.dm = new DmAPI(this);
     this.calls = new CallsAPI(this);
+    this.spaces = new SpacesAPI(this);
     this.notifications = new NotificationsAPI(this);
     this.groups = new GroupsAPI(this);
     this.uploads = new UploadsAPI(this);
@@ -3183,6 +3504,7 @@ var NyaitterClient = class {
     this.ui = new UIAPI(this);
     this.system = new SystemAPI(this);
     this.nyaitterAuth = new NyaitterAuthAPI(this);
+    this.extensions = new ExtensionsAPI(this);
   }
   /**
    * アクセストークンを設定します。
@@ -3197,6 +3519,20 @@ var NyaitterClient = class {
    */
   getToken() {
     return this._token;
+  }
+  /**
+   * 拡張 API キーを設定します（`client.extensions` の既定キー）。
+   * @param {string|null} extensionKey
+   */
+  setExtensionKey(extensionKey) {
+    this._extensionKey = extensionKey;
+  }
+  /**
+   * 現在の拡張 API キーを取得します。
+   * @returns {string|null}
+   */
+  getExtensionKey() {
+    return this._extensionKey;
   }
   /**
    * 認証中のユーザーの情報を取得します。
