@@ -1,7 +1,7 @@
 /**
  * @typedef {'Trusted'|'Reliable'|'Credible'|'Neutral'|'Questionable'|'Suspicious'|'Banned'} TrustRank
- * @typedef {{trust: TrustRank, writer: number, reviewer: number}} DisplayRanks
- * @typedef {{trust?: TrustRank|null, writer?: number|null, reviewer?: number|null}} DisplayRankOverrides
+ * @typedef {{trust: TrustRank}} DisplayRanks
+ * @typedef {{trust?: TrustRank|null}} DisplayRankOverrides
  * @typedef {{show_ranks?: boolean, display_ranks?: DisplayRankOverrides, [key: string]: any}} UserSettings
  * @typedef {{id: number, display_ranks?: DisplayRanks|null, settings?: UserSettings, [key: string]: any}} User
  */
@@ -12,14 +12,12 @@
  */
 
 /**
- * 実ランクは trust / writer / reviewer、表示用は display_ranks を参照します。実スコアは含みません。
+ * 実ランクは trust、表示用は display_ranks を参照します。実スコアは含みません。
  * @typedef {object} UserStatus
  * @property {RankInfo<TrustRank> & {ranks: RankInfo<TrustRank>[]}} trust
- * @property {RankInfo<number> & {ranks: RankInfo<number>[]}} writer
- * @property {RankInfo<number> & {ranks: RankInfo<number>[]}} reviewer
  * @property {DisplayRanks} display_ranks
- * @property {{trust: TrustRank[], writer: number[], reviewer: number[]}} display_rank_options
- * @property {{show_ranks: boolean, display_ranks: {trust: TrustRank|null, writer: number|null, reviewer: number|null}}} display_settings
+ * @property {{trust: TrustRank[]}} display_rank_options
+ * @property {{show_ranks: boolean, display_ranks: {trust: TrustRank|null}}} display_settings
  */
 
 /**

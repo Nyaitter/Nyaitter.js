@@ -1,13 +1,9 @@
 export type TrustRank = "Trusted" | "Reliable" | "Credible" | "Neutral" | "Questionable" | "Suspicious" | "Banned";
 export type DisplayRanks = {
     trust: TrustRank;
-    writer: number;
-    reviewer: number;
 };
 export type DisplayRankOverrides = {
     trust?: TrustRank | null;
-    writer?: number | null;
-    reviewer?: number | null;
 };
 export type UserSettings = {
     show_ranks?: boolean;
@@ -29,30 +25,20 @@ export type RankInfo<T extends string | number> = {
     restrictions: string[];
 };
 /**
- * 実ランクは trust / writer / reviewer、表示用は display_ranks を参照します。実スコアは含みません。
+ * 実ランクは trust、表示用は display_ranks を参照します。実スコアは含みません。
  */
 export type UserStatus = {
     trust: RankInfo<TrustRank> & {
         ranks: RankInfo<TrustRank>[];
     };
-    writer: RankInfo<number> & {
-        ranks: RankInfo<number>[];
-    };
-    reviewer: RankInfo<number> & {
-        ranks: RankInfo<number>[];
-    };
     display_ranks: DisplayRanks;
     display_rank_options: {
         trust: TrustRank[];
-        writer: number[];
-        reviewer: number[];
     };
     display_settings: {
         show_ranks: boolean;
         display_ranks: {
             trust: TrustRank | null;
-            writer: number | null;
-            reviewer: number | null;
         };
     };
 };

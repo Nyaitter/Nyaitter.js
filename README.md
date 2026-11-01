@@ -176,14 +176,14 @@ const { notes } = await client.notes.list(postId);
 
 ### 利用状態とランク表示
 
-`client.users.getStatus()` で自分の実ランクと利用できる機能の説明を確認できます。実スコアは返しません。`trust` / `writer` / `reviewer` が実ランク、`display_ranks` が表示用ランク、`display_rank_options` が選べる表示用ランクです。公開ユーザーの `display_ranks` は表示用であり、実ランクの判定には使わないでください。
+`client.users.getStatus()` で自分の実ランクと利用できる機能の説明を確認できます。実スコアは返しません。`trust` が実ランク、`display_ranks` が表示用ランク、`display_rank_options` が選べる表示用ランクです。公開ユーザーの `display_ranks` は表示用であり、実ランクの判定には使わないでください。
 
 ```js
 const status = await client.users.getStatus();
 await client.users.updateProfile({
   settings: {
     show_ranks: true,
-    display_ranks: { writer: status.display_rank_options.writer[0] ?? null },
+    display_ranks: { trust: status.display_rank_options.trust[0] ?? null },
   },
 });
 ```
