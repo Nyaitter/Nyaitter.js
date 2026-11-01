@@ -1,3 +1,6 @@
 node_modules/
 .env
 *.log
+
+# Runtime data (contains a generated HMAC secret)
+data/
