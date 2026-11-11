@@ -836,9 +836,6 @@ var Nyaitter = (() => {
     updateUser(userId, body = {}) {
       return this._client._put(`/users/${encodeURIComponent(userId)}`, body);
     }
-    reassignNyaitterId() {
-      return this._client._post("/users/me/nyaitter-id/reassign", {});
-    }
     prepareAccountDeletion() {
       return this._client._post("/users/me/account/delete/prepare", {});
     }

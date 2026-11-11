@@ -49,7 +49,6 @@ export class UsersAPI {
     updateUserStatus(userId: any, body?: {}): Promise<any>;
     /** 管理者専用。対象ユーザーの管理属性を更新します。 */
     updateUser(userId: any, body?: {}): Promise<any>;
-    reassignNyaitterId(): Promise<any>;
     prepareAccountDeletion(): Promise<any>;
     deleteAccount(confirmationToken: any): Promise<any>;
     /** @returns {Promise<import('../models.js').UserStatus>} */
